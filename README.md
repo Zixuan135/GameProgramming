@@ -91,3 +91,18 @@ ProjectSettings/
 1. Open this folder with Unity Hub
 2. On first open, Unity will auto-generate content in `ProjectSettings` and `Packages`
 3. Commit only source/assets; ignore caches and build outputs (see `.gitignore`)
+
+## 8. Current Progress (as of 2026-04-21)
+
+- Completed project bootstrap (folder structure, README, Unity-generated settings/packages)
+- Completed scene skeleton setup with 5 scenes:
+  - `MainMenu`
+  - `ModeSelect`
+  - `MapSelect`
+  - `Battle`
+  - `Result`
+- Build Settings scene order configured:
+  - `MainMenu -> ModeSelect -> MapSelect -> Battle -> Result`
+- Notes:
+  - Current scenes are structure-first placeholders
+  - Full UI and gameplay logic are intentionally not implemented yet
