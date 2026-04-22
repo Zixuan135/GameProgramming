@@ -92,7 +92,7 @@ ProjectSettings/
 2. On first open, Unity will auto-generate content in `ProjectSettings` and `Packages`
 3. Commit only source/assets; ignore caches and build outputs (see `.gitignore`)
 
-## 8. Current Progress (as of 2026-04-21)
+## 8. Current Progress (as of 2026-04-22)
 
 - Completed project bootstrap (folder structure, README, Unity-generated settings/packages)
 - Completed scene skeleton setup with 5 scenes:
@@ -103,6 +103,16 @@ ProjectSettings/
   - `Result`
 - Build Settings scene order configured:
   - `MainMenu -> ModeSelect -> MapSelect -> Battle -> Result`
+- Completed core script skeleton (structure-first, no complex gameplay yet):
+  - Core: `GameConstants`, `Enums`
+  - Managers: `GameManager`, `SceneFlowManager`
+  - Map: `MapManager`, `MapGenerator`
+  - Characters: `CharacterBase`, `PlayerController`, `AIController`
+  - Gameplay: `BombController`, `ExplosionController`
+  - Items: `ItemBase`, `ItemSpawner`
+  - Camera: `CameraController`
+  - UI: `MainMenuUI`, `ModeSelectUI`, `MapSelectUI`, `BattleUI`, `ResultUI`
 - Notes:
   - Current scenes are structure-first placeholders
-  - Full UI and gameplay logic are intentionally not implemented yet
+  - Current scripts are skeleton-level with basic fields/methods only
+  - Full UI and complete gameplay logic are intentionally not implemented yet
