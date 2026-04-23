@@ -17,8 +17,9 @@ namespace BubbleTown.AI
         private float bombTimer;
         private Vector3 currentDirection = Vector3.zero;
 
-        private void Update()
+        protected override void Update()
         {
+            base.Update();
             UpdateDirection();
             UpdateBombDecision();
 
