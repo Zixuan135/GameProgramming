@@ -11,7 +11,8 @@ namespace BubbleTown.Core
         public const float GridCellSize = 1f;
 
         public const int DefaultBombCount = 1;
-        public const int DefaultBombRange = 2;
+        public const int DefaultExplosionRange = 2;
+        public const int DefaultBombRange = DefaultExplosionRange;
         public const float DefaultBombFuseSeconds = 2f;
 
         public const float DefaultMoveSpeed = 4f;
