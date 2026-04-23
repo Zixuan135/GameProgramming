@@ -133,8 +133,21 @@ ProjectSettings/
   - spawn-adjacent cells are reserved as walkable space
   - `LocalVS` uses distant spawn points for Player1/Player2
   - `AIBattle` uses a reasonable AI spawn opposite to Player1
+- Completed Player1 base movement pass:
+  - `Player1` uses `WASD` for four-direction grid movement
+  - movement happens on the XZ plane and moves smoothly from one cell to the next
+  - new movement input is ignored while the character is already moving
+  - movement checks `MapManager.IsWalkable` before entering a target cell
+  - character occupancy is synchronized with `MapManager`
+  - bomb input is reserved through a placeholder `Space` callback
+- Completed movement blocking pass:
+  - hard walls block character movement
+  - soft walls block character movement
+  - bomb blocking has a dedicated placeholder path for later bomb rules
+  - `Battle` scene includes visible test blockers:
+    - `TestHardWall_3_1`
+    - `TestSoftWall_1_3`
 - Notes:
-  - Current scenes are structure-first placeholders
-  - Current scripts are skeleton-level with basic fields/methods only
-  - Current map rule update is data-layer focused (no complex visual generation yet)
-  - Full UI and complete gameplay logic are intentionally not implemented yet
+  - Current scenes are still placeholder-based but now include a playable movement test in `Battle`
+  - Current map work is logic/data focused (no full visual map generation yet)
+  - Full UI, complete bomb behavior, explosion propagation, and battle win/lose logic are intentionally not implemented yet
