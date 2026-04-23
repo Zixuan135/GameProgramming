@@ -92,7 +92,7 @@ ProjectSettings/
 2. On first open, Unity will auto-generate content in `ProjectSettings` and `Packages`
 3. Commit only source/assets; ignore caches and build outputs (see `.gitignore`)
 
-## 8. Current Progress (as of 2026-04-22)
+## 8. Current Progress (as of 2026-04-23)
 
 - Completed project bootstrap (folder structure, README, Unity-generated settings/packages)
 - Completed scene skeleton setup with 5 scenes:
@@ -112,7 +112,29 @@ ProjectSettings/
   - Items: `ItemBase`, `ItemSpawner`
   - Camera: `CameraController`
   - UI: `MainMenuUI`, `ModeSelectUI`, `MapSelectUI`, `BattleUI`, `ResultUI`
+- Completed enum/state/constants foundation update:
+  - added `GameState` enum for global runtime flow
+  - confirmed `GameMode`, `CellType`, and `ItemType` as shared base enums
+  - refined constants with `DefaultExplosionRange` (kept `DefaultBombRange` compatibility alias)
+- Completed grid data-layer APIs for map logic:
+  - added `GridCell` data model (`GridPosition`, hard/soft wall, bomb, character, item flags)
+  - expanded `MapManager` with:
+    - `GetCell`
+    - `IsInsideBounds`
+    - `IsWalkable`
+    - `SetCharacter`
+    - `ClearCharacter`
+    - `PlaceBomb`
+    - `RemoveBomb`
+  - added `WorldToGrid` / `GridToWorld` helpers for XZ-plane movement logic
+  - configured `Battle` scene `MapRoot` with `MapGenerator` + `MapManager` references
+- Completed map rule data-layer update for Bomberman-style opening fairness:
+  - hard-wall border is enforced on map edges
+  - spawn-adjacent cells are reserved as walkable space
+  - `LocalVS` uses distant spawn points for Player1/Player2
+  - `AIBattle` uses a reasonable AI spawn opposite to Player1
 - Notes:
   - Current scenes are structure-first placeholders
   - Current scripts are skeleton-level with basic fields/methods only
+  - Current map rule update is data-layer focused (no complex visual generation yet)
   - Full UI and complete gameplay logic are intentionally not implemented yet
