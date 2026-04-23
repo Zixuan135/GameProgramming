@@ -10,35 +10,55 @@ namespace BubbleTown.Characters
         [Header("Input")]
         [SerializeField] private bool isPlayerOne = true;
 
-        private void Update()
+        protected override void Update()
         {
+            base.Update();
             HandleMovementInput();
             HandleBombInput();
         }
 
         private void HandleMovementInput()
         {
-            Vector3 move = Vector3.zero;
+            if (IsMoving)
+            {
+                return;
+            }
+
+            Vector2Int gridDirection = Vector2Int.zero;
 
             if (isPlayerOne)
             {
-                if (Input.GetKey(KeyCode.W)) move += Vector3.forward;
-                if (Input.GetKey(KeyCode.S)) move += Vector3.back;
-                if (Input.GetKey(KeyCode.A)) move += Vector3.left;
-                if (Input.GetKey(KeyCode.D)) move += Vector3.right;
+                gridDirection = ReadPlayerOneMoveInput();
             }
             else
             {
-                if (Input.GetKey(KeyCode.UpArrow)) move += Vector3.forward;
-                if (Input.GetKey(KeyCode.DownArrow)) move += Vector3.back;
-                if (Input.GetKey(KeyCode.LeftArrow)) move += Vector3.left;
-                if (Input.GetKey(KeyCode.RightArrow)) move += Vector3.right;
+                gridDirection = ReadPlayerTwoMoveInput();
             }
 
-            if (move != Vector3.zero)
+            if (gridDirection != Vector2Int.zero)
             {
-                Move(move);
+                TryMoveGridDirection(gridDirection);
             }
+        }
+
+        private Vector2Int ReadPlayerOneMoveInput()
+        {
+            if (Input.GetKey(KeyCode.W)) return Vector2Int.up;
+            if (Input.GetKey(KeyCode.S)) return Vector2Int.down;
+            if (Input.GetKey(KeyCode.A)) return Vector2Int.left;
+            if (Input.GetKey(KeyCode.D)) return Vector2Int.right;
+
+            return Vector2Int.zero;
+        }
+
+        private Vector2Int ReadPlayerTwoMoveInput()
+        {
+            if (Input.GetKey(KeyCode.UpArrow)) return Vector2Int.up;
+            if (Input.GetKey(KeyCode.DownArrow)) return Vector2Int.down;
+            if (Input.GetKey(KeyCode.LeftArrow)) return Vector2Int.left;
+            if (Input.GetKey(KeyCode.RightArrow)) return Vector2Int.right;
+
+            return Vector2Int.zero;
         }
 
         private void HandleBombInput()
@@ -49,8 +69,13 @@ namespace BubbleTown.Characters
 
             if (pressed)
             {
-                TryPlaceBomb();
+                OnBombInputPressed();
             }
+        }
+
+        protected virtual void OnBombInputPressed()
+        {
+            Debug.Log("[PlayerController] Bomb input pressed. Bomb placement will be implemented later.");
         }
     }
 }
