@@ -221,6 +221,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1031}
+  - component: {fileID: 1032}
+  - component: {fileID: 1033}
   m_Layer: 0
   m_Name: MapRoot
   m_TagString: Untagged
@@ -243,6 +245,39 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1032
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1030}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 414f1a82012a54cdd994c0ef9468ac42, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mapWidth: 13
+  mapHeight: 11
+  cellSize: 1
+--- !u!114 &1033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1030}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e04976ec522de46649f5dbf3469172c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mapGenerator: {fileID: 1032}
+  mapWidth: 13
+  mapHeight: 11
+  cellSize: 1
+  useMapGeneratorSize: 1
+  selectedMapType: 0
 --- !u!1 &1040
 GameObject:
   m_ObjectHideFlags: 0
