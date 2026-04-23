@@ -19,6 +19,10 @@ namespace BubbleTown.Map
         [SerializeField] private float cellSize = GameConstants.GridCellSize;
         [SerializeField] private bool useMapGeneratorSize = true;
 
+        [Header("Initial Blocking Cells")]
+        [SerializeField] private Vector2Int[] initialHardWallCells = new Vector2Int[0];
+        [SerializeField] private Vector2Int[] initialSoftWallCells = new Vector2Int[0];
+
         [Header("Runtime")]
         [SerializeField] private BattleMapType selectedMapType = BattleMapType.Default;
 
@@ -32,9 +36,13 @@ namespace BubbleTown.Map
         private Vector2Int player2SpawnGrid = new Vector2Int(1, 1);
         private Vector2Int aiSpawnGrid = new Vector2Int(1, 1);
 
-        private void Start()
+        private void Awake()
         {
             InitializeGridData();
+        }
+
+        private void Start()
+        {
             GenerateMap();
         }
 
@@ -76,6 +84,7 @@ namespace BubbleTown.Map
         private void ApplyMapRules()
         {
             ApplyHardWallBorder();
+            ApplyInitialBlockingCells();
             ResolveSpawnPointsByMode();
             ReserveSpawnArea(player1SpawnGrid);
             ReserveSpawnArea(player2SpawnGrid);
@@ -94,6 +103,19 @@ namespace BubbleTown.Map
             {
                 SetHardWall(new Vector2Int(0, y), true);
                 SetHardWall(new Vector2Int(mapWidth - 1, y), true);
+            }
+        }
+
+        private void ApplyInitialBlockingCells()
+        {
+            for (int i = 0; i < initialHardWallCells.Length; i++)
+            {
+                SetHardWall(initialHardWallCells[i], true);
+            }
+
+            for (int i = 0; i < initialSoftWallCells.Length; i++)
+            {
+                SetSoftWall(initialSoftWallCells[i], true);
             }
         }
 
@@ -142,6 +164,11 @@ namespace BubbleTown.Map
 
         private void ClearBlockingAt(Vector2Int gridPos)
         {
+            if (IsBorderCell(gridPos))
+            {
+                return;
+            }
+
             GridCell cell = GetCell(gridPos);
             if (cell == null)
             {
@@ -152,7 +179,13 @@ namespace BubbleTown.Map
             cell.IsSoftWall = false;
         }
 
-        private void SetHardWall(Vector2Int gridPos, bool isHardWall)
+        private bool IsBorderCell(Vector2Int gridPos)
+        {
+            return gridPos.x == 0 || gridPos.x == mapWidth - 1 ||
+                   gridPos.y == 0 || gridPos.y == mapHeight - 1;
+        }
+
+        public void SetHardWall(Vector2Int gridPos, bool isHardWall)
         {
             GridCell cell = GetCell(gridPos);
             if (cell == null)
@@ -165,6 +198,17 @@ namespace BubbleTown.Map
             {
                 cell.IsSoftWall = false;
             }
+        }
+
+        public void SetSoftWall(Vector2Int gridPos, bool isSoftWall)
+        {
+            GridCell cell = GetCell(gridPos);
+            if (cell == null || cell.IsHardWall)
+            {
+                return;
+            }
+
+            cell.IsSoftWall = isSoftWall;
         }
 
         public GridCell GetCell(Vector2Int gridPos)
@@ -191,12 +235,17 @@ namespace BubbleTown.Map
                 return false;
             }
 
-            if (cell.IsHardWall || cell.IsSoftWall)
+            if (IsBlockedByWall(cell))
             {
                 return false;
             }
 
-            if (cell.HasBomb || cell.HasCharacter)
+            if (IsBlockedByBomb(cell))
+            {
+                return false;
+            }
+
+            if (IsOccupiedByCharacter(cell))
             {
                 return false;
             }
@@ -204,10 +253,38 @@ namespace BubbleTown.Map
             return true;
         }
 
+        public bool IsBlockedByWall(Vector2Int gridPos)
+        {
+            GridCell cell = GetCell(gridPos);
+            return cell == null || IsBlockedByWall(cell);
+        }
+
+        public bool IsBlockedByBomb(Vector2Int gridPos)
+        {
+            GridCell cell = GetCell(gridPos);
+            return cell != null && IsBlockedByBomb(cell);
+        }
+
+        private bool IsBlockedByWall(GridCell cell)
+        {
+            return cell.IsHardWall || cell.IsSoftWall;
+        }
+
+        private bool IsBlockedByBomb(GridCell cell)
+        {
+            // Bombs block movement for now; later this can support owner grace rules.
+            return cell.HasBomb;
+        }
+
+        private bool IsOccupiedByCharacter(GridCell cell)
+        {
+            return cell.HasCharacter;
+        }
+
         public bool SetCharacter(Vector2Int gridPos)
         {
             GridCell cell = GetCell(gridPos);
-            if (cell == null || cell.IsHardWall || cell.IsSoftWall || cell.HasCharacter)
+            if (cell == null || IsBlockedByWall(cell) || IsBlockedByBomb(cell) || IsOccupiedByCharacter(cell))
             {
                 return false;
             }
@@ -230,7 +307,7 @@ namespace BubbleTown.Map
         public bool PlaceBomb(Vector2Int gridPos)
         {
             GridCell cell = GetCell(gridPos);
-            if (cell == null || cell.IsHardWall || cell.IsSoftWall || cell.HasBomb)
+            if (cell == null || IsBlockedByWall(cell) || IsBlockedByBomb(cell))
             {
                 return false;
             }
