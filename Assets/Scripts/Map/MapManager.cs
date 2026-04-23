@@ -1,5 +1,6 @@
 using BubbleTown.Core;
 using BubbleTown.Core.Enums;
+using BubbleTown.Managers;
 using UnityEngine;
 
 namespace BubbleTown.Map
@@ -27,6 +28,9 @@ namespace BubbleTown.Map
         public float CellSize => cellSize;
 
         private GridCell[,] grid;
+        private Vector2Int player1SpawnGrid = new Vector2Int(1, 1);
+        private Vector2Int player2SpawnGrid = new Vector2Int(1, 1);
+        private Vector2Int aiSpawnGrid = new Vector2Int(1, 1);
 
         private void Start()
         {
@@ -58,6 +62,108 @@ namespace BubbleTown.Map
                 {
                     grid[x, y] = new GridCell(x, y);
                 }
+            }
+
+            ApplyMapRules();
+        }
+
+        /// <summary>
+        /// Applies lightweight Bomberman-style logical rules:
+        /// 1) hard-wall border
+        /// 2) mode-based spawn positions
+        /// 3) keep spawn-adjacent area empty
+        /// </summary>
+        private void ApplyMapRules()
+        {
+            ApplyHardWallBorder();
+            ResolveSpawnPointsByMode();
+            ReserveSpawnArea(player1SpawnGrid);
+            ReserveSpawnArea(player2SpawnGrid);
+            ReserveSpawnArea(aiSpawnGrid);
+        }
+
+        private void ApplyHardWallBorder()
+        {
+            for (int x = 0; x < mapWidth; x++)
+            {
+                SetHardWall(new Vector2Int(x, 0), true);
+                SetHardWall(new Vector2Int(x, mapHeight - 1), true);
+            }
+
+            for (int y = 0; y < mapHeight; y++)
+            {
+                SetHardWall(new Vector2Int(0, y), true);
+                SetHardWall(new Vector2Int(mapWidth - 1, y), true);
+            }
+        }
+
+        private void ResolveSpawnPointsByMode()
+        {
+            Vector2Int bottomLeft = new Vector2Int(1, 1);
+            Vector2Int topRight = new Vector2Int(mapWidth - 2, mapHeight - 2);
+            Vector2Int topLeft = new Vector2Int(1, mapHeight - 2);
+
+            GameMode mode = GameManager.Instance != null
+                ? GameManager.Instance.CurrentGameMode
+                : GameMode.SinglePlayer;
+
+            player1SpawnGrid = bottomLeft;
+            player2SpawnGrid = topRight;
+            aiSpawnGrid = topLeft;
+
+            switch (mode)
+            {
+                case GameMode.SinglePlayer:
+                    // Keep only player1 meaningful for now.
+                    player2SpawnGrid = bottomLeft;
+                    aiSpawnGrid = bottomLeft;
+                    break;
+                case GameMode.AIBattle:
+                    // Player and AI are placed far apart for fair opening space.
+                    aiSpawnGrid = topRight;
+                    player2SpawnGrid = bottomLeft;
+                    break;
+                case GameMode.LocalVS:
+                    // Two players use opposite corners to avoid early overlap.
+                    player2SpawnGrid = topRight;
+                    aiSpawnGrid = topLeft;
+                    break;
+            }
+        }
+
+        private void ReserveSpawnArea(Vector2Int center)
+        {
+            ClearBlockingAt(center);
+            ClearBlockingAt(center + Vector2Int.right);
+            ClearBlockingAt(center + Vector2Int.left);
+            ClearBlockingAt(center + Vector2Int.up);
+            ClearBlockingAt(center + Vector2Int.down);
+        }
+
+        private void ClearBlockingAt(Vector2Int gridPos)
+        {
+            GridCell cell = GetCell(gridPos);
+            if (cell == null)
+            {
+                return;
+            }
+
+            cell.IsHardWall = false;
+            cell.IsSoftWall = false;
+        }
+
+        private void SetHardWall(Vector2Int gridPos, bool isHardWall)
+        {
+            GridCell cell = GetCell(gridPos);
+            if (cell == null)
+            {
+                return;
+            }
+
+            cell.IsHardWall = isHardWall;
+            if (isHardWall)
+            {
+                cell.IsSoftWall = false;
             }
         }
 
@@ -155,6 +261,10 @@ namespace BubbleTown.Map
             cell.HasItem = hasItem;
             return true;
         }
+
+        public Vector2Int GetPlayer1SpawnGrid() => player1SpawnGrid;
+        public Vector2Int GetPlayer2SpawnGrid() => player2SpawnGrid;
+        public Vector2Int GetAISpawnGrid() => aiSpawnGrid;
 
         public Vector2Int WorldToGrid(Vector3 worldPosition)
         {
