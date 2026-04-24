@@ -86,6 +86,16 @@ namespace BubbleTown.Gameplay
 
         private void OnTriggerEnter(Collider other)
         {
+            HandleTriggerHit(other);
+        }
+
+        private void OnTriggerStay(Collider other)
+        {
+            HandleTriggerHit(other);
+        }
+
+        private void HandleTriggerHit(Collider other)
+        {
             CharacterBase character = other.GetComponent<CharacterBase>();
             if (character != null)
             {
@@ -95,7 +105,7 @@ namespace BubbleTown.Gameplay
             BombController bomb = other.GetComponent<BombController>();
             if (bomb != null)
             {
-                bomb.TriggerChainExplosion();
+                bomb.TryTriggerChainExplosion(this);
             }
         }
     }

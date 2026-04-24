@@ -34,6 +34,11 @@ namespace BubbleTown.Characters
         protected override void Update()
         {
             base.Update();
+            if (!IsAlive)
+            {
+                return;
+            }
+
             HandleMovementInput();
             HandleBombInput();
         }

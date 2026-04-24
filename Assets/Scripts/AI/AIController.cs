@@ -20,6 +20,11 @@ namespace BubbleTown.AI
         protected override void Update()
         {
             base.Update();
+            if (!IsAlive)
+            {
+                return;
+            }
+
             UpdateDirection();
             UpdateBombDecision();
 

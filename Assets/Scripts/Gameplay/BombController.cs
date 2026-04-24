@@ -29,11 +29,13 @@ namespace BubbleTown.Gameplay
         [Header("Runtime")]
         [SerializeField] private float remainingFuseSeconds;
         [SerializeField] private bool isCountingDown;
+        [SerializeField] private bool triggeredByChainExplosion;
 
         private CharacterBase owner;
         private MapManager mapManager;
         private int range;
         private bool exploded;
+        private bool hasGridOccupation;
         private bool gridOccupationReleased;
         private bool ownerNotified;
 
@@ -44,6 +46,7 @@ namespace BubbleTown.Gameplay
         public float RemainingFuseSeconds => remainingFuseSeconds;
         public bool IsCountingDown => isCountingDown;
         public bool HasExploded => exploded;
+        public bool TriggeredByChainExplosion => triggeredByChainExplosion;
 
         private void Awake()
         {
@@ -63,6 +66,11 @@ namespace BubbleTown.Gameplay
             mapManager = ownerMapManager;
             gridPosition = bombGridPosition;
             range = Mathf.Max(1, bombRange);
+            exploded = false;
+            triggeredByChainExplosion = false;
+            gridOccupationReleased = false;
+            ownerNotified = false;
+            hasGridOccupation = HasPlacedBombOccupation();
             ResetFuseTimer();
         }
 
@@ -116,12 +124,31 @@ namespace BubbleTown.Gameplay
 
         public void TriggerChainExplosion()
         {
-            TriggerExplosion();
+            TryTriggerChainExplosion(null);
         }
 
-        public void Explode()
+        public bool TryTriggerChainExplosion(ExplosionController sourceExplosion)
         {
+            if (exploded)
+            {
+                return false;
+            }
+
+            triggeredByChainExplosion = true;
+            string sourceGrid = sourceExplosion != null ? sourceExplosion.GridPosition.ToString() : "Unknown";
+            Debug.Log($"[BombController] Chain explosion triggered at {gridPosition} by explosion cell {sourceGrid}.");
+            return TryTriggerExplosion();
+        }
+
+        public bool TryTriggerExplosion()
+        {
+            if (exploded)
+            {
+                return false;
+            }
+
             TriggerExplosion();
+            return true;
         }
 
         public void TriggerExplosion()
@@ -140,6 +167,11 @@ namespace BubbleTown.Gameplay
             Destroy(gameObject);
         }
 
+        public void Explode()
+        {
+            TriggerExplosion();
+        }
+
         protected virtual void SpawnExplosion()
         {
             if (explosionPrefab == null)
@@ -147,6 +179,7 @@ namespace BubbleTown.Gameplay
                 return;
             }
 
+            EnsureMapManager();
             SpawnExplosionCell(gridPosition);
 
             for (int i = 0; i < ExplosionDirections.Length; i++)
@@ -169,6 +202,7 @@ namespace BubbleTown.Gameplay
 
                 if (ShouldStopPropagationAfterCell(targetGridPosition))
                 {
+                    DestroySoftWallAt(targetGridPosition);
                     break;
                 }
             }
@@ -185,11 +219,16 @@ namespace BubbleTown.Gameplay
         {
             if (mapManager == null)
             {
-                return true;
+                return false;
+            }
+
+            if (!mapManager.IsInsideBounds(targetGridPosition))
+            {
+                return false;
             }
 
             GridCell cell = mapManager.GetCell(targetGridPosition);
-            return cell != null && !cell.IsHardWall;
+            return cell != null && !IsHardWall(cell);
         }
 
         private bool ShouldStopPropagationAfterCell(Vector2Int targetGridPosition)
@@ -201,6 +240,21 @@ namespace BubbleTown.Gameplay
 
             GridCell cell = mapManager.GetCell(targetGridPosition);
             return cell == null || cell.IsSoftWall;
+        }
+
+        private void DestroySoftWallAt(Vector2Int targetGridPosition)
+        {
+            if (mapManager == null)
+            {
+                return;
+            }
+
+            mapManager.DestroySoftWall(targetGridPosition);
+        }
+
+        private bool IsHardWall(GridCell cell)
+        {
+            return cell.IsHardWall;
         }
 
         private Vector3 GridToWorld(Vector2Int targetGridPosition)
@@ -216,6 +270,14 @@ namespace BubbleTown.Gameplay
                 targetGridPosition.y * GameConstants.GridCellSize);
         }
 
+        private void EnsureMapManager()
+        {
+            if (mapManager == null)
+            {
+                mapManager = FindObjectOfType<MapManager>();
+            }
+        }
+
         private void OnDestroy()
         {
             ReleaseGridOccupation();
@@ -229,8 +291,25 @@ namespace BubbleTown.Gameplay
                 return;
             }
 
-            mapManager?.RemoveBomb(gridPosition);
+            EnsureMapManager();
+            if (hasGridOccupation && mapManager != null && mapManager.IsInsideBounds(gridPosition))
+            {
+                mapManager.RemoveBomb(gridPosition);
+            }
+
+            hasGridOccupation = false;
             gridOccupationReleased = true;
+        }
+
+        private bool HasPlacedBombOccupation()
+        {
+            if (mapManager == null || !mapManager.IsInsideBounds(gridPosition))
+            {
+                return false;
+            }
+
+            GridCell cell = mapManager.GetCell(gridPosition);
+            return cell != null && cell.HasBomb;
         }
 
         private void NotifyOwnerBombEnded()
