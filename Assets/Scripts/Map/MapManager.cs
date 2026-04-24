@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using BubbleTown.Core;
 using BubbleTown.Core.Enums;
 using BubbleTown.Managers;
@@ -12,6 +13,7 @@ namespace BubbleTown.Map
     {
         [Header("References")]
         [SerializeField] private MapGenerator mapGenerator;
+        [SerializeField] private Transform mapVisualRoot;
 
         [Header("Map Config (Data Layer)")]
         [SerializeField] private int mapWidth = GameConstants.DefaultMapWidth;
@@ -35,6 +37,7 @@ namespace BubbleTown.Map
         private Vector2Int player1SpawnGrid = new Vector2Int(1, 1);
         private Vector2Int player2SpawnGrid = new Vector2Int(1, 1);
         private Vector2Int aiSpawnGrid = new Vector2Int(1, 1);
+        private readonly Dictionary<Vector2Int, GameObject> softWallObjects = new Dictionary<Vector2Int, GameObject>();
 
         private void Awake()
         {
@@ -43,6 +46,7 @@ namespace BubbleTown.Map
 
         private void Start()
         {
+            RebuildSoftWallObjectLookup();
             GenerateMap();
         }
 
@@ -194,8 +198,9 @@ namespace BubbleTown.Map
             }
 
             cell.IsHardWall = isHardWall;
-            if (isHardWall)
+            if (isHardWall && cell.IsSoftWall)
             {
+                RemoveSoftWallObject(gridPos);
                 cell.IsSoftWall = false;
             }
         }
@@ -208,7 +213,25 @@ namespace BubbleTown.Map
                 return;
             }
 
+            bool wasSoftWall = cell.IsSoftWall;
             cell.IsSoftWall = isSoftWall;
+            if (!isSoftWall && wasSoftWall)
+            {
+                RemoveSoftWallObject(gridPos);
+            }
+        }
+
+        public bool DestroySoftWall(Vector2Int gridPos)
+        {
+            GridCell cell = GetCell(gridPos);
+            if (cell == null || !cell.IsSoftWall)
+            {
+                return false;
+            }
+
+            cell.IsSoftWall = false;
+            RemoveSoftWallObject(gridPos);
+            return true;
         }
 
         public GridCell GetCell(Vector2Int gridPos)
@@ -355,6 +378,90 @@ namespace BubbleTown.Map
             return new Vector3(gridPos.x * cellSize, y, gridPos.y * cellSize);
         }
 
+        public void RegisterSoftWallObject(Vector2Int gridPos, GameObject softWallObject)
+        {
+            if (softWallObject == null)
+            {
+                return;
+            }
+
+            softWallObjects[gridPos] = softWallObject;
+        }
+
+        public void RebuildSoftWallObjectLookup()
+        {
+            softWallObjects.Clear();
+
+            Transform root = mapVisualRoot != null ? mapVisualRoot : transform;
+            Transform[] children = root.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < children.Length; i++)
+            {
+                Transform child = children[i];
+                if (child == root)
+                {
+                    continue;
+                }
+
+                Vector2Int childGridPosition = WorldToGrid(child.position);
+                GridCell cell = GetCell(childGridPosition);
+                if (cell != null && cell.IsSoftWall)
+                {
+                    RegisterSoftWallObject(childGridPosition, child.gameObject);
+                }
+            }
+        }
+
+        private void RemoveSoftWallObject(Vector2Int gridPos)
+        {
+            if (!softWallObjects.TryGetValue(gridPos, out GameObject softWallObject) || softWallObject == null)
+            {
+                RebuildSoftWallObjectLookup();
+                softWallObjects.TryGetValue(gridPos, out softWallObject);
+            }
+
+            if (softWallObject == null)
+            {
+                softWallObject = FindMapVisualObjectAtGrid(gridPos);
+            }
+
+            softWallObjects.Remove(gridPos);
+
+            if (softWallObject == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Destroy(softWallObject);
+            }
+            else
+            {
+                DestroyImmediate(softWallObject);
+            }
+        }
+
+        private GameObject FindMapVisualObjectAtGrid(Vector2Int gridPos)
+        {
+            Transform root = mapVisualRoot != null ? mapVisualRoot : transform;
+            Transform[] children = root.GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < children.Length; i++)
+            {
+                Transform child = children[i];
+                if (child == root)
+                {
+                    continue;
+                }
+
+                if (WorldToGrid(child.position) == gridPos)
+                {
+                    return child.gameObject;
+                }
+            }
+
+            return null;
+        }
+
         public void GenerateMap()
         {
             if (mapGenerator == null)
@@ -386,6 +493,8 @@ namespace BubbleTown.Map
                     grid[x, y].ClearDynamicFlags();
                 }
             }
+
+            softWallObjects.Clear();
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using BubbleTown.Core;
 using BubbleTown.Gameplay;
 using BubbleTown.Map;
@@ -28,13 +29,23 @@ namespace BubbleTown.Characters
         [SerializeField] protected BombController bombPrefab;
         [SerializeField] protected Transform bombSpawnRoot;
         [SerializeField, Min(0)] protected int activeBombCount;
+
+        [Header("Life State")]
+        [SerializeField] protected bool isAlive = true;
+        [SerializeField] protected bool hideRenderersOnDeath = true;
+        [SerializeField] protected bool disableCollidersOnDeath = true;
+        [SerializeField] protected bool clearMapOccupationOnDeath = true;
+
         private Vector3 moveTargetWorldPosition;
+
+        public event Action<CharacterBase> Died;
 
         public Vector2Int CurrentGridPosition => currentGridPosition;
         public Vector3 CurrentWorldPosition => currentWorldPosition;
         public Vector3 MoveTargetWorldPosition => moveTargetWorldPosition;
         public float MoveSpeed => moveSpeed;
         public bool IsMoving => isMoving;
+        public bool IsAlive => isAlive;
         public int MaxBombCount => maxBombCount;
         public int ActiveBombCount => activeBombCount;
         public int CurrentBombCount => activeBombCount;
@@ -44,6 +55,7 @@ namespace BubbleTown.Characters
 
         protected virtual void Awake()
         {
+            isAlive = true;
             activeBombCount = 0;
             currentWorldPosition = transform.position;
         }
@@ -55,6 +67,11 @@ namespace BubbleTown.Characters
 
         protected virtual void Update()
         {
+            if (!isAlive)
+            {
+                return;
+            }
+
             UpdateGridMovement();
         }
 
@@ -85,6 +102,11 @@ namespace BubbleTown.Characters
 
         public virtual bool TryMoveGridDirection(Vector2Int gridDirection)
         {
+            if (!isAlive)
+            {
+                return false;
+            }
+
             if (!CanStartMove(gridDirection))
             {
                 return false;
@@ -113,7 +135,7 @@ namespace BubbleTown.Characters
 
         protected virtual bool CanStartMove(Vector2Int gridDirection)
         {
-            return !isMoving && gridDirection != Vector2Int.zero;
+            return isAlive && !isMoving && gridDirection != Vector2Int.zero;
         }
 
         protected virtual void BeginMoveToCurrentGridPosition()
@@ -194,6 +216,11 @@ namespace BubbleTown.Characters
 
         public virtual bool TryPlaceBomb()
         {
+            if (!isAlive)
+            {
+                return false;
+            }
+
             if (bombPrefab == null)
             {
                 Debug.LogWarning($"[CharacterBase] {name} cannot place a bomb because no Bomb Prefab is assigned.");
@@ -264,8 +291,59 @@ namespace BubbleTown.Characters
 
         public virtual void OnHitByExplosion()
         {
+            if (!isAlive)
+            {
+                return;
+            }
+
             Debug.Log($"[CharacterBase] {name} was hit by explosion.");
-            // TODO: Hook HP/life and battle result flow.
+            Die();
+        }
+
+        public virtual void Die()
+        {
+            if (!isAlive)
+            {
+                return;
+            }
+
+            isAlive = false;
+            isMoving = false;
+
+            if (clearMapOccupationOnDeath)
+            {
+                mapManager?.ClearCharacter(currentGridPosition);
+            }
+
+            ApplyDeathPresentation();
+            OnDied();
+        }
+
+        protected virtual void ApplyDeathPresentation()
+        {
+            if (hideRenderersOnDeath)
+            {
+                Renderer[] renderers = GetComponentsInChildren<Renderer>();
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    renderers[i].enabled = false;
+                }
+            }
+
+            if (disableCollidersOnDeath)
+            {
+                Collider[] colliders = GetComponentsInChildren<Collider>();
+                for (int i = 0; i < colliders.Length; i++)
+                {
+                    colliders[i].enabled = false;
+                }
+            }
+        }
+
+        protected virtual void OnDied()
+        {
+            Debug.Log($"[CharacterBase] {name} died.");
+            Died?.Invoke(this);
         }
     }
 }
