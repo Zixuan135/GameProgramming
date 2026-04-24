@@ -642,8 +642,8 @@ MonoBehaviour:
   moveSpeed: 4
   maxBombCount: 1
   bombRange: 2
-  bombPrefab: {fileID: 0}
-  bombSpawnRoot: {fileID: 0}
+  bombPrefab: {fileID: 2120576858052026143, guid: 77b186deaf51a466bb305349390980f6, type: 3}
+  bombSpawnRoot: {fileID: 1051}
   localVsOnly: 1
   moveUpKey: 273
   moveDownKey: 274
@@ -777,8 +777,8 @@ MonoBehaviour:
   moveSpeed: 4
   maxBombCount: 1
   bombRange: 2
-  bombPrefab: {fileID: 0}
-  bombSpawnRoot: {fileID: 0}
+  bombPrefab: {fileID: 2120576858052026143, guid: 77b186deaf51a466bb305349390980f6, type: 3}
+  bombSpawnRoot: {fileID: 1051}
   localVsOnly: 0
   moveUpKey: 119
   moveDownKey: 115
