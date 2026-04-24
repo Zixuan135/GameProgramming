@@ -21,14 +21,13 @@ namespace BubbleTown.Characters
 
         [Header("Stats")]
         [SerializeField] protected float moveSpeed = GameConstants.DefaultMoveSpeed;
-        [SerializeField] protected int maxBombCount = GameConstants.DefaultBombCount;
+        [SerializeField, Min(1)] protected int maxBombCount = GameConstants.DefaultBombCount;
         [SerializeField] protected int bombRange = GameConstants.DefaultBombRange;
 
         [Header("Bomb")]
         [SerializeField] protected BombController bombPrefab;
         [SerializeField] protected Transform bombSpawnRoot;
-
-        protected int activeBombCount;
+        [SerializeField, Min(0)] protected int activeBombCount;
         private Vector3 moveTargetWorldPosition;
 
         public Vector2Int CurrentGridPosition => currentGridPosition;
@@ -37,7 +36,11 @@ namespace BubbleTown.Characters
         public float MoveSpeed => moveSpeed;
         public bool IsMoving => isMoving;
         public int MaxBombCount => maxBombCount;
+        public int ActiveBombCount => activeBombCount;
+        public int CurrentBombCount => activeBombCount;
+        public int RemainingBombCount => Mathf.Max(0, maxBombCount - activeBombCount);
         public int BombRange => bombRange;
+        public MapManager MapManager => mapManager;
 
         protected virtual void Awake()
         {
@@ -191,21 +194,57 @@ namespace BubbleTown.Characters
 
         public virtual bool TryPlaceBomb()
         {
-            if (bombPrefab == null || activeBombCount >= maxBombCount)
+            if (bombPrefab == null)
+            {
+                Debug.LogWarning($"[CharacterBase] {name} cannot place a bomb because no Bomb Prefab is assigned.");
+                return false;
+            }
+
+            if (!CanPlaceMoreBombs())
             {
                 return false;
             }
 
-            Transform root = bombSpawnRoot == null ? transform : bombSpawnRoot;
-            BombController bomb = Instantiate(bombPrefab, root.position, Quaternion.identity);
-            bomb.Initialize(this, bombRange);
-            activeBombCount++;
+            if (mapManager == null)
+            {
+                mapManager = FindObjectOfType<MapManager>();
+            }
+
+            if (mapManager == null || !mapManager.PlaceBomb(currentGridPosition))
+            {
+                return false;
+            }
+
+            Vector3 spawnPosition = GridToWorld(currentGridPosition);
+            BombController bomb = Instantiate(bombPrefab, spawnPosition, Quaternion.identity, bombSpawnRoot);
+            bomb.Initialize(this, mapManager, currentGridPosition, bombRange);
+            RegisterPlacedBomb();
             return true;
         }
 
         public virtual void OnBombExploded(BombController bomb)
         {
+            ReleaseBombSlot();
+        }
+
+        public virtual bool CanPlaceMoreBombs()
+        {
+            return activeBombCount < maxBombCount;
+        }
+
+        protected virtual void RegisterPlacedBomb()
+        {
+            activeBombCount = Mathf.Min(maxBombCount, activeBombCount + 1);
+        }
+
+        protected virtual void ReleaseBombSlot()
+        {
             activeBombCount = Mathf.Max(0, activeBombCount - 1);
+        }
+
+        public virtual void SetMaxBombCount(int newMaxBombCount)
+        {
+            maxBombCount = Mathf.Max(1, newMaxBombCount);
         }
 
         public virtual void ApplyMoveSpeedModifier(float delta)
@@ -215,7 +254,7 @@ namespace BubbleTown.Characters
 
         public virtual void ApplyBombCountModifier(int delta)
         {
-            maxBombCount = Mathf.Max(1, maxBombCount + delta);
+            SetMaxBombCount(maxBombCount + delta);
         }
 
         public virtual void ApplyBombRangeModifier(int delta)
