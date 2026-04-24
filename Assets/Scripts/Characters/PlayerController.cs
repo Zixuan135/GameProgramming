@@ -1,3 +1,5 @@
+using BubbleTown.Core.Enums;
+using BubbleTown.Managers;
 using UnityEngine;
 
 namespace BubbleTown.Characters
@@ -7,8 +9,27 @@ namespace BubbleTown.Characters
     /// </summary>
     public class PlayerController : CharacterBase
     {
+        [Header("Mode")]
+        [SerializeField] private bool localVsOnly = false;
+
         [Header("Input")]
-        [SerializeField] private bool isPlayerOne = true;
+        [SerializeField] private KeyCode moveUpKey = KeyCode.W;
+        [SerializeField] private KeyCode moveDownKey = KeyCode.S;
+        [SerializeField] private KeyCode moveLeftKey = KeyCode.A;
+        [SerializeField] private KeyCode moveRightKey = KeyCode.D;
+        [SerializeField] private KeyCode primaryBombKey = KeyCode.Space;
+        [SerializeField] private KeyCode secondaryBombKey = KeyCode.None;
+
+        protected override void Start()
+        {
+            if (!ShouldActivateForCurrentMode())
+            {
+                gameObject.SetActive(false);
+                return;
+            }
+
+            base.Start();
+        }
 
         protected override void Update()
         {
@@ -24,58 +45,59 @@ namespace BubbleTown.Characters
                 return;
             }
 
-            Vector2Int gridDirection = Vector2Int.zero;
-
-            if (isPlayerOne)
-            {
-                gridDirection = ReadPlayerOneMoveInput();
-            }
-            else
-            {
-                gridDirection = ReadPlayerTwoMoveInput();
-            }
-
+            Vector2Int gridDirection = ReadMoveInput();
             if (gridDirection != Vector2Int.zero)
             {
                 TryMoveGridDirection(gridDirection);
             }
         }
 
-        private Vector2Int ReadPlayerOneMoveInput()
+        private bool ShouldActivateForCurrentMode()
         {
-            if (Input.GetKey(KeyCode.W)) return Vector2Int.up;
-            if (Input.GetKey(KeyCode.S)) return Vector2Int.down;
-            if (Input.GetKey(KeyCode.A)) return Vector2Int.left;
-            if (Input.GetKey(KeyCode.D)) return Vector2Int.right;
+            if (!localVsOnly)
+            {
+                return true;
+            }
 
-            return Vector2Int.zero;
+            if (GameManager.Instance == null)
+            {
+                return true;
+            }
+
+            return GameManager.Instance.CurrentGameMode == GameMode.LocalVS;
         }
 
-        private Vector2Int ReadPlayerTwoMoveInput()
+        private Vector2Int ReadMoveInput()
         {
-            if (Input.GetKey(KeyCode.UpArrow)) return Vector2Int.up;
-            if (Input.GetKey(KeyCode.DownArrow)) return Vector2Int.down;
-            if (Input.GetKey(KeyCode.LeftArrow)) return Vector2Int.left;
-            if (Input.GetKey(KeyCode.RightArrow)) return Vector2Int.right;
+            if (Input.GetKey(moveUpKey)) return Vector2Int.up;
+            if (Input.GetKey(moveDownKey)) return Vector2Int.down;
+            if (Input.GetKey(moveLeftKey)) return Vector2Int.left;
+            if (Input.GetKey(moveRightKey)) return Vector2Int.right;
 
             return Vector2Int.zero;
         }
 
         private void HandleBombInput()
         {
-            bool pressed = isPlayerOne
-                ? Input.GetKeyDown(KeyCode.Space)
-                : Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.RightControl);
-
-            if (pressed)
+            if (IsBombInputPressed())
             {
                 OnBombInputPressed();
             }
         }
 
+        private bool IsBombInputPressed()
+        {
+            if (Input.GetKeyDown(primaryBombKey))
+            {
+                return true;
+            }
+
+            return secondaryBombKey != KeyCode.None && Input.GetKeyDown(secondaryBombKey);
+        }
+
         protected virtual void OnBombInputPressed()
         {
-            Debug.Log("[PlayerController] Bomb input pressed. Bomb placement will be implemented later.");
+            Debug.Log($"[PlayerController] {name} bomb input pressed. Bomb placement will be implemented later.");
         }
     }
 }
