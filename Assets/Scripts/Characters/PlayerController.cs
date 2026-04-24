@@ -97,7 +97,8 @@ namespace BubbleTown.Characters
 
         protected virtual void OnBombInputPressed()
         {
-            Debug.Log($"[PlayerController] {name} bomb input pressed. Bomb placement will be implemented later.");
+            bool placedBomb = TryPlaceBomb();
+            Debug.Log($"[PlayerController] {name} bomb input pressed. Placed: {placedBomb}. Bombs: {ActiveBombCount}/{MaxBombCount}");
         }
     }
 }
