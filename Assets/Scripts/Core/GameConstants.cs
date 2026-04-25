@@ -18,6 +18,12 @@ namespace BubbleTown.Core
         public const float DefaultMoveSpeed = 4f;
         public const float DefaultExplosionDuration = 0.35f;
 
+        public const int DefaultItemBombCountDelta = 1;
+        public const int DefaultItemExplosionRangeDelta = 1;
+        public const float DefaultItemMoveSpeedDelta = 0.5f;
+        public const float DefaultItemDropChance = 0.3f;
+        public const float DefaultItemSpawnHeight = 0.35f;
+
         public const string SceneMainMenu = "MainMenu";
         public const string SceneModeSelect = "ModeSelect";
         public const string SceneMapSelect = "MapSelect";
