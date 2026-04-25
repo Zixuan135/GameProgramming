@@ -49,6 +49,12 @@ namespace BubbleTown.Managers
         [SerializeField] private BattleMapType currentMapType = BattleMapType.Default;
         [SerializeField] private GameState currentGameState = GameState.None;
 
+        [Header("Last Battle Result")]
+        [SerializeField] private bool hasBattleResult;
+        [SerializeField] private string lastResultTitle = "No Result Yet";
+        [SerializeField] private string lastResultDetail = "Start a battle to create a result.";
+        [SerializeField] private string lastResultWinner = "None";
+
         [Header("Battle Setup")]
         [SerializeField] private bool autoSetupBattleOnSceneLoaded = true;
         [SerializeField] private bool createAIIfMissing = true;
@@ -68,6 +74,10 @@ namespace BubbleTown.Managers
         public GameMode CurrentGameMode => currentGameMode;
         public BattleMapType CurrentMapType => currentMapType;
         public GameState CurrentGameState => currentGameState;
+        public bool HasBattleResult => hasBattleResult;
+        public string LastResultTitle => lastResultTitle;
+        public string LastResultDetail => lastResultDetail;
+        public string LastResultWinner => lastResultWinner;
         public MapManager ActiveMapManager => activeMapManager;
         public PlayerController Player1 => player1;
         public PlayerController Player2 => player2;
@@ -125,6 +135,7 @@ namespace BubbleTown.Managers
 
         public void BeginBattle()
         {
+            ClearBattleResult();
             currentGameState = GameState.BattlePreparing;
 
             if (SceneManager.GetActiveScene().name == GameConstants.SceneBattle)
@@ -151,6 +162,35 @@ namespace BubbleTown.Managers
             player1 = null;
             player2 = null;
             aiPlayer = null;
+            hasBattleSetupSnapshot = false;
+            ClearBattleResult();
+        }
+
+        public void FinishBattle(string resultTitle, string resultDetail, string winnerName)
+        {
+            if (currentGameState == GameState.BattleFinished)
+            {
+                return;
+            }
+
+            lastResultTitle = string.IsNullOrEmpty(resultTitle) ? "Battle Finished" : resultTitle;
+            lastResultDetail = string.IsNullOrEmpty(resultDetail) ? "The battle has ended." : resultDetail;
+            lastResultWinner = string.IsNullOrEmpty(winnerName) ? "None" : winnerName;
+            hasBattleResult = true;
+            currentGameState = GameState.BattleFinished;
+
+            if (logBattleSetup)
+            {
+                Debug.Log($"[GameManager] Battle finished. Winner: {lastResultWinner}. Result: {lastResultTitle}");
+            }
+        }
+
+        public void ClearBattleResult()
+        {
+            hasBattleResult = false;
+            lastResultTitle = "No Result Yet";
+            lastResultDetail = "Start a battle to create a result.";
+            lastResultWinner = "None";
         }
 
         public void SetupBattleForCurrentMode()
@@ -161,6 +201,7 @@ namespace BubbleTown.Managers
             }
 
             currentGameState = GameState.BattlePreparing;
+            ClearBattleResult();
             ResolveBattleReferences();
 
             if (activeMapManager == null || player1 == null)
