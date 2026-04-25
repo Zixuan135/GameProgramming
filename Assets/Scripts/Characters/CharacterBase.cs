@@ -1,5 +1,6 @@
 using System;
 using BubbleTown.Core;
+using BubbleTown.Core.Enums;
 using BubbleTown.Gameplay;
 using BubbleTown.Map;
 using UnityEngine;
@@ -39,6 +40,7 @@ namespace BubbleTown.Characters
         private Vector3 moveTargetWorldPosition;
 
         public event Action<CharacterBase> Died;
+        public event Action<CharacterBase> StatsChanged;
 
         public Vector2Int CurrentGridPosition => currentGridPosition;
         public Vector3 CurrentWorldPosition => currentWorldPosition;
@@ -272,11 +274,24 @@ namespace BubbleTown.Characters
         public virtual void SetMaxBombCount(int newMaxBombCount)
         {
             maxBombCount = Mathf.Max(1, newMaxBombCount);
+            NotifyStatsChanged();
+        }
+
+        public virtual void SetBombRange(int newBombRange)
+        {
+            bombRange = Mathf.Max(1, newBombRange);
+            NotifyStatsChanged();
+        }
+
+        public virtual void SetMoveSpeed(float newMoveSpeed)
+        {
+            moveSpeed = Mathf.Max(1f, newMoveSpeed);
+            NotifyStatsChanged();
         }
 
         public virtual void ApplyMoveSpeedModifier(float delta)
         {
-            moveSpeed = Mathf.Max(1f, moveSpeed + delta);
+            SetMoveSpeed(moveSpeed + delta);
         }
 
         public virtual void ApplyBombCountModifier(int delta)
@@ -286,7 +301,39 @@ namespace BubbleTown.Characters
 
         public virtual void ApplyBombRangeModifier(int delta)
         {
-            bombRange = Mathf.Max(1, bombRange + delta);
+            SetBombRange(bombRange + delta);
+        }
+
+        public virtual bool ApplyItemEffect(
+            ItemType itemType,
+            int bombCountDelta,
+            int explosionRangeDelta,
+            float moveSpeedDelta)
+        {
+            if (!isAlive)
+            {
+                return false;
+            }
+
+            switch (itemType)
+            {
+                case ItemType.BombCountUp:
+                    ApplyBombCountModifier(bombCountDelta);
+                    return true;
+                case ItemType.ExplosionRangeUp:
+                    ApplyBombRangeModifier(explosionRangeDelta);
+                    return true;
+                case ItemType.MoveSpeedUp:
+                    ApplyMoveSpeedModifier(moveSpeedDelta);
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        protected virtual void NotifyStatsChanged()
+        {
+            StatsChanged?.Invoke(this);
         }
 
         public virtual void OnHitByExplosion()

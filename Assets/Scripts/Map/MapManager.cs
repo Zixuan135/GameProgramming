@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using BubbleTown.Core;
 using BubbleTown.Core.Enums;
@@ -32,6 +33,8 @@ namespace BubbleTown.Map
         public int MapWidth => mapWidth;
         public int MapHeight => mapHeight;
         public float CellSize => cellSize;
+
+        public event Action<Vector2Int> SoftWallDestroyed;
 
         private GridCell[,] grid;
         private Vector2Int player1SpawnGrid = new Vector2Int(1, 1);
@@ -231,7 +234,13 @@ namespace BubbleTown.Map
 
             cell.IsSoftWall = false;
             RemoveSoftWallObject(gridPos);
+            NotifySoftWallDestroyed(gridPos);
             return true;
+        }
+
+        private void NotifySoftWallDestroyed(Vector2Int gridPos)
+        {
+            SoftWallDestroyed?.Invoke(gridPos);
         }
 
         public GridCell GetCell(Vector2Int gridPos)

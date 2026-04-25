@@ -421,6 +421,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mapGenerator: {fileID: 1032}
+  mapVisualRoot: {fileID: 0}
   mapWidth: 13
   mapHeight: 11
   cellSize: 1
@@ -503,6 +504,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1061}
+  - component: {fileID: 1062}
   m_Layer: 0
   m_Name: ItemsRoot
   m_TagString: Untagged
@@ -525,6 +527,36 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1062
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1060}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0fbd6d34193c42eea8942f460e3a7bb, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  mapManager: {fileID: 1033}
+  itemRoot: {fileID: 1061}
+  itemDefinitions:
+  - itemType: 1
+    prefab: {fileID: 5697864607785670209, guid: fc8878a20d77d4fa2a1e51e89644795d, type: 3}
+    weight: 1
+  - itemType: 2
+    prefab: {fileID: 6181751157115104355, guid: 487505f48ed8a47c094b5d673a1e16f2, type: 3}
+    weight: 1
+  - itemType: 3
+    prefab: {fileID: 8229450402797240169, guid: 222edd9b388a7473e8aba3ced174b447, type: 3}
+    weight: 1
+  dropChance: 0.3
+  registerMapItemState: 1
+  preventSpawnOnBlockedCell: 1
+  spawnHeight: 0.35
+  spawnOnSoftWallDestroyed: 1
+  logDropResults: 1
 --- !u!1 &1070
 GameObject:
   m_ObjectHideFlags: 0
@@ -644,6 +676,11 @@ MonoBehaviour:
   bombRange: 2
   bombPrefab: {fileID: 2120576858052026143, guid: 77b186deaf51a466bb305349390980f6, type: 3}
   bombSpawnRoot: {fileID: 1051}
+  activeBombCount: 0
+  isAlive: 1
+  hideRenderersOnDeath: 1
+  disableCollidersOnDeath: 1
+  clearMapOccupationOnDeath: 1
   localVsOnly: 1
   moveUpKey: 273
   moveDownKey: 274
@@ -779,6 +816,11 @@ MonoBehaviour:
   bombRange: 2
   bombPrefab: {fileID: 2120576858052026143, guid: 77b186deaf51a466bb305349390980f6, type: 3}
   bombSpawnRoot: {fileID: 1051}
+  activeBombCount: 0
+  isAlive: 1
+  hideRenderersOnDeath: 1
+  disableCollidersOnDeath: 1
+  clearMapOccupationOnDeath: 1
   localVsOnly: 0
   moveUpKey: 119
   moveDownKey: 115
