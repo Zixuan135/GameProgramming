@@ -54,6 +54,8 @@ namespace BubbleTown.Characters
         public int RemainingBombCount => Mathf.Max(0, maxBombCount - activeBombCount);
         public int BombRange => bombRange;
         public MapManager MapManager => mapManager;
+        public BombController BombPrefab => bombPrefab;
+        public Transform BombSpawnRoot => bombSpawnRoot;
 
         protected virtual void Awake()
         {
@@ -174,6 +176,40 @@ namespace BubbleTown.Characters
             transform.position = moveTargetWorldPosition;
             currentWorldPosition = transform.position;
             isMoving = false;
+        }
+
+        public virtual void ConfigureForBattle(
+            MapManager newMapManager,
+            Vector2Int spawnGridPosition,
+            Transform newBombSpawnRoot,
+            BombController newBombPrefab = null)
+        {
+            if (mapManager != null)
+            {
+                mapManager.ClearCharacter(currentGridPosition);
+            }
+
+            mapManager = newMapManager != null ? newMapManager : mapManager;
+            if (newBombSpawnRoot != null)
+            {
+                bombSpawnRoot = newBombSpawnRoot;
+            }
+
+            if (newBombPrefab != null)
+            {
+                bombPrefab = newBombPrefab;
+            }
+
+            activeBombCount = 0;
+            isAlive = true;
+            isMoving = false;
+            RestoreAlivePresentation();
+
+            currentGridPosition = spawnGridPosition;
+            currentWorldPosition = GridToWorld(currentGridPosition);
+            moveTargetWorldPosition = currentWorldPosition;
+            transform.position = currentWorldPosition;
+            mapManager?.SetCharacter(currentGridPosition);
         }
 
         public virtual Vector2Int WorldToGrid(Vector3 worldPosition)
@@ -384,6 +420,21 @@ namespace BubbleTown.Characters
                 {
                     colliders[i].enabled = false;
                 }
+            }
+        }
+
+        protected virtual void RestoreAlivePresentation()
+        {
+            Renderer[] renderers = GetComponentsInChildren<Renderer>();
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                renderers[i].enabled = true;
+            }
+
+            Collider[] colliders = GetComponentsInChildren<Collider>();
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                colliders[i].enabled = true;
             }
         }
 

@@ -36,15 +36,23 @@ Assets/
     BattleScenePlayerSetup.cs
     BombPrefabSetup.cs
     ExplosionPrefabSetup.cs
+    ItemDropSetup.cs
   Materials/
     BombPlaceholder.mat
     ExplosionCenterPlaceholder.mat
+    ItemBombCountUpPlaceholder.mat
+    ItemExplosionRangeUpPlaceholder.mat
+    ItemMoveSpeedUpPlaceholder.mat
   Prefabs/
     Characters/
     Environment/
     Gameplay/
       Bomb.prefab
       ExplosionCenter.prefab
+      Items/
+        Item_BombCountUp.prefab
+        Item_ExplosionRangeUp.prefab
+        Item_MoveSpeedUp.prefab
     Map/
     UI/
   Scenes/
@@ -125,7 +133,7 @@ Current scene state:
 - `GameMode`: `SinglePlayer`, `AIBattle`, `LocalVS`
 - `GameState`: shared runtime state foundation
 - `CellType`: map tile classification foundation
-- `ItemType`: future item/power-up type foundation
+- `ItemType`: `BombCountUp`, `ExplosionRangeUp`, `MoveSpeedUp`
 - `GameConstants`: shared defaults for map size, grid cell size, bomb fuse, bomb range, movement speed, explosion lifetime, and scene names
 
 ### Scene Skeleton
@@ -134,6 +142,16 @@ Current scene state:
 - Build Settings order follows the intended game flow
 - Each scene has basic Unity objects such as a camera and light for early testing
 - Complex UI and transitions are intentionally deferred
+
+### Game Mode Setup
+
+- `GameManager` stores the current game mode, map type, and high-level game state
+- `GameManager` prepares the `Battle` scene based on the selected mode:
+  - `SinglePlayer`: enables Player1 only
+  - `AIBattle`: enables Player1 and AI
+  - `LocalVS`: enables Player1 and Player2
+- Player and AI spawn positions are resolved through `MapManager`
+- Runtime character setup reuses the same map, bomb root, and bomb prefab references
 
 ### Map And Grid Data
 
@@ -195,6 +213,21 @@ Current scene state:
 - Player2 is prepared for `LocalVS` without duplicating movement code
 - Both players reuse `CharacterBase` movement and bomb placement logic
 
+### AI
+
+- `AIController` reuses `CharacterBase` movement and bomb placement
+- The first AI pass supports stable random grid movement
+- AI avoids moving into known dangerous cells when possible
+- AI detects danger from:
+  - active bomb blast lines
+  - active explosion cells
+- When standing in danger, AI searches for a nearby safe cell and moves toward it
+- AI can attempt to place bombs when:
+  - a soft wall is nearby
+  - a living player is in the same unobstructed bomb line
+- AI checks for an escape route before placing a bomb by default
+- This is intentionally MVP behavior, not advanced pathfinding or tactical combat
+
 ### Camera
 
 - `CameraController` provides an angled 3D overhead / light third-person style view
@@ -220,6 +253,21 @@ Current scene state:
 - Explosion cells can kill characters by calling `CharacterBase.OnHitByExplosion`
 - Explosion cells can trigger nearby bombs early, enabling chain reactions
 - Chain reactions are guarded against duplicate explosions and duplicate occupancy cleanup
+
+### Items And Power-Ups
+
+- `ItemBase` handles simple pickup and stat application
+- `ItemSpawner` listens for soft wall destruction and can spawn random items
+- Soft wall item drops use a configurable probability
+- Item spawn state syncs with `MapManager.SetItem`
+- Current placeholder item prefabs:
+  - `Item_BombCountUp`
+  - `Item_ExplosionRangeUp`
+  - `Item_MoveSpeedUp`
+- Current item effects:
+  - increase max bomb count
+  - increase explosion range
+  - increase movement speed
 
 ## 8. Current Test Controls
 
@@ -249,6 +297,9 @@ Basic things to verify:
 - Soft walls disappear when hit by an explosion
 - A character hit by an explosion dies and stops responding to input
 - A bomb touched by another explosion triggers early as a chain reaction
+- Destroyed soft walls can drop placeholder items
+- Characters automatically pick up items and apply stat changes
+- In `AIBattle`, the AI moves around the grid, tries to avoid bomb danger, and can place bombs near soft walls or players
 
 ## 9. MVP Roadmap
 
@@ -273,14 +324,17 @@ Completed or started:
 - [x] Soft wall destruction
 - [x] Character death from explosions
 - [x] Bomb chain reactions
+- [x] Soft wall item drops
+- [x] Bomb count, range, and speed power-ups
+- [x] Basic game mode battle setup
+- [x] Basic AI random movement
+- [x] AI danger detection and simple bomb placement
 
 Still planned:
 
 - [ ] Full battle win/lose detection and result flow
 - [ ] Real menu UI interactions
-- [ ] Item drop chance after soft wall destruction
-- [ ] Bomb count, range, and speed power-ups
-- [ ] Basic AI movement and bomb behavior
+- [ ] More robust AI pathfinding and battle decisions
 - [ ] Better placeholder map generation visuals
 - [ ] Polished Q-style character, bomb, wall, and explosion assets
 - [ ] Audio, VFX, and UI polish
@@ -291,5 +345,5 @@ Still planned:
 - The `Battle` scene is the main development/test scene for now
 - Prefabs and editor setup scripts exist to reduce manual Unity Inspector work
 - Result logic should later subscribe to character death events and decide battle outcome
-- Item logic should later connect `ItemSpawner`, `ItemBase`, and `MapManager.SetItem`
-- AI should reuse `CharacterBase` movement and bomb placement instead of creating a separate movement system
+- Item visuals, pickup feedback, and balancing can be improved after the MVP loop is stable
+- AI currently favors stability over intelligence; future work can add path scoring, target chasing, and better self-preservation
