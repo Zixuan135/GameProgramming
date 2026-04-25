@@ -37,6 +37,7 @@ Assets/
     BombPrefabSetup.cs
     ExplosionPrefabSetup.cs
     ItemDropSetup.cs
+    UIFlowSceneSetup.cs
   Materials/
     BombPlaceholder.mat
     ExplosionCenterPlaceholder.mat
@@ -72,6 +73,7 @@ Assets/
     Managers/
     Map/
     UI/
+      SimpleUIFactory.cs
     Utils/
   UI/
     Fonts/
@@ -113,11 +115,11 @@ Build Settings scene order:
 
 Current scene state:
 
-- `MainMenu`: placeholder scene shell for future title/menu UI
-- `ModeSelect`: placeholder scene shell for `SinglePlayer`, `AIBattle`, and `LocalVS`
-- `MapSelect`: placeholder scene shell for future map selection
-- `Battle`: active gameplay test scene with map, players, camera, bombs, and explosions
-- `Result`: placeholder scene shell for future win/lose display
+- `MainMenu`: MVP start screen with Start Game and Quit actions
+- `ModeSelect`: MVP mode screen for `SinglePlayer`, `AIBattle`, and `LocalVS`
+- `MapSelect`: MVP map screen for `Default`, `OpenField`, and `Maze`
+- `Battle`: active gameplay scene with map, players, camera, bombs, explosions, items, AI, and a small HUD
+- `Result`: MVP result screen with win/loss text, Retry, and Main Menu actions
 
 ## 7. Core Systems Implemented So Far
 
@@ -141,17 +143,40 @@ Current scene state:
 - Five required scenes exist in `Assets/Scenes`
 - Build Settings order follows the intended game flow
 - Each scene has basic Unity objects such as a camera and light for early testing
-- Complex UI and transitions are intentionally deferred
+- Each scene has a `UI_Root_*` object with its matching MVP UI controller
+- The current UI uses Unity's built-in IMGUI through `OnGUI` so the MVP flow works without extra UI package dependencies
+- Final polished Canvas / UI Toolkit screens are intentionally deferred
+
+### MVP UI Flow
+
+- `MainMenuUI` starts a new session or quits the application
+- `ModeSelectUI` stores the selected `GameMode`
+- `MapSelectUI` stores the selected `BattleMapType` and starts battle loading
+- `BattleUI` displays current mode, map, character states, and quick test buttons
+- `ResultUI` displays the last battle result and supports Retry or returning to the main menu
+- `SceneFlowManager` owns the fixed scene flow:
+  - `MainMenu -> ModeSelect -> MapSelect -> Battle -> Result`
+- `UIFlowSceneSetup` can rewire all MVP UI scene controllers from the Unity editor or batchmode
 
 ### Game Mode Setup
 
 - `GameManager` stores the current game mode, map type, and high-level game state
+- `GameManager` stores the most recent battle result for the `Result` scene
 - `GameManager` prepares the `Battle` scene based on the selected mode:
   - `SinglePlayer`: enables Player1 only
   - `AIBattle`: enables Player1 and AI
   - `LocalVS`: enables Player1 and Player2
 - Player and AI spawn positions are resolved through `MapManager`
 - Runtime character setup reuses the same map, bomb root, and bomb prefab references
+
+### Result Flow
+
+- `BattleUI` provides the first minimal result detection layer
+- `SinglePlayer`: Player1 defeat leads to `Game Over`
+- `AIBattle`: Player1 defeat is a loss, AI defeat is a victory, simultaneous defeat is a draw
+- `LocalVS`: Player1 or Player2 defeat awards the round to the other player, simultaneous defeat is a draw
+- The `Battle` HUD includes a `Force Result` button for quickly testing the result scene
+- `ResultUI` supports Retry and Main Menu actions
 
 ### Map And Grid Data
 
@@ -271,7 +296,19 @@ Current scene state:
 
 ## 8. Current Test Controls
 
-Open the `Battle` scene and press Play.
+For the full MVP loop, open `MainMenu` and press Play.
+
+Flow:
+
+1. Click `Start Game`
+2. Choose `Single Player`, `AI Battle`, or `Local VS`
+3. Choose `Default`, `Open Field`, or `Maze`
+4. Play the `Battle` scene
+5. Defeat a character or click `Force Result`
+6. Verify the `Result` screen
+7. Use `Retry` or `Main Menu`
+
+You can still open the `Battle` scene directly for gameplay-system testing.
 
 Player1:
 
@@ -300,6 +337,8 @@ Basic things to verify:
 - Destroyed soft walls can drop placeholder items
 - Characters automatically pick up items and apply stat changes
 - In `AIBattle`, the AI moves around the grid, tries to avoid bomb danger, and can place bombs near soft walls or players
+- The UI flow moves from menu screens into battle and then into the result screen
+- Result screen shows the last winner/result and supports Retry/Main Menu
 
 ## 9. MVP Roadmap
 
@@ -329,11 +368,14 @@ Completed or started:
 - [x] Basic game mode battle setup
 - [x] Basic AI random movement
 - [x] AI danger detection and simple bomb placement
+- [x] Minimal menu UI flow
+- [x] Minimal result screen
+- [x] Retry and Main Menu result actions
 
 Still planned:
 
-- [ ] Full battle win/lose detection and result flow
-- [ ] Real menu UI interactions
+- [ ] More complete battle rules, scoring, timers, and win conditions
+- [ ] Replace IMGUI placeholder screens with polished Canvas or UI Toolkit menus
 - [ ] More robust AI pathfinding and battle decisions
 - [ ] Better placeholder map generation visuals
 - [ ] Polished Q-style character, bomb, wall, and explosion assets
@@ -344,6 +386,7 @@ Still planned:
 - The current project is playable as a gameplay-system test, not yet a finished game loop
 - The `Battle` scene is the main development/test scene for now
 - Prefabs and editor setup scripts exist to reduce manual Unity Inspector work
-- Result logic should later subscribe to character death events and decide battle outcome
+- Current result logic is intentionally simple and lives in `BattleUI`; later it can move into a dedicated battle rules/result service
+- Current UI is IMGUI-only for speed and stability; final UI should use proper prefabs, layout, styling, and navigation
 - Item visuals, pickup feedback, and balancing can be improved after the MVP loop is stable
 - AI currently favors stability over intelligence; future work can add path scoring, target chasing, and better self-preservation

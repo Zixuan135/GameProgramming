@@ -10,7 +10,29 @@ namespace BubbleTown.Managers
     /// </summary>
     public class SceneFlowManager : MonoBehaviour
     {
-        public static SceneFlowManager Instance { get; private set; }
+        private const string RuntimeObjectName = "SceneFlowManager";
+
+        private static SceneFlowManager instance;
+        private static bool isQuitting;
+
+        public static SceneFlowManager Instance
+        {
+            get
+            {
+                if (instance == null && !isQuitting)
+                {
+                    instance = FindObjectOfType<SceneFlowManager>();
+                    if (instance == null)
+                    {
+                        GameObject sceneFlowObject = new GameObject(RuntimeObjectName);
+                        instance = sceneFlowObject.AddComponent<SceneFlowManager>();
+                    }
+                }
+
+                return instance;
+            }
+            private set => instance = value;
+        }
 
         private void Awake()
         {
@@ -24,10 +46,19 @@ namespace BubbleTown.Managers
             DontDestroyOnLoad(gameObject);
         }
 
+        private void OnApplicationQuit()
+        {
+            isQuitting = true;
+        }
+
         public void LoadMainMenu() => LoadScene(GameConstants.SceneMainMenu);
         public void LoadModeSelect() => LoadScene(GameConstants.SceneModeSelect);
         public void LoadMapSelect() => LoadScene(GameConstants.SceneMapSelect);
-        public void LoadBattle() => LoadScene(GameConstants.SceneBattle);
+        public void LoadBattle()
+        {
+            GameManager.Instance?.BeginBattle();
+        }
+
         public void LoadResult() => LoadScene(GameConstants.SceneResult);
 
         public void LoadScene(string sceneName)
