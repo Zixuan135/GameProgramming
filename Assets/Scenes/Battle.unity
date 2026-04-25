@@ -216,8 +216,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4b3c9a5650782436fa817dc4bb6c4674, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   primaryTarget: {fileID: 1277180228}
   secondaryTarget: {fileID: 619645842}
   autoFindTargets: 1
@@ -403,8 +403,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 414f1a82012a54cdd994c0ef9468ac42, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   mapWidth: 13
   mapHeight: 11
   cellSize: 1
@@ -418,8 +418,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e04976ec522de46649f5dbf3469172c7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   mapGenerator: {fileID: 1032}
   mapVisualRoot: {fileID: 0}
   mapWidth: 13
@@ -597,6 +597,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1081}
+  - component: {fileID: 1082}
   m_Layer: 0
   m_Name: UI_Root_Battle
   m_TagString: Untagged
@@ -619,6 +620,19 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1082
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1080}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc12433a2a910466fa93ac518fecb91f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  resultSceneDelay: 0.75
 --- !u!1 &619645841
 GameObject:
   m_ObjectHideFlags: 0
@@ -664,8 +678,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ce64ca401e7ce41f88202e42a3482d80, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   mapManager: {fileID: 1033}
   currentGridPosition: {x: 11, y: 9}
   currentWorldPosition: {x: 11, y: 0.5, z: 9}
@@ -804,8 +818,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ce64ca401e7ce41f88202e42a3482d80, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  m_Name:
+  m_EditorClassIdentifier:
   mapManager: {fileID: 1033}
   currentGridPosition: {x: 1, y: 1}
   currentWorldPosition: {x: 1, y: 0.5, z: 1}
@@ -918,7 +932,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties: 
+  m_LockedProperties:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -1210,7 +1224,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties: 
+  m_LockedProperties:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:

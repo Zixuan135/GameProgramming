@@ -9,6 +9,36 @@ namespace BubbleTown.UI
     /// </summary>
     public class ModeSelectUI : MonoBehaviour
     {
+        private void OnGUI()
+        {
+            Rect panel = SimpleUIFactory.CenteredRect(620f, 520f);
+            SimpleUIFactory.BeginPanel(panel);
+            SimpleUIFactory.Title("Select Mode");
+            SimpleUIFactory.Body("Choose how this round should be created.");
+
+            if (SimpleUIFactory.Button("Single Player"))
+            {
+                OnSelectSinglePlayer();
+            }
+
+            if (SimpleUIFactory.Button("AI Battle"))
+            {
+                OnSelectAIBattle();
+            }
+
+            if (SimpleUIFactory.Button("Local VS"))
+            {
+                OnSelectLocalVS();
+            }
+
+            if (SimpleUIFactory.Button("Back"))
+            {
+                OnClickBack();
+            }
+
+            SimpleUIFactory.EndPanel();
+        }
+
         public void OnSelectSinglePlayer() => SelectMode(GameMode.SinglePlayer);
         public void OnSelectAIBattle() => SelectMode(GameMode.AIBattle);
         public void OnSelectLocalVS() => SelectMode(GameMode.LocalVS);
