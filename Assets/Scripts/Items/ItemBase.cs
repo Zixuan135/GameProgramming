@@ -1,48 +1,168 @@
 using BubbleTown.Characters;
+using BubbleTown.Core;
 using BubbleTown.Core.Enums;
+using BubbleTown.Map;
 using UnityEngine;
 
 namespace BubbleTown.Items
 {
     /// <summary>
-    /// Base item pickup behavior.
-    /// Applies simple stat modifiers to character on trigger.
+    /// Base class for simple stat items.
+    /// The first version keeps pickup behavior lightweight and exposes reusable hooks for later visuals/SFX/UI.
     /// </summary>
     public class ItemBase : MonoBehaviour
     {
+        [Header("Item")]
         [SerializeField] protected ItemType itemType = ItemType.None;
-        [SerializeField] protected float moveSpeedDelta = 0.5f;
-        [SerializeField] protected int bombCountDelta = 1;
-        [SerializeField] protected int bombRangeDelta = 1;
+        [SerializeField] protected bool pickupOnTrigger = true;
+        [SerializeField] protected bool destroyAfterPickup = true;
+
+        [Header("Effect Values")]
+        [SerializeField, Min(0)] protected int bombCountDelta = GameConstants.DefaultItemBombCountDelta;
+        [SerializeField, Min(0)] protected int explosionRangeDelta = GameConstants.DefaultItemExplosionRangeDelta;
+        [SerializeField, Min(0f)] protected float moveSpeedDelta = GameConstants.DefaultItemMoveSpeedDelta;
+
+        [Header("Grid State")]
+        [SerializeField] protected MapManager mapManager;
+        [SerializeField] protected Vector2Int gridPosition;
+        [SerializeField] protected bool hasGridPosition;
+        [SerializeField] protected bool clearMapItemOnDestroy = true;
+
+        private bool pickedUp;
 
         public ItemType ItemType => itemType;
+        public int BombCountDelta => bombCountDelta;
+        public int ExplosionRangeDelta => explosionRangeDelta;
+        public float MoveSpeedDelta => moveSpeedDelta;
+        public Vector2Int GridPosition => gridPosition;
+        public bool HasGridPosition => hasGridPosition;
+        public bool IsPickedUp => pickedUp;
+
+        public virtual void Initialize(ItemType newItemType)
+        {
+            itemType = newItemType;
+            ClearGridPositionState();
+        }
+
+        public virtual void Initialize(ItemType newItemType, MapManager ownerMapManager, Vector2Int itemGridPosition)
+        {
+            itemType = newItemType;
+
+            if (ownerMapManager == null)
+            {
+                ClearGridPositionState();
+                return;
+            }
+
+            SetGridPosition(ownerMapManager, itemGridPosition);
+        }
+
+        public virtual void SetGridPosition(MapManager ownerMapManager, Vector2Int itemGridPosition)
+        {
+            mapManager = ownerMapManager;
+            gridPosition = itemGridPosition;
+            hasGridPosition = true;
+        }
 
         private void OnTriggerEnter(Collider other)
         {
-            CharacterBase character = other.GetComponent<CharacterBase>();
+            TryPickupFromCollider(other);
+        }
+
+        private void OnTriggerStay(Collider other)
+        {
+            TryPickupFromCollider(other);
+        }
+
+        private void TryPickupFromCollider(Collider other)
+        {
+            if (!pickupOnTrigger)
+            {
+                return;
+            }
+
+            CharacterBase character = other.GetComponentInParent<CharacterBase>();
             if (character == null)
             {
                 return;
             }
 
-            ApplyTo(character);
-            Destroy(gameObject);
+            TryPickup(character);
         }
 
-        public virtual void ApplyTo(CharacterBase character)
+        public virtual bool TryPickup(CharacterBase character)
         {
-            switch (itemType)
+            if (pickedUp || character == null || !character.IsAlive)
             {
-                case ItemType.BombCountUp:
-                    character.ApplyBombCountModifier(bombCountDelta);
-                    break;
-                case ItemType.BombRangeUp:
-                    character.ApplyBombRangeModifier(bombRangeDelta);
-                    break;
-                case ItemType.MoveSpeedUp:
-                    character.ApplyMoveSpeedModifier(moveSpeedDelta);
-                    break;
+                return false;
             }
+
+            if (!ApplyTo(character))
+            {
+                return false;
+            }
+
+            pickedUp = true;
+            OnPickedUp(character);
+            return true;
+        }
+
+        public virtual bool ApplyTo(CharacterBase character)
+        {
+            if (character == null)
+            {
+                return false;
+            }
+
+            bool applied = character.ApplyItemEffect(
+                itemType,
+                bombCountDelta,
+                explosionRangeDelta,
+                moveSpeedDelta);
+
+            if (!applied)
+            {
+                Debug.LogWarning($"[ItemBase] {name} failed to apply item effect: {itemType}.");
+            }
+
+            return applied;
+        }
+
+        protected virtual void OnPickedUp(CharacterBase character)
+        {
+            ClearMapItemState();
+            Debug.Log($"[ItemBase] {character.name} picked up {itemType}.");
+
+            if (destroyAfterPickup)
+            {
+                Destroy(gameObject);
+            }
+        }
+
+        protected virtual void OnDestroy()
+        {
+            if (clearMapItemOnDestroy)
+            {
+                ClearMapItemState();
+            }
+        }
+
+        protected virtual void ClearMapItemState()
+        {
+            if (!hasGridPosition || mapManager == null)
+            {
+                return;
+            }
+
+            mapManager.SetItem(gridPosition, false);
+            hasGridPosition = false;
+        }
+
+        protected virtual void ClearGridPositionState()
+        {
+            mapManager = null;
+            gridPosition = Vector2Int.zero;
+            hasGridPosition = false;
         }
     }
 }
