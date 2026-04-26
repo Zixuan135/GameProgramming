@@ -834,6 +834,16 @@ MonoBehaviour:
   m_EditorClassIdentifier:
   character: {fileID: 0}
   animatedRoot: {fileID: 8720355144446489970}
+  flashRenderers:
+  - {fileID: 4760987517356811540}
+  - {fileID: 683482606162961396}
+  - {fileID: 7522338233159937040}
+  - {fileID: 2236200776537415553}
+  - {fileID: 7627004981004535684}
+  - {fileID: 2090434920495830860}
+  - {fileID: 335807999633628105}
+  - {fileID: 7277787536881789110}
+  - {fileID: 4279871275374095771}
   enableIdleBob: 1
   idleBobAmplitude: 0.035
   idleBobSpeed: 3.2
@@ -841,7 +851,24 @@ MonoBehaviour:
   moveBobSpeed: 11
   moveSwayDegrees: 7
   moveScalePulse: 0.07
-  bombActionDuration: 0.22
-  bombSquashAmount: 0.16
-  bombHopHeight: 0.08
-  bombTiltDegrees: 8
+  bombActionDuration: 0.28
+  bombSquashAmount: 0.22
+  bombHopHeight: 0.13
+  bombTiltDegrees: 13
+  bombShakeDegrees: 5
+  hitFeedbackDuration: 0.22
+  hitShakeAmplitude: 0.075
+  hitScalePunch: 0.14
+  hitFlashColor: {r: 1, g: 0.35, b: 0.18, a: 1}
+  defeatFeedbackDuration: 0.52
+  defeatRiseHeight: 0.22
+  defeatShakeAmplitude: 0.09
+  defeatSpinDegrees: 180
+  defeatShrinkStart: 0.28
+  defeatFlashColor: {r: 1, g: 0.72, b: 0.12, a: 1}
+  spawnDefeatPuffs: 1
+  defeatPuffCount: 6
+  defeatPuffDuration: 0.42
+  defeatPuffDistance: 0.48
+  defeatPuffScale: 0.12
+  maxEmissionIntensity: 1.45

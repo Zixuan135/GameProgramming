@@ -5,33 +5,46 @@ using UnityEngine;
 namespace BubbleTown.UI
 {
     /// <summary>
-    /// Map selection callbacks that store selected map type.
+    /// Map selection callbacks that store selected map type before starting battle.
     /// </summary>
     public class MapSelectUI : MonoBehaviour
     {
+        private BattleMapType selectedMapType = BattleMapType.Default;
+        private bool hasInitializedSelection;
+
+        private readonly Color defaultAccent = new Color(0.1f, 0.72f, 1f, 1f);
+        private readonly Color openFieldAccent = new Color(0.45f, 0.9f, 0.34f, 1f);
+        private readonly Color mazeAccent = new Color(0.66f, 0.48f, 1f, 1f);
+
         private void OnGUI()
         {
-            Rect panel = SimpleUIFactory.CenteredRect(700f, 560f);
+            InitializeSelectionIfNeeded();
+            SimpleUIFactory.DrawCandyBackground();
+
+            Rect panel = SimpleUIFactory.CenteredRect(930f, 650f);
             SimpleUIFactory.BeginPanel(panel);
+            SimpleUIFactory.LabelPill("PICK YOUR PLAYGROUND");
             SimpleUIFactory.Title("Select Map");
-            SimpleUIFactory.Body("Map buttons currently share placeholder rules, but the selected type is stored for future generation.");
+            SimpleUIFactory.Body("Choose a toy-board arena, preview the flavor, then start the battle when ready.");
 
-            if (SimpleUIFactory.Button("Default"))
+            if (Screen.width >= 850f)
             {
-                OnSelectDefault();
+                DrawMapCardsHorizontal();
+            }
+            else
+            {
+                DrawMapCardsVertical();
             }
 
-            if (SimpleUIFactory.Button("Open Field"))
+            SimpleUIFactory.SmallBody("Selected: " + FormatMapName(selectedMapType));
+            SimpleUIFactory.FlexibleSpace();
+
+            if (SimpleUIFactory.PrimaryButton("START SELECTED MAP"))
             {
-                OnSelectOpenField();
+                OnClickStartSelectedMap();
             }
 
-            if (SimpleUIFactory.Button("Maze"))
-            {
-                OnSelectMaze();
-            }
-
-            if (SimpleUIFactory.Button("Back"))
+            if (SimpleUIFactory.SecondaryButton("BACK"))
             {
                 OnClickBack();
             }
@@ -39,19 +52,120 @@ namespace BubbleTown.UI
             SimpleUIFactory.EndPanel();
         }
 
-        public void OnSelectDefault() => SelectMap(BattleMapType.Default);
-        public void OnSelectOpenField() => SelectMap(BattleMapType.OpenField);
-        public void OnSelectMaze() => SelectMap(BattleMapType.Maze);
-
-        private void SelectMap(BattleMapType mapType)
+        private void InitializeSelectionIfNeeded()
         {
-            GameManager.Instance?.SetMapType(mapType);
+            if (hasInitializedSelection)
+            {
+                return;
+            }
+
+            if (GameManager.Instance != null)
+            {
+                selectedMapType = GameManager.Instance.CurrentMapType;
+            }
+
+            hasInitializedSelection = true;
+        }
+
+        private void DrawMapCardsHorizontal()
+        {
+            GUILayout.BeginHorizontal();
+            DrawDefaultMapCard();
+            GUILayout.Space(14f);
+            DrawOpenFieldMapCard();
+            GUILayout.Space(14f);
+            DrawMazeMapCard();
+            GUILayout.EndHorizontal();
+            GUILayout.Space(12f);
+        }
+
+        private void DrawMapCardsVertical()
+        {
+            DrawDefaultMapCard();
+            DrawOpenFieldMapCard();
+            DrawMazeMapCard();
+        }
+
+        private void DrawDefaultMapCard()
+        {
+            if (SimpleUIFactory.MapCard(
+                "Candy Park",
+                "DEFAULT",
+                "Balanced walls and safe spawn pockets for everyday testing.",
+                defaultAccent,
+                new Color(0.58f, 0.92f, 0.72f, 1f),
+                new Color(1f, 0.86f, 0.48f, 1f),
+                new Color(0.48f, 0.82f, 1f, 1f),
+                selectedMapType == BattleMapType.Default))
+            {
+                OnSelectDefault();
+            }
+        }
+
+        private void DrawOpenFieldMapCard()
+        {
+            if (SimpleUIFactory.MapCard(
+                "Open Field",
+                "FAST",
+                "More room to move, dodge, and test long explosion chains.",
+                openFieldAccent,
+                new Color(0.62f, 0.96f, 0.58f, 1f),
+                new Color(0.95f, 0.78f, 0.34f, 1f),
+                new Color(0.78f, 1f, 0.74f, 1f),
+                selectedMapType == BattleMapType.OpenField))
+            {
+                OnSelectOpenField();
+            }
+        }
+
+        private void DrawMazeMapCard()
+        {
+            if (SimpleUIFactory.MapCard(
+                "Jelly Maze",
+                "MAZE",
+                "Tighter routes for testing blockers, AI movement, and traps.",
+                mazeAccent,
+                new Color(0.78f, 0.72f, 1f, 1f),
+                new Color(1f, 0.78f, 0.9f, 1f),
+                new Color(0.56f, 0.9f, 1f, 1f),
+                selectedMapType == BattleMapType.Maze))
+            {
+                OnSelectMaze();
+            }
+        }
+
+        public void OnSelectDefault() => SelectMapCard(BattleMapType.Default);
+        public void OnSelectOpenField() => SelectMapCard(BattleMapType.OpenField);
+        public void OnSelectMaze() => SelectMapCard(BattleMapType.Maze);
+
+        private void SelectMapCard(BattleMapType mapType)
+        {
+            selectedMapType = mapType;
+            GameManager.Instance?.SetMapType(selectedMapType);
+        }
+
+        public void OnClickStartSelectedMap()
+        {
+            GameManager.Instance?.SetMapType(selectedMapType);
             SceneFlowManager.Instance?.LoadBattle();
         }
 
         public void OnClickBack()
         {
             SceneFlowManager.Instance?.LoadModeSelect();
+        }
+
+        private string FormatMapName(BattleMapType mapType)
+        {
+            switch (mapType)
+            {
+                case BattleMapType.OpenField:
+                    return "Open Field";
+                case BattleMapType.Maze:
+                    return "Jelly Maze";
+                default:
+                    return "Candy Park";
+            }
         }
     }
 }
