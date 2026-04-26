@@ -46,6 +46,11 @@ Assets/
     ItemBombCountUpPlaceholder.mat
     ItemExplosionRangeUpPlaceholder.mat
     ItemMoveSpeedUpPlaceholder.mat
+    Mat_Bomb_Body_BubbleNavy.mat
+    Mat_Bomb_Fuse_Cocoa.mat
+    Mat_Bomb_Highlight_Cyan.mat
+    Mat_Bomb_Spark_Yellow.mat
+    Mat_Bomb_TopCap_Cream.mat
     Mat_Character_AI_Accent.mat
     Mat_Character_AI_Body.mat
     Mat_Character_Face_Dark.mat
@@ -54,6 +59,10 @@ Assets/
     Mat_Character_Player2_Accent.mat
     Mat_Character_Player2_Body.mat
     Mat_Character_Skin_Peach.mat
+    Mat_Explosion_Arm_Orange.mat
+    Mat_Explosion_Bubble_Cyan.mat
+    Mat_Explosion_Core_Cream.mat
+    Mat_Explosion_Spark_Pink.mat
     Mat_Tile_CandyBlue.mat
     Mat_Tile_CheckerAccent.mat
     Mat_Tile_GrassPastel.mat
@@ -70,6 +79,8 @@ Assets/
     Gameplay/
       Bomb.prefab
       ExplosionCenter.prefab
+      ExplosionHorizontal.prefab
+      ExplosionVertical.prefab
       Items/
         Item_BombCountUp.prefab
         Item_ExplosionRangeUp.prefab
@@ -90,6 +101,7 @@ Assets/
     AI/
     Camera/
     Characters/
+      CharacterVisualAnimator.cs
     Core/
     Gameplay/
     Items/
@@ -257,6 +269,7 @@ Current scene state:
 - Character death currently hides renderers, disables colliders, clears map occupancy, and emits a `Died` event for future result logic
 - `CharacterBase` can rotate a configured `visualRoot` toward the latest grid movement direction
 - This keeps gameplay roots grid-stable while allowing replaceable character art to show facing
+- `CharacterBase` emits a lightweight `BombPlaced` event so visual-only scripts can react without owning gameplay logic
 
 ### Player Input
 
@@ -287,7 +300,21 @@ Current scene state:
 - Player1 uses a blue/cyan body with a yellow front accent
 - Player2 uses coral/orange with yellow bow accents
 - AI uses purple with a red visor and antenna
+- `CharacterVisualAnimator` adds code-driven placeholder animation:
+  - idle bob
+  - movement bounce/sway
+  - simple squash, hop, and tilt when a bomb is placed
 - `CharacterArtSetup` can regenerate these prefabs and rewire the `Battle` scene from the editor menu or batchmode
+
+Animator recommendation:
+
+- Current phase: use `CharacterVisualAnimator` instead of Animator because characters are primitive placeholder objects with no animation clips or skeletons yet
+- Later phase: switch to Animator when the character art becomes proper mesh/rig assets
+- Suggested future Animator parameters:
+  - `IsMoving` bool
+  - `MoveSpeed` float
+  - `PlaceBomb` trigger
+  - `IsAlive` bool
 
 ### AI
 
@@ -320,7 +347,23 @@ Current scene state:
 - Characters have a max active bomb limit, currently based on `GameConstants.DefaultBombCount`
 - Bombs start a countdown after placement and explode when the fuse reaches zero
 - Bombs notify their owner when finished so the active bomb slot is released
+- `Bomb.prefab` now uses a Phase 2 bubble-bomb placeholder structure:
+  - root `Bomb` with `SphereCollider` and `BombController`
+  - `VisualRoot`
+  - `Body_BubbleSphere`
+  - `Body_CartoonHighlight`
+  - `TopCap_CreamButton`
+  - `Fuse_CurvedStem`
+  - `Fuse_Spark`
+- `BombController` drives countdown flash feedback through the prefab renderers
+- Bomb flashing becomes faster as the fuse gets closer to explosion
 - `ExplosionCenter.prefab` is available under `Assets/Prefabs/Gameplay`
+- `ExplosionHorizontal.prefab` and `ExplosionVertical.prefab` provide directional arm visuals
+- Explosion prefab structure uses a gameplay root with trigger collider, kinematic rigidbody, `ExplosionController`, and `VisualRoot`
+- Center explosion uses round pop bubbles and pink spark accents
+- Horizontal explosion uses an orange splash bar with side bubbles
+- Vertical explosion uses the same visual language rotated for the Z axis
+- `ExplosionController` drives short scale, rotation, and emission pulses with `MaterialPropertyBlock`
 - Explosions spawn grid-based placeholder cells
 - Explosion propagation is cross-shaped from the bomb center
 - Explosion range uses the character/bomb range setting
@@ -380,6 +423,8 @@ Basic things to verify:
 - Bombs block movement after placement
 - One character cannot place more bombs than its current limit
 - Bombs count down and explode
+- Bomb visuals flash and pulse faster near the end of the fuse
+- Explosion center and arms use different colorful placeholder visuals
 - Explosion cells form a cross shape
 - Hard walls stop explosion spread
 - Soft walls disappear when hit by an explosion
@@ -391,6 +436,7 @@ Basic things to verify:
 - The UI flow moves from menu screens into battle and then into the result screen
 - Result screen shows the last winner/result and supports Retry/Main Menu
 - Player1, Player2, and AI use distinct chibi placeholder visuals with visible facing markers
+- Characters have visible idle bob, movement bounce, and a quick bomb-placement squash/hop
 
 ## 9. MVP Roadmap
 
@@ -409,8 +455,10 @@ Completed or started:
 - [x] Bomb placement
 - [x] Bomb count limit
 - [x] Bomb countdown
+- [x] Phase 2 bubble-bomb placeholder prefab and countdown flash
 - [x] Center explosion placeholder
 - [x] Cross-shaped explosion propagation
+- [x] Phase 2 center/horizontal/vertical explosion placeholder prefabs
 - [x] Hard wall explosion blocking
 - [x] Soft wall destruction
 - [x] Character death from explosions
@@ -427,6 +475,7 @@ Completed or started:
 - [x] Hard/soft wall explosion feedback placeholders
 - [x] Phase 2 chibi character placeholder prefabs
 - [x] Shared character visual facing support
+- [x] Code-driven placeholder character animations
 
 Still planned:
 
@@ -436,6 +485,7 @@ Still planned:
 - [ ] More complete map theme decoration outside the playable grid
 - [ ] Polished Q-style bomb, explosion, item, UI, and audio assets
 - [ ] Optional Blender/Blockbench replacement meshes for current primitive character prefabs
+- [ ] Animator-based character animation once real character meshes or rigs exist
 - [ ] Audio, VFX, and UI polish
 
 ## 10. Notes For Future Iterations

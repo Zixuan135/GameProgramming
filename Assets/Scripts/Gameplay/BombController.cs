@@ -22,14 +22,28 @@ namespace BubbleTown.Gameplay
         [Header("Bomb")]
         [SerializeField, Min(0.1f)] private float fuseSeconds = GameConstants.DefaultBombFuseSeconds;
         [SerializeField] private ExplosionController explosionPrefab;
+        [SerializeField] private ExplosionController explosionCenterPrefab;
+        [SerializeField] private ExplosionController explosionHorizontalPrefab;
+        [SerializeField] private ExplosionController explosionVerticalPrefab;
 
         [Header("Grid")]
         [SerializeField] private Vector2Int gridPosition;
+
+        [Header("Visual Countdown Feedback")]
+        [SerializeField] private Transform visualRoot;
+        [SerializeField] private Renderer[] flashRenderers = new Renderer[0];
+        [SerializeField] private Color flashEmissionColor = new Color(1f, 0.55f, 0.12f);
+        [SerializeField, Min(0.01f)] private float slowFlashInterval = 0.55f;
+        [SerializeField, Min(0.01f)] private float fastFlashInterval = 0.08f;
+        [SerializeField, Range(0.05f, 0.95f)] private float flashOnRatio = 0.42f;
+        [SerializeField, Range(0f, 0.25f)] private float flashScalePulse = 0.1f;
 
         [Header("Runtime")]
         [SerializeField] private float remainingFuseSeconds;
         [SerializeField] private bool isCountingDown;
         [SerializeField] private bool triggeredByChainExplosion;
+
+        private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
 
         private CharacterBase owner;
         private MapManager mapManager;
@@ -38,6 +52,8 @@ namespace BubbleTown.Gameplay
         private bool hasGridOccupation;
         private bool gridOccupationReleased;
         private bool ownerNotified;
+        private MaterialPropertyBlock flashPropertyBlock;
+        private Vector3 baseVisualScale = Vector3.one;
 
         public CharacterBase Owner => owner;
         public Vector2Int GridPosition => gridPosition;
@@ -50,6 +66,7 @@ namespace BubbleTown.Gameplay
 
         private void Awake()
         {
+            CacheVisualReferences();
             ResetFuseTimer();
         }
 
@@ -82,6 +99,7 @@ namespace BubbleTown.Gameplay
         private void Update()
         {
             TickFuseTimer();
+            UpdateCountdownVisualFeedback();
         }
 
         public void BeginCountdown()
@@ -161,6 +179,7 @@ namespace BubbleTown.Gameplay
             exploded = true;
             isCountingDown = false;
             remainingFuseSeconds = 0f;
+            ResetCountdownVisualFeedback();
             ReleaseGridOccupation();
             SpawnExplosion();
             NotifyOwnerBombEnded();
@@ -174,13 +193,13 @@ namespace BubbleTown.Gameplay
 
         protected virtual void SpawnExplosion()
         {
-            if (explosionPrefab == null)
+            if (!HasAnyExplosionPrefab())
             {
                 return;
             }
 
             EnsureMapManager();
-            SpawnExplosionCell(gridPosition);
+            SpawnExplosionCell(gridPosition, ResolveExplosionPrefab(Vector2Int.zero));
 
             for (int i = 0; i < ExplosionDirections.Length; i++)
             {
@@ -204,7 +223,7 @@ namespace BubbleTown.Gameplay
                     break;
                 }
 
-                SpawnExplosionCell(targetGridPosition);
+                SpawnExplosionCell(targetGridPosition, ResolveExplosionPrefab(direction));
 
                 if (ShouldStopPropagationAfterCell(targetCell))
                 {
@@ -214,11 +233,39 @@ namespace BubbleTown.Gameplay
             }
         }
 
-        private void SpawnExplosionCell(Vector2Int targetGridPosition)
+        private void SpawnExplosionCell(Vector2Int targetGridPosition, ExplosionController prefab)
         {
+            if (prefab == null)
+            {
+                return;
+            }
+
             Vector3 spawnPosition = GridToWorld(targetGridPosition);
-            ExplosionController explosion = Instantiate(explosionPrefab, spawnPosition, Quaternion.identity);
+            ExplosionController explosion = Instantiate(prefab, spawnPosition, Quaternion.identity);
             explosion.Initialize(range, owner, targetGridPosition);
+        }
+
+        private bool HasAnyExplosionPrefab()
+        {
+            return explosionPrefab != null ||
+                   explosionCenterPrefab != null ||
+                   explosionHorizontalPrefab != null ||
+                   explosionVerticalPrefab != null;
+        }
+
+        private ExplosionController ResolveExplosionPrefab(Vector2Int direction)
+        {
+            if (direction == Vector2Int.zero)
+            {
+                return explosionCenterPrefab != null ? explosionCenterPrefab : explosionPrefab;
+            }
+
+            if (direction.x != 0)
+            {
+                return explosionHorizontalPrefab != null ? explosionHorizontalPrefab : explosionPrefab;
+            }
+
+            return explosionVerticalPrefab != null ? explosionVerticalPrefab : explosionPrefab;
         }
 
         private bool TryGetExplosionCell(Vector2Int targetGridPosition, out GridCell cell)
@@ -289,8 +336,79 @@ namespace BubbleTown.Gameplay
             }
         }
 
+        private void CacheVisualReferences()
+        {
+            if (visualRoot == null)
+            {
+                visualRoot = transform;
+            }
+
+            baseVisualScale = visualRoot.localScale;
+            if (flashRenderers == null || flashRenderers.Length == 0)
+            {
+                flashRenderers = GetComponentsInChildren<Renderer>();
+            }
+
+            flashPropertyBlock = new MaterialPropertyBlock();
+        }
+
+        private void UpdateCountdownVisualFeedback()
+        {
+            if (!isCountingDown || exploded)
+            {
+                ResetCountdownVisualFeedback();
+                return;
+            }
+
+            if (flashPropertyBlock == null)
+            {
+                CacheVisualReferences();
+            }
+
+            float fuseProgress = 1f - Mathf.Clamp01(remainingFuseSeconds / Mathf.Max(0.01f, fuseSeconds));
+            float flashInterval = Mathf.Lerp(slowFlashInterval, fastFlashInterval, fuseProgress);
+            float intervalProgress = Mathf.Repeat(Time.time, flashInterval) / flashInterval;
+            float flashPulse = intervalProgress <= flashOnRatio ? 1f : 0f;
+            float urgentGlow = Mathf.Lerp(0.35f, 1.25f, fuseProgress);
+
+            ApplyCountdownFlash(flashPulse, urgentGlow);
+        }
+
+        private void ApplyCountdownFlash(float flashPulse, float urgentGlow)
+        {
+            Color emissionColor = flashEmissionColor * flashPulse * urgentGlow;
+            for (int i = 0; i < flashRenderers.Length; i++)
+            {
+                Renderer flashRenderer = flashRenderers[i];
+                if (flashRenderer == null)
+                {
+                    continue;
+                }
+
+                flashRenderer.GetPropertyBlock(flashPropertyBlock);
+                flashPropertyBlock.SetColor(EmissionColorId, emissionColor);
+                flashRenderer.SetPropertyBlock(flashPropertyBlock);
+            }
+
+            if (visualRoot != null)
+            {
+                visualRoot.localScale = baseVisualScale * (1f + flashPulse * flashScalePulse);
+            }
+        }
+
+        private void ResetCountdownVisualFeedback()
+        {
+            if (flashPropertyBlock == null)
+            {
+                return;
+            }
+
+            ApplyCountdownFlash(0f, 0f);
+        }
+
         private void OnDestroy()
         {
+            ResetCountdownVisualFeedback();
             ReleaseGridOccupation();
             NotifyOwnerBombEnded();
         }
