@@ -45,6 +45,7 @@ namespace BubbleTown.Characters
 
         public event Action<CharacterBase> Died;
         public event Action<CharacterBase> StatsChanged;
+        public event Action<CharacterBase> BombPlaced;
 
         public Vector2Int CurrentGridPosition => currentGridPosition;
         public Vector3 CurrentWorldPosition => currentWorldPosition;
@@ -301,6 +302,7 @@ namespace BubbleTown.Characters
             BombController bomb = Instantiate(bombPrefab, spawnPosition, Quaternion.identity, bombSpawnRoot);
             bomb.Initialize(this, mapManager, currentGridPosition, bombRange);
             RegisterPlacedBomb();
+            OnBombPlaced();
             return true;
         }
 
@@ -317,6 +319,11 @@ namespace BubbleTown.Characters
         protected virtual void RegisterPlacedBomb()
         {
             activeBombCount = Mathf.Min(maxBombCount, activeBombCount + 1);
+        }
+
+        protected virtual void OnBombPlaced()
+        {
+            BombPlaced?.Invoke(this);
         }
 
         protected virtual void ReleaseBombSlot()

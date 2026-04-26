@@ -132,10 +132,41 @@ Implementation notes:
 - The current facing marker is `FrontBadge_FacingMarker`, plus eyes/visor on the forward side.
 - `CharacterArtSetup` can regenerate these prefabs and rewire `Battle` from the Unity editor menu or batchmode.
 
+## 3.2 Current Phase 2 Character Animation Placeholder
+
+The current animation pass is code-driven instead of Animator-driven.
+
+Why code first:
+
+- Current characters are primitive placeholder objects, not rigged meshes.
+- There are no reusable authored animation clips yet.
+- The goal is quick Q-style liveliness without disturbing grid movement or collision.
+- The visual script can be removed later when proper Animator clips exist.
+
+Current implementation:
+
+- `CharacterVisualAnimator` lives on `CharacterVisual`.
+- It animates the child `VisualRoot`, not the gameplay root.
+- `CharacterBase` exposes a `BombPlaced` event for visual-only reactions.
+- Idle state uses a subtle vertical bob.
+- Moving state uses bounce, sway, and squash/stretch.
+- Bomb placement uses a short hop, squash, and forward tilt.
+
+Animator recommendation:
+
+- Do not require Animator for the current primitive placeholder phase.
+- Add Animator later when characters become Blender/Blockbench/FBX meshes or when we need authored clips.
+- Suggested future Animator parameters:
+  - `IsMoving` bool
+  - `MoveSpeed` float
+  - `PlaceBomb` trigger
+  - `IsAlive` bool
+
 Low-cost next upgrades:
 
-- Add a tiny idle bob on `CharacterVisual`.
-- Add squash/stretch while moving between cells.
+- Tune per-character animation values for personality.
+- Add item pickup pop feedback.
+- Add defeat pop/spin before hiding the character.
 - Replace primitive heads/bodies with one simple Blender or Blockbench mesh while keeping the same prefab names.
 
 ## 4. Map Style
@@ -323,10 +354,108 @@ Recommended prefab names:
 
 Recommended material names:
 
-- `Mat_Bomb_BubbleDark`
-- `Mat_Bomb_Highlight`
-- `Mat_Explosion_BubbleCyan`
-- `Mat_Explosion_BubbleOrange`
+- `Mat_Bomb_Body_BubbleNavy`
+- `Mat_Bomb_Highlight_Cyan`
+- `Mat_Bomb_TopCap_Cream`
+- `Mat_Bomb_Fuse_Cocoa`
+- `Mat_Bomb_Spark_Yellow`
+- `Mat_Explosion_Core_Cream`
+- `Mat_Explosion_Bubble_Cyan`
+- `Mat_Explosion_Arm_Orange`
+- `Mat_Explosion_Spark_Pink`
+
+## 6.1 Current Phase 2 Bubble-Bomb Placeholder
+
+The current bomb art pass keeps the existing `Assets/Prefabs/Gameplay/Bomb.prefab` name and upgrades the visual hierarchy.
+
+Current prefab hierarchy:
+
+- `Bomb`
+  - Component: `SphereCollider`
+  - Component: `BombController`
+  - `VisualRoot`
+    - `Body_BubbleSphere`
+    - `Body_CartoonHighlight`
+    - `TopCap_CreamButton`
+    - `Fuse_CurvedStem`
+    - `Fuse_Spark`
+
+Current material set:
+
+- `Mat_Bomb_Body_BubbleNavy`
+- `Mat_Bomb_Highlight_Cyan`
+- `Mat_Bomb_TopCap_Cream`
+- `Mat_Bomb_Fuse_Cocoa`
+- `Mat_Bomb_Spark_Yellow`
+
+Current feedback behavior:
+
+- `BombController` owns the fuse timer and visual countdown feedback.
+- The bomb renderers receive emission pulses through `MaterialPropertyBlock`.
+- Flash interval blends from slow to fast as the fuse approaches zero.
+- `VisualRoot` also gets a small scale pulse during the flash.
+- This keeps the effect cheap and easy to replace with particles or Animator later.
+
+Low-cost next upgrades:
+
+- Add a tiny looping fuse spark particle.
+- Add a stronger last-half-second squash pulse.
+- Replace the cylinder fuse with a simple curved mesh from Blender or Blockbench.
+
+## 6.2 Current Phase 2 Bubble Explosion Placeholder
+
+The current explosion art pass keeps the classic cross-shaped gameplay and gives each explosion cell a more playful visual role.
+
+Current prefab set:
+
+- `Assets/Prefabs/Gameplay/ExplosionCenter.prefab`
+  - Component: `SphereCollider`
+  - Component: `Rigidbody`
+  - Component: `ExplosionController`
+  - `VisualRoot`
+    - `Center_CoreBubble`
+    - `Center_CyanPop_North`
+    - `Center_CyanPop_South`
+    - `Center_PinkSpark_East`
+    - `Center_PinkSpark_West`
+- `Assets/Prefabs/Gameplay/ExplosionHorizontal.prefab`
+  - Component: `BoxCollider`
+  - Component: `Rigidbody`
+  - Component: `ExplosionController`
+  - `VisualRoot`
+    - `Horizontal_OrangeSplash`
+    - `Horizontal_Bubble_Left`
+    - `Horizontal_Bubble_Right`
+    - `Horizontal_Spark_Top`
+- `Assets/Prefabs/Gameplay/ExplosionVertical.prefab`
+  - Component: `BoxCollider`
+  - Component: `Rigidbody`
+  - Component: `ExplosionController`
+  - `VisualRoot`
+    - `Vertical_OrangeSplash`
+    - `Vertical_Bubble_North`
+    - `Vertical_Bubble_South`
+    - `Vertical_Spark_Top`
+
+Current material set:
+
+- `Mat_Explosion_Core_Cream`
+- `Mat_Explosion_Bubble_Cyan`
+- `Mat_Explosion_Arm_Orange`
+- `Mat_Explosion_Spark_Pink`
+
+Current feedback behavior:
+
+- `BombController` chooses center, horizontal, or vertical explosion prefab while preserving the existing grid propagation rules.
+- `ExplosionController` owns each explosion cell lifetime, hit detection, scale pulse, rotation pulse, and emission pulse.
+- The visuals use rounded bubble shapes, warm orange, cyan, cream, and pink rather than realistic fire.
+- This keeps the result closer to a Q-style casual game and safer for a cute presentation.
+
+Low-cost next upgrades:
+
+- Add short-lived particle puffs to the center prefab only.
+- Add tiny star sprites or simple mesh stars to the arm prefabs.
+- Add a soft pop sound when each explosion cell spawns.
 
 ## 7. Item Style
 
