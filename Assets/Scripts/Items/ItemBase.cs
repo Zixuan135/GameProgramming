@@ -1,3 +1,4 @@
+using System;
 using BubbleTown.Characters;
 using BubbleTown.Core;
 using BubbleTown.Core.Enums;
@@ -12,6 +13,8 @@ namespace BubbleTown.Items
     /// </summary>
     public class ItemBase : MonoBehaviour
     {
+        public static event Action<CharacterBase, ItemBase> ItemPickedUp;
+
         [Header("Item")]
         [SerializeField] protected ItemType itemType = ItemType.None;
         [SerializeField] protected bool pickupOnTrigger = true;
@@ -27,6 +30,11 @@ namespace BubbleTown.Items
         [SerializeField] protected Vector2Int gridPosition;
         [SerializeField] protected bool hasGridPosition;
         [SerializeField] protected bool clearMapItemOnDestroy = true;
+
+        [Header("Pickup Feedback")]
+        [SerializeField] protected ItemPickupFeedback pickupFeedback;
+        [SerializeField] protected bool notifyPickupFeedback = true;
+        [SerializeField] protected bool notifyCharacterFeedback = true;
 
         private bool pickedUp;
 
@@ -132,11 +140,56 @@ namespace BubbleTown.Items
         {
             ClearMapItemState();
             Debug.Log($"[ItemBase] {character.name} picked up {itemType}.");
+            ItemPickedUp?.Invoke(character, this);
+            PlayCharacterPickupFeedback(character);
 
             if (destroyAfterPickup)
             {
-                Destroy(gameObject);
+                PlayItemPickupFeedback(character, DestroySelf);
             }
+        }
+
+        protected virtual void PlayItemPickupFeedback(CharacterBase character, Action onComplete)
+        {
+            if (!notifyPickupFeedback)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            if (pickupFeedback == null)
+            {
+                pickupFeedback = GetComponent<ItemPickupFeedback>();
+            }
+
+            if (pickupFeedback == null)
+            {
+                onComplete?.Invoke();
+                return;
+            }
+
+            pickupFeedback.PlayPickupFeedback(character, itemType, onComplete);
+        }
+
+        protected virtual void PlayCharacterPickupFeedback(CharacterBase character)
+        {
+            if (!notifyCharacterFeedback || character == null)
+            {
+                return;
+            }
+
+            CharacterPickupFeedback characterFeedback = character.GetComponentInChildren<CharacterPickupFeedback>();
+            if (characterFeedback == null)
+            {
+                characterFeedback = character.gameObject.AddComponent<CharacterPickupFeedback>();
+            }
+
+            characterFeedback.PlayPickupFlash(itemType);
+        }
+
+        protected virtual void DestroySelf()
+        {
+            Destroy(gameObject);
         }
 
         protected virtual void OnDestroy()
