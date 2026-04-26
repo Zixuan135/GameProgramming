@@ -224,6 +224,7 @@ namespace BubbleTown.EditorTools
                 accentMaterial);
 
             AddVariantDetails(visualRoot, variant, faceMaterial, bodyMaterial, accentMaterial);
+            ConfigureVisualAnimator(root, visualRoot, variant, null);
 
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
             Object.DestroyImmediate(root);
@@ -463,6 +464,12 @@ namespace BubbleTown.EditorTools
             visualInstance.transform.localScale = Vector3.one;
 
             CharacterBase character = characterObject.GetComponent<CharacterBase>();
+            ConfigureVisualAnimator(
+                visualInstance,
+                ResolveVisualRoot(visualInstance.transform),
+                ResolveCharacterVariant(characterObject.name),
+                character);
+
             if (character != null)
             {
                 SerializedObject serializedCharacter = new SerializedObject(character);
@@ -480,6 +487,54 @@ namespace BubbleTown.EditorTools
             }
 
             EditorUtility.SetDirty(characterObject);
+        }
+
+        private static void ConfigureVisualAnimator(
+            GameObject visualObject,
+            Transform animatedRoot,
+            CharacterVariant variant,
+            CharacterBase character)
+        {
+            CharacterVisualAnimator animator = visualObject.GetComponent<CharacterVisualAnimator>();
+            if (animator == null)
+            {
+                animator = visualObject.AddComponent<CharacterVisualAnimator>();
+            }
+
+            SerializedObject serializedAnimator = new SerializedObject(animator);
+            SetObjectReference(serializedAnimator, "character", character);
+            SetObjectReference(serializedAnimator, "animatedRoot", animatedRoot);
+            SetFloat(serializedAnimator, "idleBobAmplitude", variant == CharacterVariant.AI ? 0.028f : 0.035f);
+            SetFloat(serializedAnimator, "idleBobSpeed", variant == CharacterVariant.AI ? 4f : 3.2f);
+            SetFloat(serializedAnimator, "moveBobAmplitude", variant == CharacterVariant.AI ? 0.055f : 0.065f);
+            SetFloat(serializedAnimator, "moveBobSpeed", variant == CharacterVariant.AI ? 12f : 11f);
+            SetFloat(serializedAnimator, "moveSwayDegrees", variant == CharacterVariant.AI ? 5f : 7f);
+            SetFloat(serializedAnimator, "moveScalePulse", variant == CharacterVariant.AI ? 0.055f : 0.07f);
+            SetFloat(serializedAnimator, "bombActionDuration", 0.22f);
+            SetFloat(serializedAnimator, "bombSquashAmount", variant == CharacterVariant.AI ? 0.12f : 0.16f);
+            SetFloat(serializedAnimator, "bombHopHeight", variant == CharacterVariant.AI ? 0.06f : 0.08f);
+            SetFloat(serializedAnimator, "bombTiltDegrees", variant == CharacterVariant.AI ? 6f : 8f);
+            serializedAnimator.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(animator);
+        }
+
+        private static Transform ResolveVisualRoot(Transform characterVisual)
+        {
+            Transform visualRoot = characterVisual.Find("VisualRoot");
+            return visualRoot != null ? visualRoot : characterVisual;
+        }
+
+        private static CharacterVariant ResolveCharacterVariant(string characterObjectName)
+        {
+            switch (characterObjectName)
+            {
+                case Player2Name:
+                    return CharacterVariant.Player2;
+                case AIName:
+                    return CharacterVariant.AI;
+                default:
+                    return CharacterVariant.Player1;
+            }
         }
 
         private static void RemoveRootPrimitiveRenderer(GameObject characterObject)
@@ -544,6 +599,15 @@ namespace BubbleTown.EditorTools
             if (property != null)
             {
                 property.boolValue = value;
+            }
+        }
+
+        private static void SetFloat(SerializedObject serializedObject, string propertyName, float value)
+        {
+            SerializedProperty property = serializedObject.FindProperty(propertyName);
+            if (property != null)
+            {
+                property.floatValue = value;
             }
         }
     }
