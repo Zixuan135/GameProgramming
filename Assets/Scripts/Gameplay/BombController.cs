@@ -193,14 +193,20 @@ namespace BubbleTown.Gameplay
             for (int distance = 1; distance <= range; distance++)
             {
                 Vector2Int targetGridPosition = gridPosition + direction * distance;
-                if (!CanExplosionEnterCell(targetGridPosition))
+                if (!TryGetExplosionCell(targetGridPosition, out GridCell targetCell))
                 {
+                    break;
+                }
+
+                if (IsHardWall(targetCell))
+                {
+                    NotifyHardWallBlockedExplosion(targetGridPosition);
                     break;
                 }
 
                 SpawnExplosionCell(targetGridPosition);
 
-                if (ShouldStopPropagationAfterCell(targetGridPosition))
+                if (ShouldStopPropagationAfterCell(targetCell))
                 {
                     DestroySoftWallAt(targetGridPosition);
                     break;
@@ -215,8 +221,9 @@ namespace BubbleTown.Gameplay
             explosion.Initialize(range, owner, targetGridPosition);
         }
 
-        private bool CanExplosionEnterCell(Vector2Int targetGridPosition)
+        private bool TryGetExplosionCell(Vector2Int targetGridPosition, out GridCell cell)
         {
+            cell = null;
             if (mapManager == null)
             {
                 return false;
@@ -227,18 +234,12 @@ namespace BubbleTown.Gameplay
                 return false;
             }
 
-            GridCell cell = mapManager.GetCell(targetGridPosition);
-            return cell != null && !IsHardWall(cell);
+            cell = mapManager.GetCell(targetGridPosition);
+            return cell != null;
         }
 
-        private bool ShouldStopPropagationAfterCell(Vector2Int targetGridPosition)
+        private bool ShouldStopPropagationAfterCell(GridCell cell)
         {
-            if (mapManager == null)
-            {
-                return false;
-            }
-
-            GridCell cell = mapManager.GetCell(targetGridPosition);
             return cell == null || cell.IsSoftWall;
         }
 
@@ -250,6 +251,16 @@ namespace BubbleTown.Gameplay
             }
 
             mapManager.DestroySoftWall(targetGridPosition);
+        }
+
+        private void NotifyHardWallBlockedExplosion(Vector2Int targetGridPosition)
+        {
+            if (mapManager == null)
+            {
+                return;
+            }
+
+            mapManager.PlayHardWallBlockedFeedback(targetGridPosition, GridToWorld(gridPosition));
         }
 
         private bool IsHardWall(GridCell cell)
