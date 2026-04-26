@@ -37,6 +37,10 @@ namespace BubbleTown.Characters
         [SerializeField] protected bool disableCollidersOnDeath = true;
         [SerializeField] protected bool clearMapOccupationOnDeath = true;
 
+        [Header("Visual Facing")]
+        [SerializeField] protected bool faceMoveDirection = true;
+        [SerializeField] protected Transform visualRoot;
+
         private Vector3 moveTargetWorldPosition;
 
         public event Action<CharacterBase> Died;
@@ -133,6 +137,7 @@ namespace BubbleTown.Characters
                 return false;
             }
 
+            FaceGridDirection(gridDirection);
             BeginMoveToCurrentGridPosition();
             return true;
         }
@@ -146,6 +151,18 @@ namespace BubbleTown.Characters
         {
             moveTargetWorldPosition = GridToWorld(currentGridPosition);
             isMoving = true;
+        }
+
+        protected virtual void FaceGridDirection(Vector2Int gridDirection)
+        {
+            if (!faceMoveDirection || gridDirection == Vector2Int.zero)
+            {
+                return;
+            }
+
+            Transform facingTarget = visualRoot != null ? visualRoot : transform;
+            Vector3 worldDirection = new Vector3(gridDirection.x, 0f, gridDirection.y);
+            facingTarget.rotation = Quaternion.LookRotation(worldDirection, Vector3.up);
         }
 
         protected virtual void UpdateGridMovement()

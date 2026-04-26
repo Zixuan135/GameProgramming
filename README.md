@@ -35,8 +35,10 @@ Assets/
     BattleSceneCameraSetup.cs
     BattleScenePlayerSetup.cs
     BombPrefabSetup.cs
+    CharacterArtSetup.cs
     ExplosionPrefabSetup.cs
     ItemDropSetup.cs
+    MapArtSetup.cs
     UIFlowSceneSetup.cs
   Materials/
     BombPlaceholder.mat
@@ -44,8 +46,26 @@ Assets/
     ItemBombCountUpPlaceholder.mat
     ItemExplosionRangeUpPlaceholder.mat
     ItemMoveSpeedUpPlaceholder.mat
+    Mat_Character_AI_Accent.mat
+    Mat_Character_AI_Body.mat
+    Mat_Character_Face_Dark.mat
+    Mat_Character_Player1_Accent.mat
+    Mat_Character_Player1_Body.mat
+    Mat_Character_Player2_Accent.mat
+    Mat_Character_Player2_Body.mat
+    Mat_Character_Skin_Peach.mat
+    Mat_Tile_CandyBlue.mat
+    Mat_Tile_CheckerAccent.mat
+    Mat_Tile_GrassPastel.mat
+    Mat_Wall_Hard_Cream.mat
+    Mat_Wall_Hard_Highlight.mat
+    Mat_Wall_Hard_Shadow.mat
+    Mat_Wall_Soft_JellyBlue.mat
   Prefabs/
     Characters/
+      Character_AI_Chibi.prefab
+      Character_Player1_Chibi.prefab
+      Character_Player2_Chibi.prefab
     Environment/
     Gameplay/
       Bomb.prefab
@@ -55,6 +75,9 @@ Assets/
         Item_ExplosionRangeUp.prefab
         Item_MoveSpeedUp.prefab
     Map/
+      Tile_Ground_CandyPark.prefab
+      Wall_Hard_RoundedBlock.prefab
+      Wall_Soft_JellyCrate.prefab
     UI/
   Scenes/
     MainMenu.unity
@@ -72,6 +95,7 @@ Assets/
     Items/
     Managers/
     Map/
+      WallFeedback.cs
     UI/
       SimpleUIFactory.cs
     Utils/
@@ -91,6 +115,12 @@ ProjectSettings/
 - Prefer basic 3D objects and simple materials for early tests
 - Keep naming stable so future daily tasks can build on existing modules
 - Every iteration should have a small goal, a testable result, and a matching Git commit
+
+## 4.1 Phase 2 Visual Direction
+
+- Phase 2 focuses on turning the playable MVP into a more presentable chibi-style 3D grid battle game
+- Art direction and low-cost asset planning live in `Docs/Phase2_ArtDirection.md`
+- The project should use original cute, rounded, toy-like visuals and avoid official copyrighted characters, logos, UI, music, or exact asset recreations
 
 ## 5. Branching And Commit Strategy
 
@@ -118,7 +148,7 @@ Current scene state:
 - `MainMenu`: MVP start screen with Start Game and Quit actions
 - `ModeSelect`: MVP mode screen for `SinglePlayer`, `AIBattle`, and `LocalVS`
 - `MapSelect`: MVP map screen for `Default`, `OpenField`, and `Maze`
-- `Battle`: active gameplay scene with map, players, camera, bombs, explosions, items, AI, and a small HUD
+- `Battle`: active gameplay scene with a colorful Phase 2 map art pass, players, camera, bombs, explosions, items, AI, and a small HUD
 - `Result`: MVP result screen with win/loss text, Retry, and Main Menu actions
 
 ## 7. Core Systems Implemented So Far
@@ -207,9 +237,8 @@ Current scene state:
 - Player spawn areas reserve nearby walkable cells
 - `LocalVS` uses distant spawn positions for Player1 and Player2
 - `AIBattle` reserves a reasonable AI spawn position opposite Player1
-- The current `Battle` scene includes visible blocker test objects:
-  - `TestHardWall_3_1`
-  - `TestSoftWall_1_3`
+- The current `Battle` scene uses Phase 2 map visual prefabs under `MapRoot`
+- Logical map blocker data remains owned by `MapManager`
 
 ### Character Framework
 
@@ -226,6 +255,8 @@ Current scene state:
 - New movement input is ignored while already moving
 - Characters cannot move through hard walls, soft walls, bombs, or occupied character cells
 - Character death currently hides renderers, disables colliders, clears map occupancy, and emits a `Died` event for future result logic
+- `CharacterBase` can rotate a configured `visualRoot` toward the latest grid movement direction
+- This keeps gameplay roots grid-stable while allowing replaceable character art to show facing
 
 ### Player Input
 
@@ -237,6 +268,26 @@ Current scene state:
   - `Enter` or `RightControl` to place a bomb
 - Player2 is prepared for `LocalVS` without duplicating movement code
 - Both players reuse `CharacterBase` movement and bomb placement logic
+
+### Phase 2 Character Placeholder Art
+
+- The `Battle` scene now uses low-cost chibi-style geometry characters
+- Gameplay roots stay named `Player1`, `Player2`, and `AIPlayer`
+- Each character root owns movement, bombs, collision, and map occupancy
+- Each character root has a child visual named `CharacterVisual`
+- `CharacterVisual` is replaceable art and points to one of these prefabs:
+  - `Character_Player1_Chibi.prefab`
+  - `Character_Player2_Chibi.prefab`
+  - `Character_AI_Chibi.prefab`
+- Current visual hierarchy:
+  - character root
+  - `CharacterVisual`
+  - `VisualRoot`
+  - primitive parts such as `Head_BigRound`, `Body_RoundSuit`, `Foot_*`, `Eye_*`, and `FrontBadge_FacingMarker`
+- Player1 uses a blue/cyan body with a yellow front accent
+- Player2 uses coral/orange with yellow bow accents
+- AI uses purple with a red visor and antenna
+- `CharacterArtSetup` can regenerate these prefabs and rewire the `Battle` scene from the editor menu or batchmode
 
 ### AI
 
@@ -339,6 +390,7 @@ Basic things to verify:
 - In `AIBattle`, the AI moves around the grid, tries to avoid bomb danger, and can place bombs near soft walls or players
 - The UI flow moves from menu screens into battle and then into the result screen
 - Result screen shows the last winner/result and supports Retry/Main Menu
+- Player1, Player2, and AI use distinct chibi placeholder visuals with visible facing markers
 
 ## 9. MVP Roadmap
 
@@ -371,14 +423,19 @@ Completed or started:
 - [x] Minimal menu UI flow
 - [x] Minimal result screen
 - [x] Retry and Main Menu result actions
+- [x] Phase 2 map placeholder art pass
+- [x] Hard/soft wall explosion feedback placeholders
+- [x] Phase 2 chibi character placeholder prefabs
+- [x] Shared character visual facing support
 
 Still planned:
 
 - [ ] More complete battle rules, scoring, timers, and win conditions
 - [ ] Replace IMGUI placeholder screens with polished Canvas or UI Toolkit menus
 - [ ] More robust AI pathfinding and battle decisions
-- [ ] Better placeholder map generation visuals
-- [ ] Polished Q-style character, bomb, wall, and explosion assets
+- [ ] More complete map theme decoration outside the playable grid
+- [ ] Polished Q-style bomb, explosion, item, UI, and audio assets
+- [ ] Optional Blender/Blockbench replacement meshes for current primitive character prefabs
 - [ ] Audio, VFX, and UI polish
 
 ## 10. Notes For Future Iterations
