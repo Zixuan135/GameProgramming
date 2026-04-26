@@ -548,6 +548,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 454514864737587352}
+  - component: {fileID: 5126670233647165530}
   m_Layer: 0
   m_Name: Character_AI_Chibi
   m_TagString: Untagged
@@ -571,6 +572,31 @@ Transform:
   - {fileID: 866744140025515900}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5126670233647165530
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6413971322667951541}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ad3f8c8250d469b823aa8509429d32, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  character: {fileID: 0}
+  animatedRoot: {fileID: 866744140025515900}
+  enableIdleBob: 1
+  idleBobAmplitude: 0.028
+  idleBobSpeed: 4
+  moveBobAmplitude: 0.055
+  moveBobSpeed: 12
+  moveSwayDegrees: 5
+  moveScalePulse: 0.055
+  bombActionDuration: 0.22
+  bombSquashAmount: 0.12
+  bombHopHeight: 0.06
+  bombTiltDegrees: 6
 --- !u!1 &6646614941620506431
 GameObject:
   m_ObjectHideFlags: 0
