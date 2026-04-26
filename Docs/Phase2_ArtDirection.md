@@ -148,9 +148,13 @@ Current implementation:
 - `CharacterVisualAnimator` lives on `CharacterVisual`.
 - It animates the child `VisualRoot`, not the gameplay root.
 - `CharacterBase` exposes a `BombPlaced` event for visual-only reactions.
+- `CharacterBase` exposes `ExplosionHit` and `DeathFeedbackStarted` events for visual-only combat feedback.
 - Idle state uses a subtle vertical bob.
 - Moving state uses bounce, sway, and squash/stretch.
-- Bomb placement uses a short hop, squash, and forward tilt.
+- Bomb placement uses a more obvious hop, squash, forward tilt, small shake, and cyan glow.
+- Explosion hit uses quick shake, punch scale, and orange flash.
+- Defeat uses rise, spin, shrink, warm glow, and tiny primitive puff placeholders before renderers are hidden.
+- Death collision is disabled immediately, while renderer hiding is delayed briefly so the defeat feedback remains visible.
 
 Animator recommendation:
 
@@ -166,7 +170,8 @@ Low-cost next upgrades:
 
 - Tune per-character animation values for personality.
 - Add item pickup pop feedback.
-- Add defeat pop/spin before hiding the character.
+- Replace primitive defeat puffs with a proper VFX prefab.
+- Add short hit and defeat sound effects.
 - Replace primitive heads/bodies with one simple Blender or Blockbench mesh while keeping the same prefab names.
 
 ## 4. Map Style
@@ -464,7 +469,7 @@ Target style:
 - Items must be readable at a glance from the battle camera
 - Use simple icon-like 3D shapes
 - Each item should have a clear color identity
-- Add gentle floating/bobbing and rotation later
+- Add gentle floating/bobbing, rotation, and glow to draw attention
 
 Current item categories:
 
@@ -504,9 +509,88 @@ Recommended prefab names:
 
 Recommended material names:
 
-- `Mat_Item_BombCountUp_Cyan`
-- `Mat_Item_ExplosionRangeUp_Orange`
-- `Mat_Item_MoveSpeedUp_Green`
+- `Mat_Item_BombCount_Body_Cyan`
+- `Mat_Item_BombCount_Icon_Cream`
+- `Mat_Item_BombCount_MiniBomb_Navy`
+- `Mat_Item_Range_Body_Orange`
+- `Mat_Item_Range_Icon_Yellow`
+- `Mat_Item_Range_Spark_Pink`
+- `Mat_Item_Speed_Body_Lime`
+- `Mat_Item_Speed_Icon_White`
+- `Mat_Item_Speed_Wing_Cyan`
+- `Mat_Item_Common_Glow_Cream`
+
+## 7.1 Current Phase 2 Item Placeholder Set
+
+The current item art pass uses Unity primitives, clear color coding, and icon-like silhouettes.
+
+Current prefab set:
+
+- `Assets/Prefabs/Gameplay/Items/Item_BombCountUp.prefab`
+  - Root: `Item_BombCountUp`
+  - Component: `SphereCollider` trigger
+  - Component: kinematic `Rigidbody`
+  - Component: `ItemBase`
+  - Component: `ItemVisualAnimator`
+  - Child: `VisualRoot`
+  - Under `VisualRoot`: `Token_CyanBubble`, mini-bomb parts, plus icon cubes, and `Glow_FloorRing`
+  - Visual read: cyan bomb-count power-up
+- `Assets/Prefabs/Gameplay/Items/Item_ExplosionRangeUp.prefab`
+  - Root: `Item_ExplosionRangeUp`
+  - Component: `SphereCollider` trigger
+  - Component: kinematic `Rigidbody`
+  - Component: `ItemBase`
+  - Component: `ItemVisualAnimator`
+  - Child: `VisualRoot`
+  - Under `VisualRoot`: `Token_OrangeBurst`, yellow cross-range arms, pink spark dots, and `Glow_FloorRing`
+  - Visual read: orange/yellow explosion-range power-up
+- `Assets/Prefabs/Gameplay/Items/Item_MoveSpeedUp.prefab`
+  - Root: `Item_MoveSpeedUp`
+  - Component: `SphereCollider` trigger
+  - Component: kinematic `Rigidbody`
+  - Component: `ItemBase`
+  - Component: `ItemVisualAnimator`
+  - Child: `VisualRoot`
+  - Under `VisualRoot`: `Token_LimeCapsule`, forward arrow cubes, cyan speed wings, and `Glow_FloorRing`
+  - Visual read: lime speed power-up
+
+Current behavior:
+
+- `ItemBase` remains responsible only for pickup, map item state cleanup, and stat application.
+- `ItemVisualAnimator` owns floating, rotation, scale pulse, and emission pulse.
+- `ItemPickupFeedback` owns the pickup disappear animation and optional audio hook.
+- `CharacterPickupFeedback` owns the short collector highlight flash.
+- `BattleUI` listens for pickup events and displays a temporary text/icon-style toast.
+- The gameplay root stays stable so trigger pickup and grid state do not move around with the visual bob.
+- `ItemDropSetup` can regenerate these prefabs and rewire `Battle` from the Unity editor menu or batchmode.
+
+Pickup feedback structure:
+
+- Item root:
+  - `ItemBase`
+  - `ItemVisualAnimator`
+  - `ItemPickupFeedback`
+  - trigger collider and kinematic rigidbody
+- Character root or runtime-added component:
+  - `CharacterPickupFeedback`
+- `BattleUI`:
+  - displays text such as `[Bomb Slot +1]`, `[Range +1]`, or `[Speed Up]`
+
+Pickup feedback behavior:
+
+- The item immediately clears its logical map item state.
+- The item dispatches a pickup event for the HUD.
+- The collecting character briefly flashes with a color matching the item type.
+- The item disables its trigger collider to prevent duplicate pickup.
+- The item rises, spins, shrinks, pulses emission, and destroys itself.
+- `ItemPickupFeedback.pickupClip` is intentionally exposed but empty for now so later audio can be assigned without code changes.
+
+Low-cost next upgrades:
+
+- Add real pickup pop particles.
+- Add short pickup sounds per item type.
+- Replace cube icons with simple Blender or Blockbench meshes while keeping the same prefab names.
+- Add small HUD feedback when an item changes bomb count, explosion range, or move speed.
 
 ## 8. UI Style
 

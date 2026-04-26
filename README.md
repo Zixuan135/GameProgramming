@@ -46,6 +46,16 @@ Assets/
     ItemBombCountUpPlaceholder.mat
     ItemExplosionRangeUpPlaceholder.mat
     ItemMoveSpeedUpPlaceholder.mat
+    Mat_Item_BombCount_Body_Cyan.mat
+    Mat_Item_BombCount_Icon_Cream.mat
+    Mat_Item_BombCount_MiniBomb_Navy.mat
+    Mat_Item_Common_Glow_Cream.mat
+    Mat_Item_Range_Body_Orange.mat
+    Mat_Item_Range_Icon_Yellow.mat
+    Mat_Item_Range_Spark_Pink.mat
+    Mat_Item_Speed_Body_Lime.mat
+    Mat_Item_Speed_Icon_White.mat
+    Mat_Item_Speed_Wing_Cyan.mat
     Mat_Bomb_Body_BubbleNavy.mat
     Mat_Bomb_Fuse_Cocoa.mat
     Mat_Bomb_Highlight_Cyan.mat
@@ -101,10 +111,13 @@ Assets/
     AI/
     Camera/
     Characters/
+      CharacterPickupFeedback.cs
       CharacterVisualAnimator.cs
     Core/
     Gameplay/
     Items/
+      ItemPickupFeedback.cs
+      ItemVisualAnimator.cs
     Managers/
     Map/
       WallFeedback.cs
@@ -157,9 +170,9 @@ Build Settings scene order:
 
 Current scene state:
 
-- `MainMenu`: MVP start screen with Start Game and Quit actions
-- `ModeSelect`: MVP mode screen for `SinglePlayer`, `AIBattle`, and `LocalVS`
-- `MapSelect`: MVP map screen for `Default`, `OpenField`, and `Maze`
+- `MainMenu`: colorful chibi-style placeholder start screen with Start Game and Quit actions
+- `ModeSelect`: colorful card-based mode screen for `SinglePlayer`, `AIBattle`, and `LocalVS`
+- `MapSelect`: card-based map screen with placeholder previews for `Default`, `OpenField`, and `Maze`
 - `Battle`: active gameplay scene with a colorful Phase 2 map art pass, players, camera, bombs, explosions, items, AI, and a small HUD
 - `Result`: MVP result screen with win/loss text, Retry, and Main Menu actions
 
@@ -192,9 +205,12 @@ Current scene state:
 ### MVP UI Flow
 
 - `MainMenuUI` starts a new session or quits the application
+- `MainMenuUI` uses a candy-gradient background, bubble decorations, rounded panel, and layered buttons
 - `ModeSelectUI` stores the selected `GameMode`
-- `MapSelectUI` stores the selected `BattleMapType` and starts battle loading
+- `ModeSelectUI` presents mode choices as colorful card buttons
+- `MapSelectUI` stores the selected `BattleMapType`, shows map cards with placeholder previews, and starts battle from a dedicated Start button
 - `BattleUI` displays current mode, map, character states, and quick test buttons
+- `BattleUI` displays short pickup toast messages when items are collected
 - `ResultUI` displays the last battle result and supports Retry or returning to the main menu
 - `SceneFlowManager` owns the fixed scene flow:
   - `MainMenu -> ModeSelect -> MapSelect -> Battle -> Result`
@@ -266,10 +282,11 @@ Current scene state:
 - Characters move smoothly from one grid cell to the next
 - New movement input is ignored while already moving
 - Characters cannot move through hard walls, soft walls, bombs, or occupied character cells
-- Character death currently hides renderers, disables colliders, clears map occupancy, and emits a `Died` event for future result logic
+- Character death clears map occupancy, disables colliders immediately, plays a short defeat visual, then hides renderers
 - `CharacterBase` can rotate a configured `visualRoot` toward the latest grid movement direction
 - This keeps gameplay roots grid-stable while allowing replaceable character art to show facing
 - `CharacterBase` emits a lightweight `BombPlaced` event so visual-only scripts can react without owning gameplay logic
+- `CharacterBase` also emits `ExplosionHit` and `DeathFeedbackStarted` events for visual-only hit/defeat feedback
 
 ### Player Input
 
@@ -303,7 +320,9 @@ Current scene state:
 - `CharacterVisualAnimator` adds code-driven placeholder animation:
   - idle bob
   - movement bounce/sway
-  - simple squash, hop, and tilt when a bomb is placed
+  - stronger squash, hop, tilt, glow, and shake when a bomb is placed
+  - explosion hit shake, punch scale, and flash
+  - defeat rise, spin, shrink, glow, and small puff placeholders
 - `CharacterArtSetup` can regenerate these prefabs and rewire the `Battle` scene from the editor menu or batchmode
 
 Animator recommendation:
@@ -376,13 +395,31 @@ Animator recommendation:
 ### Items And Power-Ups
 
 - `ItemBase` handles simple pickup and stat application
+- `ItemBase` stays focused on pickup rules, stat application, map cleanup, and pickup event dispatch
 - `ItemSpawner` listens for soft wall destruction and can spawn random items
 - Soft wall item drops use a configurable probability
 - Item spawn state syncs with `MapManager.SetItem`
-- Current placeholder item prefabs:
+- `ItemVisualAnimator` adds visual-only floating, rotation, scale pulse, and emission pulse
+- `ItemPickupFeedback` adds a low-cost pickup disappear animation and an `AudioClip` hook
+- `CharacterPickupFeedback` gives the collecting character a short color-matched glow flash
+- `BattleUI` listens for `ItemBase.ItemPickedUp` and shows a temporary text/icon-style pickup toast
+- Current Phase 2 item placeholder prefabs:
   - `Item_BombCountUp`
+    - cyan bubble token with a mini-bomb and plus icon
   - `Item_ExplosionRangeUp`
+    - orange burst token with a yellow cross-range icon and pink sparks
   - `Item_MoveSpeedUp`
+    - lime capsule token with a forward arrow and cyan speed wings
+- Current item prefab structure:
+  - root item object with trigger collider, kinematic rigidbody, `ItemBase`, `ItemPickupFeedback`, and `ItemVisualAnimator`
+  - `VisualRoot`
+  - primitive token/icon/glow children
+- Pickup feedback flow:
+  - item clears map item state
+  - item dispatches a pickup event for UI
+  - character flashes briefly
+  - item disables its trigger, rises, spins, shrinks, and then destroys itself
+  - optional pickup audio can be assigned through `ItemPickupFeedback.pickupClip`
 - Current item effects:
   - increase max bomb count
   - increase explosion range
@@ -396,11 +433,12 @@ Flow:
 
 1. Click `Start Game`
 2. Choose `Single Player`, `AI Battle`, or `Local VS`
-3. Choose `Default`, `Open Field`, or `Maze`
-4. Play the `Battle` scene
-5. Defeat a character or click `Force Result`
-6. Verify the `Result` screen
-7. Use `Retry` or `Main Menu`
+3. Choose a map card: `Candy Park`, `Open Field`, or `Jelly Maze`
+4. Click `START SELECTED MAP`
+5. Play the `Battle` scene
+6. Defeat a character or click `Force Result`
+7. Verify the `Result` screen
+8. Use `Retry` or `Main Menu`
 
 You can still open the `Battle` scene directly for gameplay-system testing.
 
@@ -431,12 +469,20 @@ Basic things to verify:
 - A character hit by an explosion dies and stops responding to input
 - A bomb touched by another explosion triggers early as a chain reaction
 - Destroyed soft walls can drop placeholder items
+- Dropped items float, rotate, and use glowing color pulses
+- Picked-up items play a short disappear animation
+- The collecting character flashes with a matching item color
+- The battle HUD shows a short pickup toast such as `[Bomb Slot +1]`
 - Characters automatically pick up items and apply stat changes
 - In `AIBattle`, the AI moves around the grid, tries to avoid bomb danger, and can place bombs near soft walls or players
 - The UI flow moves from menu screens into battle and then into the result screen
+- `MainMenu` and `ModeSelect` use colorful placeholder Q-style menu visuals
+- `MapSelect` uses map cards, simple color preview blocks, selected-state feedback, and a separate start button
 - Result screen shows the last winner/result and supports Retry/Main Menu
 - Player1, Player2, and AI use distinct chibi placeholder visuals with visible facing markers
-- Characters have visible idle bob, movement bounce, and a quick bomb-placement squash/hop
+- Characters have visible idle bob, movement bounce, and a stronger bomb-placement squash/hop/glow
+- Characters shake and flash when hit by an explosion
+- Defeated characters briefly pop upward, spin/shrink, spawn tiny puffs, then disappear
 
 ## 9. MVP Roadmap
 
@@ -465,10 +511,14 @@ Completed or started:
 - [x] Bomb chain reactions
 - [x] Soft wall item drops
 - [x] Bomb count, range, and speed power-ups
+- [x] Phase 2 recognizable 3D item placeholder prefabs
+- [x] Low-cost item pickup feedback with toast, character flash, and audio hook
 - [x] Basic game mode battle setup
 - [x] Basic AI random movement
 - [x] AI danger detection and simple bomb placement
 - [x] Minimal menu UI flow
+- [x] Q-style placeholder MainMenu and ModeSelect visual pass
+- [x] Card-based MapSelect placeholder UI with map previews
 - [x] Minimal result screen
 - [x] Retry and Main Menu result actions
 - [x] Phase 2 map placeholder art pass
@@ -476,6 +526,7 @@ Completed or started:
 - [x] Phase 2 chibi character placeholder prefabs
 - [x] Shared character visual facing support
 - [x] Code-driven placeholder character animations
+- [x] Character bomb, hit, and defeat feedback polish
 
 Still planned:
 
@@ -495,5 +546,5 @@ Still planned:
 - Prefabs and editor setup scripts exist to reduce manual Unity Inspector work
 - Current result logic is intentionally simple and lives in `BattleUI`; later it can move into a dedicated battle rules/result service
 - Current UI is IMGUI-only for speed and stability; final UI should use proper prefabs, layout, styling, and navigation
-- Item visuals, pickup feedback, and balancing can be improved after the MVP loop is stable
+- Item pickup feedback and balancing can be improved after the current item visuals are stable
 - AI currently favors stability over intelligence; future work can add path scoring, target chasing, and better self-preservation
