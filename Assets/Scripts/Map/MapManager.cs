@@ -359,6 +359,27 @@ namespace BubbleTown.Map
             cell.HasBomb = false;
         }
 
+        public void PlayHardWallBlockedFeedback(Vector2Int gridPos, Vector3 explosionWorldPosition)
+        {
+            GridCell cell = GetCell(gridPos);
+            if (cell == null || !cell.IsHardWall)
+            {
+                return;
+            }
+
+            GameObject wallObject = FindMapVisualObjectAtGrid(gridPos);
+            if (wallObject == null)
+            {
+                return;
+            }
+
+            WallFeedback wallFeedback = wallObject.GetComponent<WallFeedback>();
+            if (wallFeedback != null)
+            {
+                wallFeedback.PlayHardWallBlockedFeedback(explosionWorldPosition);
+            }
+        }
+
         public bool SetItem(Vector2Int gridPos, bool hasItem)
         {
             GridCell cell = GetCell(gridPos);
@@ -402,14 +423,9 @@ namespace BubbleTown.Map
             softWallObjects.Clear();
 
             Transform root = mapVisualRoot != null ? mapVisualRoot : transform;
-            Transform[] children = root.GetComponentsInChildren<Transform>(true);
-            for (int i = 0; i < children.Length; i++)
+            for (int i = 0; i < root.childCount; i++)
             {
-                Transform child = children[i];
-                if (child == root)
-                {
-                    continue;
-                }
+                Transform child = root.GetChild(i);
 
                 Vector2Int childGridPosition = WorldToGrid(child.position);
                 GridCell cell = GetCell(childGridPosition);
@@ -440,6 +456,13 @@ namespace BubbleTown.Map
                 return;
             }
 
+            WallFeedback wallFeedback = softWallObject.GetComponent<WallFeedback>();
+            if (Application.isPlaying && wallFeedback != null)
+            {
+                wallFeedback.PlaySoftWallDestroyedFeedback();
+                return;
+            }
+
             if (Application.isPlaying)
             {
                 Destroy(softWallObject);
@@ -453,14 +476,9 @@ namespace BubbleTown.Map
         private GameObject FindMapVisualObjectAtGrid(Vector2Int gridPos)
         {
             Transform root = mapVisualRoot != null ? mapVisualRoot : transform;
-            Transform[] children = root.GetComponentsInChildren<Transform>(true);
-            for (int i = 0; i < children.Length; i++)
+            for (int i = 0; i < root.childCount; i++)
             {
-                Transform child = children[i];
-                if (child == root)
-                {
-                    continue;
-                }
+                Transform child = root.GetChild(i);
 
                 if (WorldToGrid(child.position) == gridPos)
                 {
