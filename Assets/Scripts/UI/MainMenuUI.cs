@@ -4,28 +4,33 @@ using UnityEngine;
 namespace BubbleTown.UI
 {
     /// <summary>
-    /// Main menu button callbacks and MVP placeholder layout.
+    /// Main menu button callbacks and chibi-style placeholder layout.
     /// </summary>
     public class MainMenuUI : MonoBehaviour
     {
         private void OnGUI()
         {
-            Rect panel = SimpleUIFactory.CenteredRect(560f, 420f);
+            SimpleUIFactory.DrawCandyBackground();
+
+            Rect panel = SimpleUIFactory.CenteredRect(680f, 540f);
             SimpleUIFactory.BeginPanel(panel);
+            SimpleUIFactory.LabelPill("CANDY ARENA TEST BUILD");
             SimpleUIFactory.Title("BubbleTown");
-            SimpleUIFactory.Body("A colorful 3D grid bomber MVP");
+            SimpleUIFactory.Body("A cute 3D grid battle with bubble bombs, toy blocks, and bright power-ups.");
+            SimpleUIFactory.FeatureRow("GRID ARENA", "BUBBLE BOMBS", "POWER UPS");
             SimpleUIFactory.FlexibleSpace();
 
-            if (SimpleUIFactory.Button("Start Game"))
+            if (SimpleUIFactory.PrimaryButton("START GAME"))
             {
                 OnClickStart();
             }
 
-            if (SimpleUIFactory.Button("Quit"))
+            if (SimpleUIFactory.SecondaryButton("QUIT"))
             {
                 OnClickQuit();
             }
 
+            SimpleUIFactory.SmallBody("Placeholder UI pass: IMGUI now, Canvas polish later.");
             SimpleUIFactory.EndPanel();
         }
 

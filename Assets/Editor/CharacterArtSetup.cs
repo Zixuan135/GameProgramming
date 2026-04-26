@@ -478,6 +478,9 @@ namespace BubbleTown.EditorTools
                 SetVector3(serializedCharacter, "currentWorldPosition", characterObject.transform.position);
                 SetBool(serializedCharacter, "isMoving", false);
                 SetBool(serializedCharacter, "isAlive", true);
+                SetBool(serializedCharacter, "delayDeathPresentationForFeedback", true);
+                SetFloat(serializedCharacter, "deathPresentationDelay", 0.55f);
+                SetBool(serializedCharacter, "disableCollidersImmediatelyOnDeath", true);
                 SetObjectReference(serializedCharacter, "bombSpawnRoot", bombsRoot);
                 SetObjectReference(serializedCharacter, "bombPrefab", bombPrefab);
                 SetBool(serializedCharacter, "faceMoveDirection", true);
@@ -510,10 +513,39 @@ namespace BubbleTown.EditorTools
             SetFloat(serializedAnimator, "moveBobSpeed", variant == CharacterVariant.AI ? 12f : 11f);
             SetFloat(serializedAnimator, "moveSwayDegrees", variant == CharacterVariant.AI ? 5f : 7f);
             SetFloat(serializedAnimator, "moveScalePulse", variant == CharacterVariant.AI ? 0.055f : 0.07f);
-            SetFloat(serializedAnimator, "bombActionDuration", 0.22f);
-            SetFloat(serializedAnimator, "bombSquashAmount", variant == CharacterVariant.AI ? 0.12f : 0.16f);
-            SetFloat(serializedAnimator, "bombHopHeight", variant == CharacterVariant.AI ? 0.06f : 0.08f);
-            SetFloat(serializedAnimator, "bombTiltDegrees", variant == CharacterVariant.AI ? 6f : 8f);
+            SetFloat(serializedAnimator, "bombActionDuration", variant == CharacterVariant.AI ? 0.24f : 0.28f);
+            SetFloat(serializedAnimator, "bombSquashAmount", variant == CharacterVariant.AI ? 0.16f : 0.22f);
+            SetFloat(serializedAnimator, "bombHopHeight", variant == CharacterVariant.AI ? 0.09f : 0.13f);
+            SetFloat(serializedAnimator, "bombTiltDegrees", variant == CharacterVariant.AI ? 9f : 13f);
+            SetFloat(serializedAnimator, "bombShakeDegrees", variant == CharacterVariant.AI ? 3.5f : 5f);
+            SetFloat(serializedAnimator, "hitFeedbackDuration", 0.22f);
+            SetFloat(serializedAnimator, "hitShakeAmplitude", variant == CharacterVariant.AI ? 0.065f : 0.075f);
+            SetFloat(serializedAnimator, "hitScalePunch", variant == CharacterVariant.AI ? 0.11f : 0.14f);
+            SetColor(serializedAnimator, "hitFlashColor", new Color(1f, 0.35f, 0.18f));
+            SetFloat(serializedAnimator, "defeatFeedbackDuration", 0.52f);
+            SetFloat(serializedAnimator, "defeatRiseHeight", variant == CharacterVariant.AI ? 0.18f : 0.22f);
+            SetFloat(serializedAnimator, "defeatShakeAmplitude", variant == CharacterVariant.AI ? 0.075f : 0.09f);
+            SetFloat(serializedAnimator, "defeatSpinDegrees", variant == CharacterVariant.AI ? 140f : 180f);
+            SetFloat(serializedAnimator, "defeatShrinkStart", 0.28f);
+            SetColor(serializedAnimator, "defeatFlashColor", new Color(1f, 0.72f, 0.12f));
+            SetBool(serializedAnimator, "spawnDefeatPuffs", true);
+            SetInt(serializedAnimator, "defeatPuffCount", variant == CharacterVariant.AI ? 5 : 6);
+            SetFloat(serializedAnimator, "defeatPuffDuration", 0.42f);
+            SetFloat(serializedAnimator, "defeatPuffDistance", variant == CharacterVariant.AI ? 0.38f : 0.48f);
+            SetFloat(serializedAnimator, "defeatPuffScale", variant == CharacterVariant.AI ? 0.1f : 0.12f);
+            SetFloat(serializedAnimator, "maxEmissionIntensity", 1.45f);
+
+            Renderer[] renderers = visualObject.GetComponentsInChildren<Renderer>();
+            SerializedProperty flashRenderers = serializedAnimator.FindProperty("flashRenderers");
+            if (flashRenderers != null)
+            {
+                flashRenderers.arraySize = renderers.Length;
+                for (int i = 0; i < renderers.Length; i++)
+                {
+                    flashRenderers.GetArrayElementAtIndex(i).objectReferenceValue = renderers[i];
+                }
+            }
+
             serializedAnimator.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(animator);
         }
@@ -602,12 +634,30 @@ namespace BubbleTown.EditorTools
             }
         }
 
+        private static void SetInt(SerializedObject serializedObject, string propertyName, int value)
+        {
+            SerializedProperty property = serializedObject.FindProperty(propertyName);
+            if (property != null)
+            {
+                property.intValue = value;
+            }
+        }
+
         private static void SetFloat(SerializedObject serializedObject, string propertyName, float value)
         {
             SerializedProperty property = serializedObject.FindProperty(propertyName);
             if (property != null)
             {
                 property.floatValue = value;
+            }
+        }
+
+        private static void SetColor(SerializedObject serializedObject, string propertyName, Color value)
+        {
+            SerializedProperty property = serializedObject.FindProperty(propertyName);
+            if (property != null)
+            {
+                property.colorValue = value;
             }
         }
     }

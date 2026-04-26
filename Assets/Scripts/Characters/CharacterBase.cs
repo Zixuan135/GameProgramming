@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using BubbleTown.Core;
 using BubbleTown.Core.Enums;
 using BubbleTown.Gameplay;
@@ -37,15 +38,23 @@ namespace BubbleTown.Characters
         [SerializeField] protected bool disableCollidersOnDeath = true;
         [SerializeField] protected bool clearMapOccupationOnDeath = true;
 
+        [Header("Death Feedback Timing")]
+        [SerializeField] protected bool delayDeathPresentationForFeedback = true;
+        [SerializeField, Min(0f)] protected float deathPresentationDelay = 0.55f;
+        [SerializeField] protected bool disableCollidersImmediatelyOnDeath = true;
+
         [Header("Visual Facing")]
         [SerializeField] protected bool faceMoveDirection = true;
         [SerializeField] protected Transform visualRoot;
 
         private Vector3 moveTargetWorldPosition;
+        private Coroutine delayedDeathPresentationRoutine;
 
         public event Action<CharacterBase> Died;
         public event Action<CharacterBase> StatsChanged;
         public event Action<CharacterBase> BombPlaced;
+        public event Action<CharacterBase> ExplosionHit;
+        public event Action<CharacterBase> DeathFeedbackStarted;
 
         public Vector2Int CurrentGridPosition => currentGridPosition;
         public Vector3 CurrentWorldPosition => currentWorldPosition;
@@ -404,6 +413,7 @@ namespace BubbleTown.Characters
             }
 
             Debug.Log($"[CharacterBase] {name} was hit by explosion.");
+            ExplosionHit?.Invoke(this);
             Die();
         }
 
@@ -422,8 +432,38 @@ namespace BubbleTown.Characters
                 mapManager?.ClearCharacter(currentGridPosition);
             }
 
-            ApplyDeathPresentation();
+            BeginDeathPresentation();
             OnDied();
+        }
+
+        protected virtual void BeginDeathPresentation()
+        {
+            DeathFeedbackStarted?.Invoke(this);
+
+            if (disableCollidersOnDeath && disableCollidersImmediatelyOnDeath)
+            {
+                ApplyDeathColliderPresentation();
+            }
+
+            if (delayDeathPresentationForFeedback && deathPresentationDelay > 0f)
+            {
+                if (delayedDeathPresentationRoutine != null)
+                {
+                    StopCoroutine(delayedDeathPresentationRoutine);
+                }
+
+                delayedDeathPresentationRoutine = StartCoroutine(ApplyDeathPresentationAfterDelay());
+                return;
+            }
+
+            ApplyDeathPresentation();
+        }
+
+        private IEnumerator ApplyDeathPresentationAfterDelay()
+        {
+            yield return new WaitForSeconds(deathPresentationDelay);
+            delayedDeathPresentationRoutine = null;
+            ApplyDeathPresentation();
         }
 
         protected virtual void ApplyDeathPresentation()
@@ -439,16 +479,27 @@ namespace BubbleTown.Characters
 
             if (disableCollidersOnDeath)
             {
-                Collider[] colliders = GetComponentsInChildren<Collider>();
-                for (int i = 0; i < colliders.Length; i++)
-                {
-                    colliders[i].enabled = false;
-                }
+                ApplyDeathColliderPresentation();
+            }
+        }
+
+        protected virtual void ApplyDeathColliderPresentation()
+        {
+            Collider[] colliders = GetComponentsInChildren<Collider>();
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                colliders[i].enabled = false;
             }
         }
 
         protected virtual void RestoreAlivePresentation()
         {
+            if (delayedDeathPresentationRoutine != null)
+            {
+                StopCoroutine(delayedDeathPresentationRoutine);
+                delayedDeathPresentationRoutine = null;
+            }
+
             Renderer[] renderers = GetComponentsInChildren<Renderer>();
             for (int i = 0; i < renderers.Length; i++)
             {
