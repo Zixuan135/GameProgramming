@@ -114,12 +114,14 @@ namespace BubbleTown.UI
 
         private void SelectMode(GameMode mode)
         {
+            AudioManager.Instance?.PlayButtonClickSFX();
             GameManager.Instance?.SetGameMode(mode);
             SceneFlowManager.Instance?.LoadMapSelect();
         }
 
         public void OnClickBack()
         {
+            AudioManager.Instance?.PlayButtonClickSFX();
             SceneFlowManager.Instance?.LoadMainMenu();
         }
     }
