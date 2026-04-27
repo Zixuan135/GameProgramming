@@ -3,6 +3,7 @@ using System.Collections;
 using BubbleTown.Core;
 using BubbleTown.Core.Enums;
 using BubbleTown.Gameplay;
+using BubbleTown.Managers;
 using BubbleTown.Map;
 using UnityEngine;
 
@@ -149,6 +150,7 @@ namespace BubbleTown.Characters
 
             FaceGridDirection(gridDirection);
             BeginMoveToCurrentGridPosition();
+            AudioManager.Instance?.PlayMoveSFX();
             return true;
         }
 
@@ -312,6 +314,7 @@ namespace BubbleTown.Characters
             bomb.Initialize(this, mapManager, currentGridPosition, bombRange);
             RegisterPlacedBomb();
             OnBombPlaced();
+            AudioManager.Instance?.PlayPlaceBombSFX();
             return true;
         }
 
@@ -516,6 +519,7 @@ namespace BubbleTown.Characters
         protected virtual void OnDied()
         {
             Debug.Log($"[CharacterBase] {name} died.");
+            AudioManager.Instance?.PlayCharacterDeathSFX();
             Died?.Invoke(this);
         }
     }

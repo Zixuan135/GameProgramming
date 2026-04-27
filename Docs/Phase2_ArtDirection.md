@@ -229,6 +229,27 @@ Recommended material names:
 - `Mat_Wall_Soft_JellyBlue`
 - `Mat_Wall_Soft_JellyOrange`
 
+## 4.1 Current Battle Theme: Candy Park
+
+The first complete Battle scene theme is `Candy Park`.
+
+Reference document:
+
+- `Docs/CandyPark_MapTheme.md`
+
+Current reusable map assets:
+
+- `Tile_Ground_CandyPark.prefab`
+- `Wall_Hard_RoundedBlock.prefab`
+- `Wall_Soft_JellyCrate.prefab`
+
+Theme direction:
+
+- Pastel candy grass floor tiles
+- Cream rounded hard walls
+- Blue jelly soft walls
+- Optional toy fence, lollipop tree, balloon cluster, sign board, and round bush props outside the playable grid
+
 ## 5. Hard Wall And Soft Wall Style
 
 Hard wall direction:

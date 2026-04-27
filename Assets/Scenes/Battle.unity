@@ -222,17 +222,28 @@ MonoBehaviour:
   secondaryTarget: {fileID: 619645842}
   autoFindTargets: 1
   shareCameraInLocalVS: 1
-  followOffset: {x: 0, y: 10.5, z: -8}
-  lookAtOffset: {x: 0, y: 0.25, z: 0.25}
-  focusSmoothTime: 0.12
+  frameAIInAIBattle: 0
+  targetRefreshInterval: 0.25
+  followOffset: {x: 0, y: 11.5, z: -8.5}
+  lookAtOffset: {x: 0, y: 0.2, z: 0.35}
+  focusSmoothTime: 0.1
   followSmoothTime: 0.18
-  rotationLerpSpeed: 8
-  sharedZoomOutPerCell: 0.22
-  maxSharedZoomOut: 4
+  rotationLerpSpeed: 9
+  minSharedDistanceForZoom: 2.5
+  sharedZoomOutPerCell: 0.32
+  maxSharedZoomOut: 5.5
+  zoomSmoothTime: 0.18
   controlledCamera: {fileID: 1002}
-  defaultFieldOfView: 48
-  sharedFieldOfViewBoost: 0.45
-  maxFieldOfView: 56
+  defaultFieldOfView: 50
+  minFieldOfView: 48
+  sharedFieldOfViewBoost: 0.65
+  maxFieldOfView: 62
+  lensSmoothTime: 0.18
+  enableShake: 1
+  defaultShakeDuration: 0.16
+  defaultShakeMagnitude: 0.16
+  shakeFrequency: 24
+  shakeDamping: 7
 --- !u!1 &1010
 GameObject:
   m_ObjectHideFlags: 0
@@ -408,6 +419,15 @@ MonoBehaviour:
   mapWidth: 13
   mapHeight: 11
   cellSize: 1
+  groundTilePrefab: {fileID: 5295368693561141041, guid: 54bdf907ef4d94ef99c258877ad6370e, type: 3}
+  hardWallPrefab: {fileID: 4012212207013851782, guid: 558ff38a6b93b4d58a57a02550990197, type: 3}
+  softWallPrefab: {fileID: 4636190993720481256, guid: 3343a6aed3e8a478b966aab87fe3d87f, type: 3}
+  generatedMapRoot: {fileID: 0}
+  hideSceneAuthoredVisualRoots: 1
+  generateGroundTiles: 1
+  generateWalls: 1
+  generateDecorations: 1
+  decorationOuterPadding: 1.35
 --- !u!114 &1033
 MonoBehaviour:
   m_ObjectHideFlags: 0

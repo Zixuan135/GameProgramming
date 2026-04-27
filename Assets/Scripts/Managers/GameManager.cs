@@ -212,6 +212,7 @@ namespace BubbleTown.Managers
 
             activeMapManager.SetMapType(currentMapType);
             activeMapManager.InitializeGridData();
+            activeMapManager.GenerateMap();
 
             Transform bombSpawnRoot = ResolveBombSpawnRoot();
             BombController bombPrefab = player1.BombPrefab;
