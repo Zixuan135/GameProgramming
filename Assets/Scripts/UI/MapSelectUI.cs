@@ -140,18 +140,21 @@ namespace BubbleTown.UI
 
         private void SelectMapCard(BattleMapType mapType)
         {
+            AudioManager.Instance?.PlayButtonClickSFX();
             selectedMapType = mapType;
             GameManager.Instance?.SetMapType(selectedMapType);
         }
 
         public void OnClickStartSelectedMap()
         {
+            AudioManager.Instance?.PlayButtonClickSFX();
             GameManager.Instance?.SetMapType(selectedMapType);
             SceneFlowManager.Instance?.LoadBattle();
         }
 
         public void OnClickBack()
         {
+            AudioManager.Instance?.PlayButtonClickSFX();
             SceneFlowManager.Instance?.LoadModeSelect();
         }
 

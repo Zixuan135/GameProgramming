@@ -86,6 +86,7 @@ Assets/
       Character_Player1_Chibi.prefab
       Character_Player2_Chibi.prefab
     Environment/
+      CandyPark/
     Gameplay/
       Bomb.prefab
       ExplosionCenter.prefab
@@ -119,6 +120,7 @@ Assets/
       ItemPickupFeedback.cs
       ItemVisualAnimator.cs
     Managers/
+      AudioManager.cs
     Map/
       WallFeedback.cs
     UI/
@@ -129,6 +131,8 @@ Assets/
     Sprites/
 
 Docs/
+  CandyPark_MapTheme.md
+  Phase2_ArtDirection.md
 Packages/
 ProjectSettings/
 ```
@@ -145,6 +149,7 @@ ProjectSettings/
 
 - Phase 2 focuses on turning the playable MVP into a more presentable chibi-style 3D grid battle game
 - Art direction and low-cost asset planning live in `Docs/Phase2_ArtDirection.md`
+- The first implemented Battle scene theme is `Candy Park`, documented in `Docs/CandyPark_MapTheme.md`
 - The project should use original cute, rounded, toy-like visuals and avoid official copyrighted characters, logos, UI, music, or exact asset recreations
 
 ## 5. Branching And Commit Strategy
@@ -173,8 +178,8 @@ Current scene state:
 - `MainMenu`: colorful chibi-style placeholder start screen with Start Game and Quit actions
 - `ModeSelect`: colorful card-based mode screen for `SinglePlayer`, `AIBattle`, and `LocalVS`
 - `MapSelect`: card-based map screen with placeholder previews for `Default`, `OpenField`, and `Maze`
-- `Battle`: active gameplay scene with a colorful Phase 2 map art pass, players, camera, bombs, explosions, items, AI, and a small HUD
-- `Result`: MVP result screen with win/loss text, Retry, and Main Menu actions
+- `Battle`: active gameplay scene with a runtime-generated Candy Park map theme, players, camera, bombs, explosions, items, AI, key SFX hooks, and a fuller HUD
+- `Result`: colorful result screen with outcome, mode, map, winner, score placeholder, star reward placeholder, Retry, and Main Menu actions
 
 ## 7. Core Systems Implemented So Far
 
@@ -209,9 +214,11 @@ Current scene state:
 - `ModeSelectUI` stores the selected `GameMode`
 - `ModeSelectUI` presents mode choices as colorful card buttons
 - `MapSelectUI` stores the selected `BattleMapType`, shows map cards with placeholder previews, and starts battle from a dedicated Start button
-- `BattleUI` displays current mode, map, character states, and quick test buttons
+- `BattleUI` displays current mode, map, timer, character states, bomb/range/speed ability values, and quick test buttons
+- `BattleUI` shows a `READY / GO!` opening prompt and a battle result prompt before loading `Result`
 - `BattleUI` displays short pickup toast messages when items are collected
-- `ResultUI` displays the last battle result and supports Retry or returning to the main menu
+- `ResultUI` displays the last battle result, mode, map, winner, placeholder score, placeholder candy coin reward, and star rating
+- `ResultUI` supports Retry or returning to the main menu
 - `SceneFlowManager` owns the fixed scene flow:
   - `MainMenu -> ModeSelect -> MapSelect -> Battle -> Result`
 - `UIFlowSceneSetup` can rewire all MVP UI scene controllers from the Unity editor or batchmode
@@ -226,6 +233,7 @@ Current scene state:
   - `LocalVS`: enables Player1 and Player2
 - Player and AI spawn positions are resolved through `MapManager`
 - Runtime character setup reuses the same map, bomb root, and bomb prefab references
+- `GameManager` asks `MapManager` to rebuild the selected map visuals after applying battle setup data
 
 ### Result Flow
 
@@ -234,6 +242,7 @@ Current scene state:
 - `AIBattle`: Player1 defeat is a loss, AI defeat is a victory, simultaneous defeat is a draw
 - `LocalVS`: Player1 or Player2 defeat awards the round to the other player, simultaneous defeat is a draw
 - The `Battle` HUD includes a `Force Result` button for quickly testing the result scene
+- `ResultUI` presents a colorful result card with placeholder face icon, score, candy coin reward, and star rating
 - `ResultUI` supports Retry and Main Menu actions
 
 ### Map And Grid Data
@@ -258,6 +267,8 @@ Current scene state:
   - `GridToWorld`
 - The map is grid-based logically while remaining 3D visually
 - Movement and bomb logic operate on the XZ plane
+- `MapGenerator` now generates Candy Park visuals from the current `MapManager` grid data
+- Generated soft wall visuals are registered back into `MapManager` so destruction feedback and item drops remain synchronized
 
 ### Map Rules
 
@@ -267,6 +278,30 @@ Current scene state:
 - `AIBattle` reserves a reasonable AI spawn position opposite Player1
 - The current `Battle` scene uses Phase 2 map visual prefabs under `MapRoot`
 - Logical map blocker data remains owned by `MapManager`
+- `BattleMapType.Default` uses the Candy Park visual direction
+- `BattleMapType.OpenField` and `BattleMapType.Maze` use different lightweight logical wall-density patterns while reusing the current Candy Park visual theme
+
+### Candy Park Runtime Map Theme
+
+- `Candy Park` is the first implemented Battle scene theme
+- Theme documentation lives in `Docs/CandyPark_MapTheme.md`
+- Runtime generation creates:
+  - `GeneratedMap_CandyPark`
+  - `GroundRoot`
+  - `HardWallRoot`
+  - `SoftWallRoot`
+  - `DecorationRoot`
+- Generated gameplay visuals use:
+  - `Tile_Ground_CandyPark.prefab`
+  - `Wall_Hard_RoundedBlock.prefab`
+  - `Wall_Soft_JellyCrate.prefab`
+- Generated decorations are low-cost primitive props placed outside the playable grid:
+  - candy fence lines
+  - lollipop trees
+  - balloon cluster
+  - round bush
+  - Candy Park sign board
+- Scene-authored fallback roots such as `Ground_CandyParkBoard` and `WallVisualsRoot` remain in the scene, but are hidden at runtime to avoid duplicate map visuals
 
 ### Character Framework
 
@@ -354,8 +389,12 @@ Animator recommendation:
 
 - `CameraController` provides an angled 3D overhead / light third-person style view
 - The camera follows Player1 by default
-- In `LocalVS`, the current design supports a shared camera that can frame both players
-- The first camera pass favors grid readability over cinematic movement
+- In `LocalVS`, the shared camera frames both players by focusing between them
+- The camera smoothly zooms out and increases FOV when LocalVS players move farther apart
+- `AIBattle` currently keeps Player1 readability first; optional AI framing can be enabled later
+- `CameraController.ShakeActiveCamera(duration, magnitude)` provides a lightweight screen shake interface
+- Bomb explosions call the camera shake interface for a small impact effect
+- The camera pass favors grid readability over cinematic movement
 
 ### Bombs And Explosions
 
@@ -391,6 +430,7 @@ Animator recommendation:
 - Explosion cells can kill characters by calling `CharacterBase.OnHitByExplosion`
 - Explosion cells can trigger nearby bombs early, enabling chain reactions
 - Chain reactions are guarded against duplicate explosions and duplicate occupancy cleanup
+- Bomb explosions can trigger light camera shake
 
 ### Items And Power-Ups
 
@@ -425,6 +465,28 @@ Animator recommendation:
   - increase explosion range
   - increase movement speed
 
+### Audio
+
+- `AudioManager` provides the first shared audio system structure
+- Supports separate BGM and SFX sources
+- Can auto-play scene BGM when clips are assigned:
+  - menu BGM for `MainMenu`, `ModeSelect`, and `MapSelect`
+  - battle BGM for `Battle`
+  - result BGM for `Result`
+- Key SFX events are wired through placeholder-safe interfaces:
+  - move
+  - place bomb
+  - explosion
+  - item pickup
+  - UI button click
+  - character death
+  - victory
+  - defeat
+- If no clips are assigned, all audio calls safely do nothing
+- Recommended clip folders:
+  - `Assets/Audio/BGM`
+  - `Assets/Audio/SFX`
+
 ## 8. Current Test Controls
 
 For the full MVP loop, open `MainMenu` and press Play.
@@ -455,6 +517,8 @@ Player2:
 
 Basic things to verify:
 
+- `Battle` creates `GeneratedMap_CandyPark` at runtime
+- Candy Park ground, hard walls, soft walls, and edge decorations appear in the Battle scene
 - Player movement stays on the grid
 - Movement is smooth between cells
 - Hard walls and soft walls block movement
@@ -483,6 +547,11 @@ Basic things to verify:
 - Characters have visible idle bob, movement bounce, and a stronger bomb-placement squash/hop/glow
 - Characters shake and flash when hit by an explosion
 - Defeated characters briefly pop upward, spin/shrink, spawn tiny puffs, then disappear
+- The Battle HUD shows `READY / GO!`, mode, map, timer, player state, and ability values
+- In `LocalVS`, the shared camera keeps both players visible and zooms out as they separate
+- Bomb explosions create a light camera shake
+- Result screen shows outcome, mode, map, winner, placeholder score, placeholder reward, and star rating
+- If AudioClips are assigned, button clicks, bomb placement, explosions, item pickups, character death, and victory/defeat SFX should play
 
 ## 9. MVP Roadmap
 
@@ -522,22 +591,30 @@ Completed or started:
 - [x] Minimal result screen
 - [x] Retry and Main Menu result actions
 - [x] Phase 2 map placeholder art pass
+- [x] Runtime Candy Park map theme generation
 - [x] Hard/soft wall explosion feedback placeholders
 - [x] Phase 2 chibi character placeholder prefabs
 - [x] Shared character visual facing support
 - [x] Code-driven placeholder character animations
 - [x] Character bomb, hit, and defeat feedback polish
+- [x] Fuller Battle HUD with timer, mode, player state, abilities, Ready/Go, result prompt, and pickup toast
+- [x] Fuller Result UI with outcome, mode, map, score placeholder, star reward placeholder, Retry, and Main Menu
+- [x] Basic AudioManager with BGM/SFX sources and key event hooks
+- [x] Key SFX event wiring for bombs, explosions, item pickup, UI buttons, character death, and results
+- [x] Improved battle camera with LocalVS shared framing, distance-based zoom, FOV adjustment, and shake interface
 
 Still planned:
 
 - [ ] More complete battle rules, scoring, timers, and win conditions
 - [ ] Replace IMGUI placeholder screens with polished Canvas or UI Toolkit menus
 - [ ] More robust AI pathfinding and battle decisions
-- [ ] More complete map theme decoration outside the playable grid
+- [ ] Replace runtime primitive Candy Park decorations with reusable prop prefabs
+- [ ] Add more map theme variants beyond Candy Park
 - [ ] Polished Q-style bomb, explosion, item, UI, and audio assets
+- [ ] Add real BGM/SFX clips and tune volume/mix settings
 - [ ] Optional Blender/Blockbench replacement meshes for current primitive character prefabs
 - [ ] Animator-based character animation once real character meshes or rigs exist
-- [ ] Audio, VFX, and UI polish
+- [ ] Additional VFX and UI polish
 
 ## 10. Notes For Future Iterations
 
@@ -546,5 +623,8 @@ Still planned:
 - Prefabs and editor setup scripts exist to reduce manual Unity Inspector work
 - Current result logic is intentionally simple and lives in `BattleUI`; later it can move into a dedicated battle rules/result service
 - Current UI is IMGUI-only for speed and stability; final UI should use proper prefabs, layout, styling, and navigation
+- Current Candy Park map visuals are generated from `MapManager` grid data; later prop prefabs can replace the primitive generated decorations
+- Current score, reward, and star values are placeholder presentation data; later they should come from a dedicated battle result data model
+- Audio hooks are wired, but final clips and mix tuning are still pending
 - Item pickup feedback and balancing can be improved after the current item visuals are stable
 - AI currently favors stability over intelligence; future work can add path scoring, target chasing, and better self-preservation

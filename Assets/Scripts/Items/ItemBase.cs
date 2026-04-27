@@ -2,6 +2,7 @@ using System;
 using BubbleTown.Characters;
 using BubbleTown.Core;
 using BubbleTown.Core.Enums;
+using BubbleTown.Managers;
 using BubbleTown.Map;
 using UnityEngine;
 
@@ -140,6 +141,7 @@ namespace BubbleTown.Items
         {
             ClearMapItemState();
             Debug.Log($"[ItemBase] {character.name} picked up {itemType}.");
+            AudioManager.Instance?.PlayItemPickupSFX();
             ItemPickedUp?.Invoke(character, this);
             PlayCharacterPickupFeedback(character);
 

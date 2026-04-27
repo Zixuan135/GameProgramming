@@ -1,5 +1,7 @@
 using BubbleTown.Characters;
+using BubbleTown.CameraSystem;
 using BubbleTown.Core;
+using BubbleTown.Managers;
 using BubbleTown.Map;
 using UnityEngine;
 
@@ -42,6 +44,11 @@ namespace BubbleTown.Gameplay
         [SerializeField] private float remainingFuseSeconds;
         [SerializeField] private bool isCountingDown;
         [SerializeField] private bool triggeredByChainExplosion;
+
+        [Header("Camera Feedback")]
+        [SerializeField] private bool shakeCameraOnExplosion = true;
+        [SerializeField, Min(0f)] private float explosionCameraShakeDuration = 0.16f;
+        [SerializeField, Min(0f)] private float explosionCameraShakeMagnitude = 0.16f;
 
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
 
@@ -181,6 +188,8 @@ namespace BubbleTown.Gameplay
             remainingFuseSeconds = 0f;
             ResetCountdownVisualFeedback();
             ReleaseGridOccupation();
+            AudioManager.Instance?.PlayExplosionSFX();
+            PlayExplosionCameraFeedback();
             SpawnExplosion();
             NotifyOwnerBombEnded();
             Destroy(gameObject);
@@ -308,6 +317,16 @@ namespace BubbleTown.Gameplay
             }
 
             mapManager.PlayHardWallBlockedFeedback(targetGridPosition, GridToWorld(gridPosition));
+        }
+
+        private void PlayExplosionCameraFeedback()
+        {
+            if (!shakeCameraOnExplosion)
+            {
+                return;
+            }
+
+            CameraController.ShakeActiveCamera(explosionCameraShakeDuration, explosionCameraShakeMagnitude);
         }
 
         private bool IsHardWall(GridCell cell)
