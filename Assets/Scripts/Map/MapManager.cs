@@ -49,8 +49,8 @@ namespace BubbleTown.Map
 
         private void Start()
         {
-            RebuildSoftWallObjectLookup();
             GenerateMap();
+            RebuildSoftWallObjectLookup();
         }
 
         public void SetMapType(BattleMapType mapType)
@@ -92,10 +92,78 @@ namespace BubbleTown.Map
         {
             ApplyHardWallBorder();
             ApplyInitialBlockingCells();
+            ApplySelectedMapLayout();
             ResolveSpawnPointsByMode();
             ReserveSpawnArea(player1SpawnGrid);
             ReserveSpawnArea(player2SpawnGrid);
             ReserveSpawnArea(aiSpawnGrid);
+        }
+
+        private void ApplySelectedMapLayout()
+        {
+            switch (selectedMapType)
+            {
+                case BattleMapType.OpenField:
+                    ApplyOpenFieldLayout();
+                    break;
+                case BattleMapType.Maze:
+                    ApplyMazeLayout();
+                    break;
+                default:
+                    ApplyCandyParkLayout();
+                    break;
+            }
+        }
+
+        private void ApplyCandyParkLayout()
+        {
+            ApplyClassicHardWallPillars();
+            ApplyPatternedSoftWalls(3, 1);
+        }
+
+        private void ApplyOpenFieldLayout()
+        {
+            ApplyPatternedSoftWalls(5, 2);
+        }
+
+        private void ApplyMazeLayout()
+        {
+            ApplyClassicHardWallPillars();
+            ApplyPatternedSoftWalls(2, 0);
+        }
+
+        private void ApplyClassicHardWallPillars()
+        {
+            for (int x = 2; x < mapWidth - 2; x += 2)
+            {
+                for (int y = 2; y < mapHeight - 2; y += 2)
+                {
+                    SetHardWall(new Vector2Int(x, y), true);
+                }
+            }
+        }
+
+        private void ApplyPatternedSoftWalls(int interval, int offset)
+        {
+            int safeInterval = Mathf.Max(2, interval);
+            for (int x = 1; x < mapWidth - 1; x++)
+            {
+                for (int y = 1; y < mapHeight - 1; y++)
+                {
+                    Vector2Int gridPosition = new Vector2Int(x, y);
+                    GridCell cell = GetCell(gridPosition);
+                    if (cell == null || cell.IsHardWall)
+                    {
+                        continue;
+                    }
+
+                    int patternValue = x * 7 + y * 11 + offset;
+                    if (patternValue % safeInterval == 0)
+                    {
+                        SetSoftWall(gridPosition, true);
+                    }
+                }
+            }
         }
 
         private void ApplyHardWallBorder()
@@ -423,16 +491,30 @@ namespace BubbleTown.Map
             softWallObjects.Clear();
 
             Transform root = mapVisualRoot != null ? mapVisualRoot : transform;
+            RebuildSoftWallObjectLookupRecursive(root);
+            if (mapGenerator != null && mapGenerator.GeneratedMapRoot != null && mapGenerator.GeneratedMapRoot != root)
+            {
+                RebuildSoftWallObjectLookupRecursive(mapGenerator.GeneratedMapRoot);
+            }
+        }
+
+        private void RebuildSoftWallObjectLookupRecursive(Transform root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            Vector2Int rootGridPosition = WorldToGrid(root.position);
+            GridCell rootCell = GetCell(rootGridPosition);
+            if (rootCell != null && rootCell.IsSoftWall && IsSoftWallVisualObject(root.gameObject))
+            {
+                RegisterSoftWallObject(rootGridPosition, root.gameObject);
+            }
+
             for (int i = 0; i < root.childCount; i++)
             {
-                Transform child = root.GetChild(i);
-
-                Vector2Int childGridPosition = WorldToGrid(child.position);
-                GridCell cell = GetCell(childGridPosition);
-                if (cell != null && cell.IsSoftWall)
-                {
-                    RegisterSoftWallObject(childGridPosition, child.gameObject);
-                }
+                RebuildSoftWallObjectLookupRecursive(root.GetChild(i));
             }
         }
 
@@ -475,18 +557,53 @@ namespace BubbleTown.Map
 
         private GameObject FindMapVisualObjectAtGrid(Vector2Int gridPos)
         {
+            if (mapGenerator != null && mapGenerator.GeneratedMapRoot != null)
+            {
+                GameObject generatedObject = FindMapVisualObjectAtGridRecursive(mapGenerator.GeneratedMapRoot, gridPos);
+                if (generatedObject != null)
+                {
+                    return generatedObject;
+                }
+            }
+
             Transform root = mapVisualRoot != null ? mapVisualRoot : transform;
+            return FindMapVisualObjectAtGridRecursive(root, gridPos);
+        }
+
+        private GameObject FindMapVisualObjectAtGridRecursive(Transform root, Vector2Int gridPos)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+
+            if (WorldToGrid(root.position) == gridPos && IsWallVisualObject(root.gameObject))
+            {
+                return root.gameObject;
+            }
+
             for (int i = 0; i < root.childCount; i++)
             {
-                Transform child = root.GetChild(i);
-
-                if (WorldToGrid(child.position) == gridPos)
+                GameObject childMatch = FindMapVisualObjectAtGridRecursive(root.GetChild(i), gridPos);
+                if (childMatch != null)
                 {
-                    return child.gameObject;
+                    return childMatch;
                 }
             }
 
             return null;
+        }
+
+        private bool IsWallVisualObject(GameObject visualObject)
+        {
+            return visualObject != null &&
+                   (visualObject.GetComponent<WallFeedback>() != null || visualObject.name.StartsWith("Wall_"));
+        }
+
+        private bool IsSoftWallVisualObject(GameObject visualObject)
+        {
+            return visualObject != null &&
+                   (visualObject.name.StartsWith("Wall_Soft") || visualObject.GetComponent<WallFeedback>() != null);
         }
 
         public void GenerateMap()
@@ -496,7 +613,8 @@ namespace BubbleTown.Map
                 return;
             }
 
-            mapGenerator.Generate(selectedMapType);
+            mapGenerator.Generate(selectedMapType, this);
+            RebuildSoftWallObjectLookup();
         }
 
         public void ClearMap()

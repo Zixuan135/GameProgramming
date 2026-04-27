@@ -36,12 +36,14 @@ namespace BubbleTown.UI
 
         public void OnClickStart()
         {
+            AudioManager.Instance?.PlayButtonClickSFX();
             GameManager.Instance?.ResetSessionData();
             SceneFlowManager.Instance?.LoadModeSelect();
         }
 
         public void OnClickQuit()
         {
+            AudioManager.Instance?.PlayButtonClickSFX();
             Debug.Log("[MainMenuUI] Quit requested.");
             Application.Quit();
         }
