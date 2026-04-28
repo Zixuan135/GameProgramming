@@ -27,6 +27,8 @@ namespace BubbleTown.Characters
         [SerializeField] protected float moveSpeed = GameConstants.DefaultMoveSpeed;
         [SerializeField, Min(1)] protected int maxBombCount = GameConstants.DefaultBombCount;
         [SerializeField] protected int bombRange = GameConstants.DefaultBombRange;
+        [SerializeField, Min(0)] protected int shieldCharges;
+        [SerializeField, Min(1)] protected int maxShieldCharges = GameConstants.DefaultMaxShieldCharges;
 
         [Header("Bomb")]
         [SerializeField] protected BombController bombPrefab;
@@ -75,6 +77,9 @@ namespace BubbleTown.Characters
         public int CurrentBombCount => activeBombCount;
         public int RemainingBombCount => Mathf.Max(0, maxBombCount - activeBombCount);
         public int BombRange => bombRange;
+        public int ShieldCharges => shieldCharges;
+        public int MaxShieldCharges => maxShieldCharges;
+        public bool HasShield => shieldCharges > 0;
         public MapManager MapManager => mapManager;
         public BombController BombPrefab => bombPrefab;
         public Transform BombSpawnRoot => bombSpawnRoot;
@@ -240,6 +245,7 @@ namespace BubbleTown.Characters
             activeBombCount = 0;
             isAlive = true;
             isMoving = false;
+            shieldCharges = 0;
             ClearInvincibility();
             RestoreAlivePresentation();
 
@@ -385,11 +391,24 @@ namespace BubbleTown.Characters
             SetBombRange(bombRange + delta);
         }
 
+        public virtual void SetShieldCharges(int newShieldCharges)
+        {
+            shieldCharges = Mathf.Clamp(newShieldCharges, 0, Mathf.Max(1, maxShieldCharges));
+            NotifyStatsChanged();
+        }
+
+        public virtual void ApplyShieldChargesModifier(int delta)
+        {
+            SetShieldCharges(shieldCharges + delta);
+        }
+
         public virtual bool ApplyItemEffect(
             ItemType itemType,
             int bombCountDelta,
             int explosionRangeDelta,
-            float moveSpeedDelta)
+            float moveSpeedDelta,
+            int shieldChargesDelta = GameConstants.DefaultItemShieldChargesDelta,
+            float invincibleSeconds = GameConstants.DefaultItemInvincibleSeconds)
         {
             if (!isAlive)
             {
@@ -406,6 +425,12 @@ namespace BubbleTown.Characters
                     return true;
                 case ItemType.MoveSpeedUp:
                     ApplyMoveSpeedModifier(moveSpeedDelta);
+                    return true;
+                case ItemType.Shield:
+                    ApplyShieldChargesModifier(shieldChargesDelta);
+                    return true;
+                case ItemType.TemporaryInvincible:
+                    SetInvincible(invincibleSeconds);
                     return true;
                 default:
                     return false;
@@ -434,6 +459,15 @@ namespace BubbleTown.Characters
                 return;
             }
 
+            if (shieldCharges > 0)
+            {
+                shieldCharges = Mathf.Max(0, shieldCharges - 1);
+                NotifyStatsChanged();
+                Debug.Log($"[CharacterBase] {name} blocked explosion hit with shield. Remaining shields: {shieldCharges}");
+                ExplosionHit?.Invoke(this);
+                return;
+            }
+
             Debug.Log($"[CharacterBase] {name} was hit by explosion.");
             ExplosionHit?.Invoke(this);
             Die();
@@ -443,12 +477,14 @@ namespace BubbleTown.Characters
         {
             invincibleSecondsRemaining = Mathf.Max(0f, seconds);
             isInvincible = invincibleSecondsRemaining > 0f;
+            NotifyStatsChanged();
         }
 
         public virtual void ClearInvincibility()
         {
             invincibleSecondsRemaining = 0f;
             isInvincible = false;
+            NotifyStatsChanged();
         }
 
         protected virtual void TickInvincibility()
@@ -462,6 +498,7 @@ namespace BubbleTown.Characters
             if (invincibleSecondsRemaining <= 0f)
             {
                 isInvincible = false;
+                NotifyStatsChanged();
             }
         }
 

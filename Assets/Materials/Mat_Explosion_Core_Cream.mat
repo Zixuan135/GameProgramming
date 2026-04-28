@@ -20,7 +20,7 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
-  m_LockedProperties: 
+  m_LockedProperties:
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -67,7 +67,7 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _GlossMapScale: 1
-    - _Glossiness: 0.25
+    - _Glossiness: 0.38
     - _GlossyReflections: 1
     - _Metallic: 0
     - _Mode: 0
@@ -79,6 +79,6 @@ Material:
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 1, g: 0.84, b: 0.42, a: 1}
-    - _EmissionColor: {r: 1, g: 0.55, b: 0.08, a: 1}
+    - _Color: {r: 1, g: 0.9490196, b: 0.8, a: 1}
+    - _EmissionColor: {r: 1, g: 0.5411765, b: 0.11764706, a: 1}
   m_BuildTextureStacks: []

@@ -189,11 +189,17 @@ namespace BubbleTown.UI
         private static bool CartoonButton(Rect rect, string text, Color normalColor, Color hoverColor, Color activeColor, Color textColor)
         {
             EnsureStyles();
+            Matrix4x4 previousMatrix = GUI.matrix;
+            float scale = ResolveInteractiveScale(rect, 1.026f, 0.965f);
+            ApplyScaleAround(rect, scale);
+
             Rect shadowRect = new Rect(rect.x + 4f, rect.y + 6f, rect.width, rect.height);
             DrawRoundedRect(shadowRect, new Color(0.05f, 0.28f, 0.38f, 0.35f), new Color(0.05f, 0.28f, 0.38f, 0.35f), 18, 0);
 
             GUIStyle style = GetButtonStyle(normalColor, hoverColor, activeColor, textColor);
-            return GUI.Button(rect, text, style);
+            bool clicked = GUI.Button(rect, text, style);
+            GUI.matrix = previousMatrix;
+            return clicked;
         }
 
         private static bool DrawModeCard(Rect rect, string title, string tag, string description, Color accentColor)
@@ -201,6 +207,8 @@ namespace BubbleTown.UI
             bool isHovering = rect.Contains(Event.current.mousePosition);
             Color cardFill = isHovering ? new Color(1f, 0.98f, 0.83f, 1f) : new Color(1f, 0.94f, 0.72f, 1f);
             Color border = Color.Lerp(accentColor, Color.white, 0.25f);
+            Matrix4x4 previousMatrix = GUI.matrix;
+            ApplyScaleAround(rect, ResolveInteractiveScale(rect, 1.018f, 0.972f));
 
             DrawRoundedRect(new Rect(rect.x + 4f, rect.y + 7f, rect.width, rect.height), PanelShadow, PanelShadow, 20, 0);
             DrawRoundedRect(rect, cardFill, border, 20, 3);
@@ -213,6 +221,7 @@ namespace BubbleTown.UI
             GUI.Label(new Rect(rect.x + 14f, rect.y + 112f, rect.width - 28f, 34f), title, cardTitleStyle);
             GUI.Label(new Rect(rect.x + 20f, rect.y + 148f, rect.width - 40f, 52f), description, cardBodyStyle);
 
+            GUI.matrix = previousMatrix;
             return GUI.Button(rect, GUIContent.none, invisibleButtonStyle);
         }
 
@@ -234,6 +243,8 @@ namespace BubbleTown.UI
                 : isHovering ? new Color(1f, 0.96f, 0.78f, 1f) : new Color(1f, 0.92f, 0.66f, 1f);
             Color border = isSelected ? accentColor : Color.Lerp(accentColor, Color.white, 0.35f);
             int borderSize = isSelected ? 5 : 3;
+            Matrix4x4 previousMatrix = GUI.matrix;
+            ApplyScaleAround(rect, ResolveInteractiveScale(rect, 1.015f, 0.974f));
 
             DrawRoundedRect(new Rect(rect.x + 5f, rect.y + 8f, rect.width, rect.height), PanelShadow, PanelShadow, 20, 0);
             DrawRoundedRect(rect, cardFill, border, 20, borderSize);
@@ -254,7 +265,37 @@ namespace BubbleTown.UI
             GUI.Label(tagRect, tag, cardTagStyle);
             GUI.Label(new Rect(rect.x + 18f, rect.y + 180f, rect.width - 36f, 42f), description, cardBodyStyle);
 
+            GUI.matrix = previousMatrix;
             return GUI.Button(rect, GUIContent.none, invisibleButtonStyle);
+        }
+
+        private static float ResolveInteractiveScale(Rect rect, float hoverScale, float pressScale)
+        {
+            Event currentEvent = Event.current;
+            bool isHovering = currentEvent != null && rect.Contains(currentEvent.mousePosition);
+            if (!isHovering)
+            {
+                return 1f;
+            }
+
+            bool isPressing = currentEvent.type == EventType.MouseDown || currentEvent.type == EventType.MouseDrag;
+            if (isPressing)
+            {
+                return pressScale;
+            }
+
+            float pulse = Mathf.Sin(Time.unscaledTime * 11f) * 0.004f;
+            return hoverScale + pulse;
+        }
+
+        private static void ApplyScaleAround(Rect rect, float scale)
+        {
+            if (Mathf.Approximately(scale, 1f))
+            {
+                return;
+            }
+
+            GUIUtility.ScaleAroundPivot(new Vector2(scale, scale), rect.center);
         }
 
         private static void DrawMapPreview(Rect rect, Color groundColor, Color blockColor, Color pathColor, Color accentColor, MapPreviewPattern previewPattern)

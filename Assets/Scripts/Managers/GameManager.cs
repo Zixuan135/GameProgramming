@@ -69,6 +69,13 @@ namespace BubbleTown.Managers
         [SerializeField] private string lastLocalVsRoundWinner = "None";
         [SerializeField] private bool localVsMatchInProgress;
 
+        [Header("Single Player Objective")]
+        [SerializeField] private bool enableSinglePlayerSoftWallObjective = true;
+        [SerializeField, Min(1)] private int singlePlayerSoftWallTarget = GameConstants.DefaultSinglePlayerSoftWallTarget;
+        [SerializeField, Min(0)] private int activeSinglePlayerSoftWallTarget;
+        [SerializeField, Min(0)] private int singlePlayerSoftWallsCleared;
+        [SerializeField] private bool singlePlayerObjectiveComplete;
+
         [Header("Runtime References")]
         [SerializeField] private MapManager activeMapManager;
         [SerializeField] private PlayerController player1;
@@ -79,6 +86,7 @@ namespace BubbleTown.Managers
         private int lastBattleSetupSceneHandle;
         private GameMode lastBattleSetupMode;
         private BattleMapType lastBattleSetupMapType;
+        private MapManager subscribedSinglePlayerObjectiveMapManager;
 
         public GameMode CurrentGameMode => currentGameMode;
         public BattleMapType CurrentMapType => currentMapType;
@@ -99,6 +107,12 @@ namespace BubbleTown.Managers
         public string LastLocalVsRoundWinner => lastLocalVsRoundWinner;
         public bool IsLocalVsMatchInProgress => localVsMatchInProgress;
         public string LocalVsScoreLabel => $"P1 {localVsPlayer1Score} - {localVsPlayer2Score} P2";
+        public bool IsSinglePlayerObjectiveEnabled => currentGameMode == GameMode.SinglePlayer && enableSinglePlayerSoftWallObjective;
+        public int SinglePlayerSoftWallTarget => Mathf.Max(0, activeSinglePlayerSoftWallTarget);
+        public int SinglePlayerSoftWallsCleared => singlePlayerSoftWallsCleared;
+        public bool IsSinglePlayerObjectiveComplete => IsSinglePlayerObjectiveEnabled && singlePlayerObjectiveComplete;
+        public string SinglePlayerObjectiveLabel => "Clear Soft Walls";
+        public string SinglePlayerObjectiveProgressLabel => $"{singlePlayerSoftWallsCleared}/{SinglePlayerSoftWallTarget}";
 
         private void Awake()
         {
@@ -128,6 +142,7 @@ namespace BubbleTown.Managers
         private void OnDisable()
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
+            UnsubscribeSinglePlayerObjectiveMap();
         }
 
         private void OnApplicationQuit()
@@ -137,6 +152,7 @@ namespace BubbleTown.Managers
 
         public void SetGameMode(GameMode mode)
         {
+            ResetSinglePlayerObjective();
             ResetLocalVsMatch();
             currentGameMode = mode;
         }
@@ -190,6 +206,7 @@ namespace BubbleTown.Managers
             player2 = null;
             aiPlayer = null;
             hasBattleSetupSnapshot = false;
+            ResetSinglePlayerObjective();
             ResetLocalVsMatch();
             ClearBattleResult();
         }
@@ -338,6 +355,7 @@ namespace BubbleTown.Managers
             activeMapManager.SetMapType(currentMapType);
             activeMapManager.InitializeGridData();
             activeMapManager.GenerateMap();
+            ConfigureSinglePlayerObjective();
 
             Transform bombSpawnRoot = ResolveBombSpawnRoot();
             BombController bombPrefab = player1.BombPrefab;
@@ -352,6 +370,71 @@ namespace BubbleTown.Managers
             {
                 Debug.Log($"[GameManager] Battle prepared. Mode: {currentGameMode}, Map: {currentMapType}");
             }
+        }
+
+        private void ConfigureSinglePlayerObjective()
+        {
+            ResetSinglePlayerObjective();
+
+            if (!IsSinglePlayerObjectiveEnabled || activeMapManager == null)
+            {
+                return;
+            }
+
+            int availableSoftWalls = activeMapManager.CountSoftWalls();
+            activeSinglePlayerSoftWallTarget = availableSoftWalls > 0
+                ? Mathf.Clamp(singlePlayerSoftWallTarget, 1, availableSoftWalls)
+                : 0;
+
+            if (activeSinglePlayerSoftWallTarget <= 0)
+            {
+                singlePlayerObjectiveComplete = true;
+                return;
+            }
+
+            subscribedSinglePlayerObjectiveMapManager = activeMapManager;
+            subscribedSinglePlayerObjectiveMapManager.SoftWallDestroyed += HandleSinglePlayerSoftWallDestroyed;
+
+            if (logBattleSetup)
+            {
+                Debug.Log($"[GameManager] SinglePlayer objective prepared. Clear {activeSinglePlayerSoftWallTarget} soft walls.");
+            }
+        }
+
+        private void ResetSinglePlayerObjective()
+        {
+            UnsubscribeSinglePlayerObjectiveMap();
+            activeSinglePlayerSoftWallTarget = 0;
+            singlePlayerSoftWallsCleared = 0;
+            singlePlayerObjectiveComplete = false;
+        }
+
+        private void HandleSinglePlayerSoftWallDestroyed(Vector2Int gridPosition)
+        {
+            if (!IsSinglePlayerObjectiveEnabled || singlePlayerObjectiveComplete || currentGameState == GameState.BattleFinished)
+            {
+                return;
+            }
+
+            singlePlayerSoftWallsCleared = Mathf.Min(SinglePlayerSoftWallTarget, singlePlayerSoftWallsCleared + 1);
+            singlePlayerObjectiveComplete = SinglePlayerSoftWallTarget > 0 &&
+                                            singlePlayerSoftWallsCleared >= SinglePlayerSoftWallTarget;
+
+            if (logBattleSetup)
+            {
+                Debug.Log($"[GameManager] SinglePlayer objective progress: {SinglePlayerObjectiveProgressLabel} at {gridPosition}");
+            }
+        }
+
+        private void UnsubscribeSinglePlayerObjectiveMap()
+        {
+            if (subscribedSinglePlayerObjectiveMapManager == null)
+            {
+                return;
+            }
+
+            subscribedSinglePlayerObjectiveMapManager.SoftWallDestroyed -= HandleSinglePlayerSoftWallDestroyed;
+            subscribedSinglePlayerObjectiveMapManager = null;
         }
 
         private bool IsCurrentBattleSetupAlreadyApplied()
@@ -391,6 +474,11 @@ namespace BubbleTown.Managers
 
         private void UpdateGameStateForScene(string sceneName)
         {
+            if (sceneName != GameConstants.SceneBattle)
+            {
+                ResetSinglePlayerObjective();
+            }
+
             switch (sceneName)
             {
                 case GameConstants.SceneMainMenu:

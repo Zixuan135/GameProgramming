@@ -464,6 +464,29 @@ namespace BubbleTown.Map
         public Vector2Int GetPlayer2SpawnGrid() => player2SpawnGrid;
         public Vector2Int GetAISpawnGrid() => aiSpawnGrid;
 
+        public int CountSoftWalls()
+        {
+            if (grid == null)
+            {
+                return 0;
+            }
+
+            int count = 0;
+            for (int x = 0; x < mapWidth; x++)
+            {
+                for (int y = 0; y < mapHeight; y++)
+                {
+                    GridCell cell = grid[x, y];
+                    if (cell != null && cell.IsSoftWall)
+                    {
+                        count++;
+                    }
+                }
+            }
+
+            return count;
+        }
+
         public Vector2Int WorldToGrid(Vector3 worldPosition)
         {
             int x = Mathf.RoundToInt(worldPosition.x / cellSize);
