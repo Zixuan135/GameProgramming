@@ -60,6 +60,15 @@ namespace BubbleTown.Managers
         [SerializeField] private bool createAIIfMissing = true;
         [SerializeField] private bool logBattleSetup = true;
 
+        [Header("Local VS Match")]
+        [SerializeField] private bool enableLocalVsBestOf3 = true;
+        [SerializeField, Min(1)] private int localVsTargetScore = 2;
+        [SerializeField, Min(1)] private int localVsRoundNumber = 1;
+        [SerializeField, Min(0)] private int localVsPlayer1Score;
+        [SerializeField, Min(0)] private int localVsPlayer2Score;
+        [SerializeField] private string lastLocalVsRoundWinner = "None";
+        [SerializeField] private bool localVsMatchInProgress;
+
         [Header("Runtime References")]
         [SerializeField] private MapManager activeMapManager;
         [SerializeField] private PlayerController player1;
@@ -82,6 +91,14 @@ namespace BubbleTown.Managers
         public PlayerController Player1 => player1;
         public PlayerController Player2 => player2;
         public AIController AIPlayer => aiPlayer;
+        public bool EnableLocalVsBestOf3 => enableLocalVsBestOf3;
+        public int LocalVsTargetScore => Mathf.Max(1, localVsTargetScore);
+        public int LocalVsRoundNumber => Mathf.Max(1, localVsRoundNumber);
+        public int LocalVsPlayer1Score => localVsPlayer1Score;
+        public int LocalVsPlayer2Score => localVsPlayer2Score;
+        public string LastLocalVsRoundWinner => lastLocalVsRoundWinner;
+        public bool IsLocalVsMatchInProgress => localVsMatchInProgress;
+        public string LocalVsScoreLabel => $"P1 {localVsPlayer1Score} - {localVsPlayer2Score} P2";
 
         private void Awake()
         {
@@ -120,6 +137,7 @@ namespace BubbleTown.Managers
 
         public void SetGameMode(GameMode mode)
         {
+            ResetLocalVsMatch();
             currentGameMode = mode;
         }
 
@@ -137,9 +155,18 @@ namespace BubbleTown.Managers
         {
             ClearBattleResult();
             currentGameState = GameState.BattlePreparing;
+            if (currentGameMode == GameMode.LocalVS)
+            {
+                EnsureLocalVsMatchStarted();
+            }
+            else
+            {
+                ResetLocalVsMatch();
+            }
 
             if (SceneManager.GetActiveScene().name == GameConstants.SceneBattle)
             {
+                hasBattleSetupSnapshot = false;
                 SetupBattleForCurrentMode();
                 return;
             }
@@ -163,6 +190,7 @@ namespace BubbleTown.Managers
             player2 = null;
             aiPlayer = null;
             hasBattleSetupSnapshot = false;
+            ResetLocalVsMatch();
             ClearBattleResult();
         }
 
@@ -185,12 +213,109 @@ namespace BubbleTown.Managers
             }
         }
 
+        public void StartBattleRound(float spawnProtectionSeconds)
+        {
+            if (currentGameState == GameState.BattleFinished)
+            {
+                return;
+            }
+
+            ApplySpawnProtectionToActiveCharacters(spawnProtectionSeconds);
+            currentGameState = GameState.BattleRunning;
+
+            if (logBattleSetup)
+            {
+                Debug.Log($"[GameManager] Battle round started. Opening protection: {Mathf.Max(0f, spawnProtectionSeconds):0.00}s");
+            }
+        }
+
         public void ClearBattleResult()
         {
             hasBattleResult = false;
             lastResultTitle = "No Result Yet";
             lastResultDetail = "Start a battle to create a result.";
             lastResultWinner = "None";
+        }
+
+        public void ResetLocalVsMatch()
+        {
+            localVsPlayer1Score = 0;
+            localVsPlayer2Score = 0;
+            localVsRoundNumber = 1;
+            lastLocalVsRoundWinner = "None";
+            localVsMatchInProgress = false;
+        }
+
+        public void EnsureLocalVsMatchStarted()
+        {
+            if (currentGameMode != GameMode.LocalVS || localVsMatchInProgress)
+            {
+                return;
+            }
+
+            localVsPlayer1Score = 0;
+            localVsPlayer2Score = 0;
+            localVsRoundNumber = 1;
+            lastLocalVsRoundWinner = "None";
+            localVsMatchInProgress = true;
+        }
+
+        public bool RegisterLocalVsRoundResult(string roundWinner)
+        {
+            EnsureLocalVsMatchStarted();
+
+            lastLocalVsRoundWinner = string.IsNullOrEmpty(roundWinner) ? "None" : roundWinner;
+            if (lastLocalVsRoundWinner == "Player1")
+            {
+                localVsPlayer1Score++;
+            }
+            else if (lastLocalVsRoundWinner == "Player2")
+            {
+                localVsPlayer2Score++;
+            }
+
+            bool matchComplete = IsLocalVsMatchComplete();
+            if (matchComplete)
+            {
+                localVsMatchInProgress = false;
+            }
+            else
+            {
+                localVsRoundNumber++;
+            }
+
+            if (logBattleSetup)
+            {
+                Debug.Log($"[GameManager] Local VS round result. Winner: {lastLocalVsRoundWinner}, Score: {LocalVsScoreLabel}, Round: {localVsRoundNumber}, MatchComplete: {matchComplete}");
+            }
+
+            return matchComplete;
+        }
+
+        public bool IsLocalVsMatchComplete()
+        {
+            if (!enableLocalVsBestOf3)
+            {
+                return lastLocalVsRoundWinner == "Player1" || lastLocalVsRoundWinner == "Player2";
+            }
+
+            int targetScore = LocalVsTargetScore;
+            return localVsPlayer1Score >= targetScore || localVsPlayer2Score >= targetScore;
+        }
+
+        public string ResolveLocalVsMatchWinner()
+        {
+            if (localVsPlayer1Score > localVsPlayer2Score)
+            {
+                return "Player1";
+            }
+
+            if (localVsPlayer2Score > localVsPlayer1Score)
+            {
+                return "Player2";
+            }
+
+            return "None";
         }
 
         public void SetupBattleForCurrentMode()
@@ -221,17 +346,19 @@ namespace BubbleTown.Managers
             SetupPlayer2(bombSpawnRoot, bombPrefab);
             SetupAIPlayer(bombSpawnRoot, bombPrefab);
 
-            currentGameState = GameState.BattleRunning;
+            currentGameState = GameState.BattlePreparing;
             StoreBattleSetupSnapshot();
             if (logBattleSetup)
             {
-                Debug.Log($"[GameManager] Battle ready. Mode: {currentGameMode}, Map: {currentMapType}");
+                Debug.Log($"[GameManager] Battle prepared. Mode: {currentGameMode}, Map: {currentMapType}");
             }
         }
 
         private bool IsCurrentBattleSetupAlreadyApplied()
         {
-            return currentGameState == GameState.BattleRunning &&
+            bool isBattleSetupState = currentGameState == GameState.BattlePreparing ||
+                                      currentGameState == GameState.BattleRunning;
+            return isBattleSetupState &&
                    hasBattleSetupSnapshot &&
                    lastBattleSetupSceneHandle == SceneManager.GetActiveScene().handle &&
                    lastBattleSetupMode == currentGameMode &&
@@ -398,6 +525,24 @@ namespace BubbleTown.Managers
                 activeMapManager.GetAISpawnGrid(),
                 bombSpawnRoot,
                 bombPrefab);
+        }
+
+        private void ApplySpawnProtectionToActiveCharacters(float protectionSeconds)
+        {
+            float resolvedProtectionSeconds = Mathf.Max(0f, protectionSeconds);
+            ApplySpawnProtection(player1, resolvedProtectionSeconds);
+            ApplySpawnProtection(player2, resolvedProtectionSeconds);
+            ApplySpawnProtection(aiPlayer, resolvedProtectionSeconds);
+        }
+
+        private void ApplySpawnProtection(CharacterBase character, float protectionSeconds)
+        {
+            if (character == null || !character.gameObject.activeInHierarchy)
+            {
+                return;
+            }
+
+            character.SetInvincible(protectionSeconds);
         }
 
         private AIController EnsureAIPlayer()

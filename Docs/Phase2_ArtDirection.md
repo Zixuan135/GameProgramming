@@ -250,6 +250,65 @@ Theme direction:
 - Blue jelly soft walls
 - Optional toy fence, lollipop tree, balloon cluster, sign board, and round bush props outside the playable grid
 
+## 4.2 Current Battle Theme: Jelly Maze
+
+The second Battle scene theme is `Jelly Maze`.
+
+Reference document:
+
+- `Docs/JellyMaze_MapTheme.md`
+
+Current runtime map selection:
+
+- `BattleMapType.Maze` uses the Jelly Maze visual direction.
+- `BattleMapType.Default` and `BattleMapType.OpenField` continue using the Candy Park visual direction.
+
+Theme direction:
+
+- Dark violet jelly-lab floor tiles
+- Cyan glowing route insets
+- Violet glass hard walls
+- Magenta jelly soft walls
+- Neon gate lines, crystal clusters, glow tubes, and signal beacons outside the playable grid
+
+Low-cost asset direction:
+
+- Current version is generated from Unity primitives at runtime.
+- Recommended future prefabs live under `Assets/Prefabs/Environment/JellyMaze`.
+- Later map-piece prefabs can be named `Tile_Ground_JellyMaze`, `Wall_Hard_JellyMaze_GlassBlock`, and `Wall_Soft_JellyMaze_EnergyCube`.
+
+## 4.3 Current Environment Decoration Direction
+
+Reference document:
+
+- `Docs/EnvironmentDecorationGuide.md`
+
+Decoration principles:
+
+- Keep decoration outside playable grid cells.
+- Prefer clear corner and edge props over visual noise near the center of the board.
+- Use static props for stable theme identity.
+- Use small code-driven motion only for ambience props such as lamps, balloons, glow orbs, and beacons.
+
+Current Candy Park additions:
+
+- Small trees
+- Toy barrels
+- Candy lamps
+- Background clouds
+
+Current Jelly Maze additions:
+
+- Energy barrels
+- Floating glow orbs
+- Hologram sign
+- Data towers
+
+Implementation note:
+
+- `EnvironmentDecorationAnimator` owns bob, spin, and scale-pulse motion for visual-only props.
+- Decoration objects are generated under `DecorationRoot` and are not registered with `MapManager`.
+
 ## 5. Hard Wall And Soft Wall Style
 
 Hard wall direction:
@@ -646,12 +705,16 @@ Battle HUD direction:
 
 - Keep it small and readable
 - Show mode, player state, bomb count, range, maybe timer later
+- Show a clear `READY -> GO!` round opening prompt
+- Use a short `SAFE` HUD state for spawn protection at the start of combat
+- In `LocalVS`, show round number and placeholder Best of 3 score clearly enough for couch play
 - Avoid covering the play area
 
 Result direction:
 
 - Large result title
 - Winner name
+- In `LocalVS`, show final `P1 X - Y P2` score
 - Retry and Main Menu buttons
 - Later: stats such as time, defeated players, items collected
 

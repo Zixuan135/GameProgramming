@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using BubbleTown.Characters;
+using BubbleTown.Core.Enums;
 using BubbleTown.Gameplay;
+using BubbleTown.Managers;
 using BubbleTown.Map;
 using UnityEngine;
 
@@ -71,6 +73,11 @@ namespace BubbleTown.AI
                 return;
             }
 
+            if (!CanActDuringBattle())
+            {
+                return;
+            }
+
             currentCellDangerous = enableDangerAvoidance && IsGridDangerous(CurrentGridPosition);
             UpdateBombDecision();
             UpdateMovementDecision();
@@ -84,6 +91,12 @@ namespace BubbleTown.AI
         {
             base.ConfigureForBattle(newMapManager, spawnGridPosition, newBombSpawnRoot, newBombPrefab);
             ResetAIState();
+        }
+
+        private bool CanActDuringBattle()
+        {
+            GameManager gameManager = GameManager.Instance;
+            return gameManager == null || gameManager.CurrentGameState == GameState.BattleRunning;
         }
 
         private void UpdateMovementDecision()
