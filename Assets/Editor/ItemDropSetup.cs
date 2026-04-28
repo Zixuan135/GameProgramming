@@ -15,7 +15,7 @@ namespace BubbleTown.EditorTools
     {
         private const string BattleScenePath = "Assets/Scenes/Battle.unity";
         private const string ItemPrefabFolder = "Assets/Prefabs/Gameplay/Items";
-        private const string MaterialFolder = "Assets/Materials";
+        private const string MaterialFolder = "Assets/Materials/Gameplay/Items";
 
         private const string BombCountPrefabPath = ItemPrefabFolder + "/Item_BombCountUp.prefab";
         private const string ExplosionRangePrefabPath = ItemPrefabFolder + "/Item_ExplosionRangeUp.prefab";
@@ -69,6 +69,8 @@ namespace BubbleTown.EditorTools
         private static void EnsureFolders()
         {
             EnsureFolder("Assets", "Materials");
+            EnsureFolder("Assets/Materials", "Gameplay");
+            EnsureFolder("Assets/Materials/Gameplay", "Items");
             EnsureFolder("Assets/Prefabs", "Gameplay");
             EnsureFolder("Assets/Prefabs/Gameplay", "Items");
         }
