@@ -21,8 +21,12 @@ namespace BubbleTown.Core
         public const int DefaultItemBombCountDelta = 1;
         public const int DefaultItemExplosionRangeDelta = 1;
         public const float DefaultItemMoveSpeedDelta = 0.5f;
+        public const int DefaultItemShieldChargesDelta = 1;
+        public const int DefaultMaxShieldCharges = 3;
+        public const float DefaultItemInvincibleSeconds = 4f;
         public const float DefaultItemDropChance = 0.3f;
         public const float DefaultItemSpawnHeight = 0.35f;
+        public const int DefaultSinglePlayerSoftWallTarget = 8;
 
         public const string SceneMainMenu = "MainMenu";
         public const string SceneModeSelect = "ModeSelect";
