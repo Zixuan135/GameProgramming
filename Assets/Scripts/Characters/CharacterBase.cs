@@ -39,6 +39,11 @@ namespace BubbleTown.Characters
         [SerializeField] protected bool disableCollidersOnDeath = true;
         [SerializeField] protected bool clearMapOccupationOnDeath = true;
 
+        [Header("Opening Protection")]
+        [SerializeField] protected bool isInvincible;
+        [SerializeField, Min(0f)] protected float invincibleSecondsRemaining;
+        [SerializeField] protected bool logProtectedExplosionHits = true;
+
         [Header("Death Feedback Timing")]
         [SerializeField] protected bool delayDeathPresentationForFeedback = true;
         [SerializeField, Min(0f)] protected float deathPresentationDelay = 0.55f;
@@ -63,6 +68,8 @@ namespace BubbleTown.Characters
         public float MoveSpeed => moveSpeed;
         public bool IsMoving => isMoving;
         public bool IsAlive => isAlive;
+        public bool IsInvincible => isInvincible;
+        public float InvincibleSecondsRemaining => invincibleSecondsRemaining;
         public int MaxBombCount => maxBombCount;
         public int ActiveBombCount => activeBombCount;
         public int CurrentBombCount => activeBombCount;
@@ -91,6 +98,7 @@ namespace BubbleTown.Characters
                 return;
             }
 
+            TickInvincibility();
             UpdateGridMovement();
         }
 
@@ -232,6 +240,7 @@ namespace BubbleTown.Characters
             activeBombCount = 0;
             isAlive = true;
             isMoving = false;
+            ClearInvincibility();
             RestoreAlivePresentation();
 
             currentGridPosition = spawnGridPosition;
@@ -415,9 +424,45 @@ namespace BubbleTown.Characters
                 return;
             }
 
+            if (isInvincible)
+            {
+                if (logProtectedExplosionHits)
+                {
+                    Debug.Log($"[CharacterBase] {name} ignored explosion hit during opening protection.");
+                }
+
+                return;
+            }
+
             Debug.Log($"[CharacterBase] {name} was hit by explosion.");
             ExplosionHit?.Invoke(this);
             Die();
+        }
+
+        public virtual void SetInvincible(float seconds)
+        {
+            invincibleSecondsRemaining = Mathf.Max(0f, seconds);
+            isInvincible = invincibleSecondsRemaining > 0f;
+        }
+
+        public virtual void ClearInvincibility()
+        {
+            invincibleSecondsRemaining = 0f;
+            isInvincible = false;
+        }
+
+        protected virtual void TickInvincibility()
+        {
+            if (!isInvincible)
+            {
+                return;
+            }
+
+            invincibleSecondsRemaining = Mathf.Max(0f, invincibleSecondsRemaining - Time.deltaTime);
+            if (invincibleSecondsRemaining <= 0f)
+            {
+                isInvincible = false;
+            }
         }
 
         public virtual void Die()

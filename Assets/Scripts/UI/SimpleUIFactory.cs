@@ -9,6 +9,13 @@ namespace BubbleTown.UI
     /// </summary>
     public static class SimpleUIFactory
     {
+        public enum MapPreviewPattern
+        {
+            Balanced,
+            Open,
+            Maze
+        }
+
         private const int TextureSize = 64;
 
         private static GUIStyle titleStyle;
@@ -166,11 +173,12 @@ namespace BubbleTown.UI
             Color groundColor,
             Color blockColor,
             Color pathColor,
-            bool isSelected)
+            bool isSelected,
+            MapPreviewPattern previewPattern = MapPreviewPattern.Balanced)
         {
             EnsureStyles();
             Rect rect = GUILayoutUtility.GetRect(190f, 230f, GUILayout.ExpandWidth(true));
-            return DrawMapCard(rect, title, tag, description, accentColor, groundColor, blockColor, pathColor, isSelected);
+            return DrawMapCard(rect, title, tag, description, accentColor, groundColor, blockColor, pathColor, isSelected, previewPattern);
         }
 
         public static void FlexibleSpace()
@@ -217,7 +225,8 @@ namespace BubbleTown.UI
             Color groundColor,
             Color blockColor,
             Color pathColor,
-            bool isSelected)
+            bool isSelected,
+            MapPreviewPattern previewPattern)
         {
             bool isHovering = rect.Contains(Event.current.mousePosition);
             Color cardFill = isSelected
@@ -230,7 +239,7 @@ namespace BubbleTown.UI
             DrawRoundedRect(rect, cardFill, border, 20, borderSize);
 
             Rect previewRect = new Rect(rect.x + 16f, rect.y + 18f, rect.width - 32f, 96f);
-            DrawMapPreview(previewRect, groundColor, blockColor, pathColor, accentColor);
+            DrawMapPreview(previewRect, groundColor, blockColor, pathColor, accentColor, previewPattern);
 
             Rect selectedPill = new Rect(rect.x + rect.width - 86f, rect.y + 14f, 68f, 26f);
             if (isSelected)
@@ -248,12 +257,12 @@ namespace BubbleTown.UI
             return GUI.Button(rect, GUIContent.none, invisibleButtonStyle);
         }
 
-        private static void DrawMapPreview(Rect rect, Color groundColor, Color blockColor, Color pathColor, Color accentColor)
+        private static void DrawMapPreview(Rect rect, Color groundColor, Color blockColor, Color pathColor, Color accentColor, MapPreviewPattern previewPattern)
         {
             DrawRoundedRect(rect, groundColor, Color.white, 14, 2);
 
             int columns = 5;
-            int rows = 3;
+            int rows = 4;
             float cellGap = 5f;
             float cellWidth = (rect.width - 24f - cellGap * (columns - 1)) / columns;
             float cellHeight = (rect.height - 22f - cellGap * (rows - 1)) / rows;
@@ -263,9 +272,9 @@ namespace BubbleTown.UI
             {
                 for (int x = 0; x < columns; x++)
                 {
-                    bool edge = x == 0 || y == 0 || x == columns - 1 || y == rows - 1;
-                    bool checker = (x + y) % 2 == 0;
-                    Color cellColor = edge ? blockColor : checker ? pathColor : groundColor;
+                    bool blocked = IsPreviewBlockCell(x, y, columns, rows, previewPattern);
+                    bool path = IsPreviewPathCell(x, y, columns, rows, previewPattern);
+                    Color cellColor = blocked ? blockColor : path ? pathColor : groundColor;
                     Rect cellRect = new Rect(
                         start.x + x * (cellWidth + cellGap),
                         start.y + y * (cellHeight + cellGap),
@@ -275,7 +284,42 @@ namespace BubbleTown.UI
                 }
             }
 
+            if (previewPattern == MapPreviewPattern.Maze)
+            {
+                Rect glowPath = new Rect(rect.x + 18f, rect.y + rect.height * 0.5f - 4f, rect.width - 36f, 8f);
+                DrawRoundedRect(glowPath, new Color(accentColor.r, accentColor.g, accentColor.b, 0.45f), Color.clear, 5, 0);
+            }
+
             DrawBubble(new Rect(rect.x + rect.width - 34f, rect.y + rect.height - 34f, 26f, 26f), new Color(accentColor.r, accentColor.g, accentColor.b, 0.55f));
+        }
+
+        private static bool IsPreviewBlockCell(int x, int y, int columns, int rows, MapPreviewPattern previewPattern)
+        {
+            bool edge = x == 0 || y == 0 || x == columns - 1 || y == rows - 1;
+            switch (previewPattern)
+            {
+                case MapPreviewPattern.Open:
+                    return edge && (x + y) % 2 == 0;
+                case MapPreviewPattern.Maze:
+                    bool doorway = (x == 1 && y == 0) || (x == 3 && y == rows - 1);
+                    bool mazeDivider = (x == 2 && y == 1) || (x == 1 && y == 2) || (x == 3 && y == 2);
+                    return (edge && !doorway) || mazeDivider;
+                default:
+                    return edge;
+            }
+        }
+
+        private static bool IsPreviewPathCell(int x, int y, int columns, int rows, MapPreviewPattern previewPattern)
+        {
+            switch (previewPattern)
+            {
+                case MapPreviewPattern.Open:
+                    return !IsPreviewBlockCell(x, y, columns, rows, previewPattern);
+                case MapPreviewPattern.Maze:
+                    return (x == 1 && y <= 1) || (x == 3 && y >= 2) || (x == 2 && y == 2);
+                default:
+                    return (x + y) % 2 == 0;
+            }
         }
 
         private static void DrawFeaturePill(string text, int index)

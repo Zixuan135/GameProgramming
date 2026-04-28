@@ -39,6 +39,11 @@ namespace BubbleTown.Characters
                 return;
             }
 
+            if (!CanAcceptBattleInput())
+            {
+                return;
+            }
+
             HandleMovementInput();
             HandleBombInput();
         }
@@ -70,6 +75,12 @@ namespace BubbleTown.Characters
             }
 
             return GameManager.Instance.CurrentGameMode == GameMode.LocalVS;
+        }
+
+        private bool CanAcceptBattleInput()
+        {
+            GameManager gameManager = GameManager.Instance;
+            return gameManager == null || gameManager.CurrentGameState == GameState.BattleRunning;
         }
 
         private Vector2Int ReadMoveInput()
