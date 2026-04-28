@@ -1,508 +1,57 @@
-# BubbleTown (Unity 3D)
+# BubbleTown
 
-A colorful chibi-style 3D Bomberman-inspired game built with Unity and C#.
+BubbleTown is a colorful chibi-style 3D Bomberman-inspired Unity game prototype.
 
-The project is developed through small daily iterations: keep the architecture stable, commit frequently, and grow from a playable MVP into a fuller local battle game.
+The project is developed through small daily iterations: keep the architecture stable, commit frequently, and grow from a playable MVP into a more polished local battle game.
 
-## 1. Project Goals
+## Current Status
 
-- Build a grid-based 3D Bomberman-style game on the XZ plane
-- Use a cute, colorful, placeholder-first visual style during MVP development
-- Support three game modes: `SinglePlayer`, `AIBattle`, and `LocalVS`
-- Keep the scene flow clear: `MainMenu -> ModeSelect -> MapSelect -> Battle -> Result`
-- Prioritize small, testable GitHub commits over large all-at-once feature drops
+- Engine: Unity 2022.3 LTS
+- Language: C#
+- View: 3D angled overhead / light third-person camera
+- Core style: cute, colorful, low-cost placeholder art first
+- Main flow: `MainMenu -> ModeSelect -> MapSelect -> Battle -> Result`
+- Current branch workflow: develop on `local`, merge stable work into `main`
 
-## 2. Tech Stack
+## Playable Modes
 
-- Unity 2022.3 LTS style project layout
-- C# gameplay scripts
-- Git + GitHub for daily iteration and pull requests
-- Placeholder geometry, materials, and prefabs before final art/VFX/audio
+- `SinglePlayer`: Player1 test mode
+- `AIBattle`: Player1 vs simple AI
+- `LocalVS`: Player1 vs Player2 on one keyboard
+- `LocalVS` currently supports a basic Best of 3 structure
+- LocalVS score is shown in Battle and final score is shown on Result
 
-## 3. Current Folder Structure
+## Core Features
 
-```text
-Assets/
-  Art/
-    Models/
-    Sprites/
-    Textures/
-    VFX/
-  Audio/
-    BGM/
-    SFX/
-  Editor/
-    BattleSceneCameraSetup.cs
-    BattleScenePlayerSetup.cs
-    BombPrefabSetup.cs
-    CharacterArtSetup.cs
-    ExplosionPrefabSetup.cs
-    ItemDropSetup.cs
-    MapArtSetup.cs
-    UIFlowSceneSetup.cs
-  Materials/
-    BombPlaceholder.mat
-    ExplosionCenterPlaceholder.mat
-    ItemBombCountUpPlaceholder.mat
-    ItemExplosionRangeUpPlaceholder.mat
-    ItemMoveSpeedUpPlaceholder.mat
-    Mat_Item_BombCount_Body_Cyan.mat
-    Mat_Item_BombCount_Icon_Cream.mat
-    Mat_Item_BombCount_MiniBomb_Navy.mat
-    Mat_Item_Common_Glow_Cream.mat
-    Mat_Item_Range_Body_Orange.mat
-    Mat_Item_Range_Icon_Yellow.mat
-    Mat_Item_Range_Spark_Pink.mat
-    Mat_Item_Speed_Body_Lime.mat
-    Mat_Item_Speed_Icon_White.mat
-    Mat_Item_Speed_Wing_Cyan.mat
-    Mat_Bomb_Body_BubbleNavy.mat
-    Mat_Bomb_Fuse_Cocoa.mat
-    Mat_Bomb_Highlight_Cyan.mat
-    Mat_Bomb_Spark_Yellow.mat
-    Mat_Bomb_TopCap_Cream.mat
-    Mat_Character_AI_Accent.mat
-    Mat_Character_AI_Body.mat
-    Mat_Character_Face_Dark.mat
-    Mat_Character_Player1_Accent.mat
-    Mat_Character_Player1_Body.mat
-    Mat_Character_Player2_Accent.mat
-    Mat_Character_Player2_Body.mat
-    Mat_Character_Skin_Peach.mat
-    Mat_Explosion_Arm_Orange.mat
-    Mat_Explosion_Bubble_Cyan.mat
-    Mat_Explosion_Core_Cream.mat
-    Mat_Explosion_Spark_Pink.mat
-    Mat_Tile_CandyBlue.mat
-    Mat_Tile_CheckerAccent.mat
-    Mat_Tile_GrassPastel.mat
-    Mat_Wall_Hard_Cream.mat
-    Mat_Wall_Hard_Highlight.mat
-    Mat_Wall_Hard_Shadow.mat
-    Mat_Wall_Soft_JellyBlue.mat
-  Prefabs/
-    Characters/
-      Character_AI_Chibi.prefab
-      Character_Player1_Chibi.prefab
-      Character_Player2_Chibi.prefab
-    Environment/
-      CandyPark/
-    Gameplay/
-      Bomb.prefab
-      ExplosionCenter.prefab
-      ExplosionHorizontal.prefab
-      ExplosionVertical.prefab
-      Items/
-        Item_BombCountUp.prefab
-        Item_ExplosionRangeUp.prefab
-        Item_MoveSpeedUp.prefab
-    Map/
-      Tile_Ground_CandyPark.prefab
-      Wall_Hard_RoundedBlock.prefab
-      Wall_Soft_JellyCrate.prefab
-    UI/
-  Scenes/
-    MainMenu.unity
-    ModeSelect.unity
-    MapSelect.unity
-    Battle.unity
-    Result.unity
-  ScriptableObjects/
-  Scripts/
-    AI/
-    Camera/
-    Characters/
-      CharacterPickupFeedback.cs
-      CharacterVisualAnimator.cs
-    Core/
-    Gameplay/
-    Items/
-      ItemPickupFeedback.cs
-      ItemVisualAnimator.cs
-    Managers/
-      AudioManager.cs
-    Map/
-      WallFeedback.cs
-    UI/
-      SimpleUIFactory.cs
-    Utils/
-  UI/
-    Fonts/
-    Sprites/
+- Grid-based movement on the XZ plane
+- Player1 movement with `WASD`
+- Player2 movement with arrow keys
+- Bomb placement with per-character bomb count limits
+- Bomb countdown, cross-shaped explosion propagation, and chain reactions
+- Hard walls block explosions
+- Soft walls break, stop explosion propagation, and can drop items
+- Items can increase bomb count, explosion range, or movement speed
+- Characters can die from explosions
+- Battle opening flow with `READY -> GO!`
+- Short spawn protection at round start
+- Basic AI movement, danger detection, and bomb placement
 
-Docs/
-  CandyPark_MapTheme.md
-  Phase2_ArtDirection.md
-Packages/
-ProjectSettings/
-```
+## Current Presentation
 
-## 4. Development Conventions
+- Runtime map themes:
+  - `Candy Park`
+  - `Jelly Maze`
+- MapSelect uses themed cards and simple preview patterns
+- Battle scene includes visual-only edge/background decorations
+- Chibi placeholder characters for Player1, Player2, and AI
+- Bubble-style bomb placeholder with countdown flash
+- Center/horizontal/vertical explosion placeholder prefabs
+- Recognizable 3D item placeholders with floating/glow animation
+- Battle HUD shows mode, map, timer, round state, player stats, pickup toasts, and LocalVS score
+- Result screen shows outcome, mode, map, winner, score placeholder, reward placeholder, stars, Retry, and Main Menu
+- AudioManager supports BGM/SFX hooks; final audio clips are still placeholder-ready
 
-- Keep gameplay code modular and avoid one giant manager script
-- Implement the data/logic layer before polished visuals
-- Prefer basic 3D objects and simple materials for early tests
-- Keep naming stable so future daily tasks can build on existing modules
-- Every iteration should have a small goal, a testable result, and a matching Git commit
-
-## 4.1 Phase 2 Visual Direction
-
-- Phase 2 focuses on turning the playable MVP into a more presentable chibi-style 3D grid battle game
-- Art direction and low-cost asset planning live in `Docs/Phase2_ArtDirection.md`
-- The first implemented Battle scene theme is `Candy Park`, documented in `Docs/CandyPark_MapTheme.md`
-- The project should use original cute, rounded, toy-like visuals and avoid official copyrighted characters, logos, UI, music, or exact asset recreations
-
-## 5. Branching And Commit Strategy
-
-- Stable branch: `main`
-- Daily development branch: `local`
-- Recommended PR flow: finish daily task on `local`, push, open PR, merge to `main`
-- Commit message examples:
-  - `chore(init): setup unity folder structure`
-  - `docs(readme): update current project status`
-  - `feat(map): add grid occupancy data layer`
-  - `feat(gameplay): add bomb chain reaction`
-
-## 6. Scene Flow
-
-Build Settings scene order:
-
-1. `MainMenu`
-2. `ModeSelect`
-3. `MapSelect`
-4. `Battle`
-5. `Result`
-
-Current scene state:
-
-- `MainMenu`: colorful chibi-style placeholder start screen with Start Game and Quit actions
-- `ModeSelect`: colorful card-based mode screen for `SinglePlayer`, `AIBattle`, and `LocalVS`
-- `MapSelect`: card-based map screen with placeholder previews for `Default`, `OpenField`, and `Maze`
-- `Battle`: active gameplay scene with a runtime-generated Candy Park map theme, players, camera, bombs, explosions, items, AI, key SFX hooks, and a fuller HUD
-- `Result`: colorful result screen with outcome, mode, map, winner, score placeholder, star reward placeholder, Retry, and Main Menu actions
-
-## 7. Core Systems Implemented So Far
-
-### Project Bootstrap
-
-- Unity folder structure is organized for long-term iteration
-- Initial README and GitHub workflow are in place
-- Unity-generated `Packages` and `ProjectSettings` are tracked where appropriate
-- `.gitignore` is configured to ignore Unity caches, builds, and local-only files
-
-### Core Definitions
-
-- `GameMode`: `SinglePlayer`, `AIBattle`, `LocalVS`
-- `GameState`: shared runtime state foundation
-- `CellType`: map tile classification foundation
-- `ItemType`: `BombCountUp`, `ExplosionRangeUp`, `MoveSpeedUp`
-- `GameConstants`: shared defaults for map size, grid cell size, bomb fuse, bomb range, movement speed, explosion lifetime, and scene names
-
-### Scene Skeleton
-
-- Five required scenes exist in `Assets/Scenes`
-- Build Settings order follows the intended game flow
-- Each scene has basic Unity objects such as a camera and light for early testing
-- Each scene has a `UI_Root_*` object with its matching MVP UI controller
-- The current UI uses Unity's built-in IMGUI through `OnGUI` so the MVP flow works without extra UI package dependencies
-- Final polished Canvas / UI Toolkit screens are intentionally deferred
-
-### MVP UI Flow
-
-- `MainMenuUI` starts a new session or quits the application
-- `MainMenuUI` uses a candy-gradient background, bubble decorations, rounded panel, and layered buttons
-- `ModeSelectUI` stores the selected `GameMode`
-- `ModeSelectUI` presents mode choices as colorful card buttons
-- `MapSelectUI` stores the selected `BattleMapType`, shows map cards with placeholder previews, and starts battle from a dedicated Start button
-- `BattleUI` displays current mode, map, timer, character states, bomb/range/speed ability values, and quick test buttons
-- `BattleUI` shows a `READY / GO!` opening prompt and a battle result prompt before loading `Result`
-- `BattleUI` displays short pickup toast messages when items are collected
-- `ResultUI` displays the last battle result, mode, map, winner, placeholder score, placeholder candy coin reward, and star rating
-- `ResultUI` supports Retry or returning to the main menu
-- `SceneFlowManager` owns the fixed scene flow:
-  - `MainMenu -> ModeSelect -> MapSelect -> Battle -> Result`
-- `UIFlowSceneSetup` can rewire all MVP UI scene controllers from the Unity editor or batchmode
-
-### Game Mode Setup
-
-- `GameManager` stores the current game mode, map type, and high-level game state
-- `GameManager` stores the most recent battle result for the `Result` scene
-- `GameManager` prepares the `Battle` scene based on the selected mode:
-  - `SinglePlayer`: enables Player1 only
-  - `AIBattle`: enables Player1 and AI
-  - `LocalVS`: enables Player1 and Player2
-- Player and AI spawn positions are resolved through `MapManager`
-- Runtime character setup reuses the same map, bomb root, and bomb prefab references
-- `GameManager` asks `MapManager` to rebuild the selected map visuals after applying battle setup data
-
-### Result Flow
-
-- `BattleUI` provides the first minimal result detection layer
-- `SinglePlayer`: Player1 defeat leads to `Game Over`
-- `AIBattle`: Player1 defeat is a loss, AI defeat is a victory, simultaneous defeat is a draw
-- `LocalVS`: Player1 or Player2 defeat awards the round to the other player, simultaneous defeat is a draw
-- The `Battle` HUD includes a `Force Result` button for quickly testing the result scene
-- `ResultUI` presents a colorful result card with placeholder face icon, score, candy coin reward, and star rating
-- `ResultUI` supports Retry and Main Menu actions
-
-### Map And Grid Data
-
-- `GridCell` stores logical map state:
-  - grid position
-  - hard wall flag
-  - soft wall flag
-  - bomb occupancy
-  - character occupancy
-  - item occupancy
-- `MapManager` provides shared map APIs:
-  - `GetCell`
-  - `IsInsideBounds`
-  - `IsWalkable`
-  - `SetCharacter`
-  - `ClearCharacter`
-  - `PlaceBomb`
-  - `RemoveBomb`
-  - `DestroySoftWall`
-  - `WorldToGrid`
-  - `GridToWorld`
-- The map is grid-based logically while remaining 3D visually
-- Movement and bomb logic operate on the XZ plane
-- `MapGenerator` now generates Candy Park visuals from the current `MapManager` grid data
-- Generated soft wall visuals are registered back into `MapManager` so destruction feedback and item drops remain synchronized
-
-### Map Rules
-
-- Map borders are sealed with hard walls
-- Player spawn areas reserve nearby walkable cells
-- `LocalVS` uses distant spawn positions for Player1 and Player2
-- `AIBattle` reserves a reasonable AI spawn position opposite Player1
-- The current `Battle` scene uses Phase 2 map visual prefabs under `MapRoot`
-- Logical map blocker data remains owned by `MapManager`
-- `BattleMapType.Default` uses the Candy Park visual direction
-- `BattleMapType.OpenField` and `BattleMapType.Maze` use different lightweight logical wall-density patterns while reusing the current Candy Park visual theme
-
-### Candy Park Runtime Map Theme
-
-- `Candy Park` is the first implemented Battle scene theme
-- Theme documentation lives in `Docs/CandyPark_MapTheme.md`
-- Runtime generation creates:
-  - `GeneratedMap_CandyPark`
-  - `GroundRoot`
-  - `HardWallRoot`
-  - `SoftWallRoot`
-  - `DecorationRoot`
-- Generated gameplay visuals use:
-  - `Tile_Ground_CandyPark.prefab`
-  - `Wall_Hard_RoundedBlock.prefab`
-  - `Wall_Soft_JellyCrate.prefab`
-- Generated decorations are low-cost primitive props placed outside the playable grid:
-  - candy fence lines
-  - lollipop trees
-  - balloon cluster
-  - round bush
-  - Candy Park sign board
-- Scene-authored fallback roots such as `Ground_CandyParkBoard` and `WallVisualsRoot` remain in the scene, but are hidden at runtime to avoid duplicate map visuals
-
-### Character Framework
-
-- `CharacterBase` owns shared character data and behavior:
-  - current grid position
-  - current world position
-  - smooth grid movement
-  - movement speed
-  - bomb range
-  - max active bomb count
-  - active bomb count
-  - alive/dead state
-- Characters move smoothly from one grid cell to the next
-- New movement input is ignored while already moving
-- Characters cannot move through hard walls, soft walls, bombs, or occupied character cells
-- Character death clears map occupancy, disables colliders immediately, plays a short defeat visual, then hides renderers
-- `CharacterBase` can rotate a configured `visualRoot` toward the latest grid movement direction
-- This keeps gameplay roots grid-stable while allowing replaceable character art to show facing
-- `CharacterBase` emits a lightweight `BombPlaced` event so visual-only scripts can react without owning gameplay logic
-- `CharacterBase` also emits `ExplosionHit` and `DeathFeedbackStarted` events for visual-only hit/defeat feedback
-
-### Player Input
-
-- Player1:
-  - `WASD` for four-direction movement
-  - `Space` to place a bomb
-- Player2:
-  - Arrow keys for four-direction movement
-  - `Enter` or `RightControl` to place a bomb
-- Player2 is prepared for `LocalVS` without duplicating movement code
-- Both players reuse `CharacterBase` movement and bomb placement logic
-
-### Phase 2 Character Placeholder Art
-
-- The `Battle` scene now uses low-cost chibi-style geometry characters
-- Gameplay roots stay named `Player1`, `Player2`, and `AIPlayer`
-- Each character root owns movement, bombs, collision, and map occupancy
-- Each character root has a child visual named `CharacterVisual`
-- `CharacterVisual` is replaceable art and points to one of these prefabs:
-  - `Character_Player1_Chibi.prefab`
-  - `Character_Player2_Chibi.prefab`
-  - `Character_AI_Chibi.prefab`
-- Current visual hierarchy:
-  - character root
-  - `CharacterVisual`
-  - `VisualRoot`
-  - primitive parts such as `Head_BigRound`, `Body_RoundSuit`, `Foot_*`, `Eye_*`, and `FrontBadge_FacingMarker`
-- Player1 uses a blue/cyan body with a yellow front accent
-- Player2 uses coral/orange with yellow bow accents
-- AI uses purple with a red visor and antenna
-- `CharacterVisualAnimator` adds code-driven placeholder animation:
-  - idle bob
-  - movement bounce/sway
-  - stronger squash, hop, tilt, glow, and shake when a bomb is placed
-  - explosion hit shake, punch scale, and flash
-  - defeat rise, spin, shrink, glow, and small puff placeholders
-- `CharacterArtSetup` can regenerate these prefabs and rewire the `Battle` scene from the editor menu or batchmode
-
-Animator recommendation:
-
-- Current phase: use `CharacterVisualAnimator` instead of Animator because characters are primitive placeholder objects with no animation clips or skeletons yet
-- Later phase: switch to Animator when the character art becomes proper mesh/rig assets
-- Suggested future Animator parameters:
-  - `IsMoving` bool
-  - `MoveSpeed` float
-  - `PlaceBomb` trigger
-  - `IsAlive` bool
-
-### AI
-
-- `AIController` reuses `CharacterBase` movement and bomb placement
-- The first AI pass supports stable random grid movement
-- AI avoids moving into known dangerous cells when possible
-- AI detects danger from:
-  - active bomb blast lines
-  - active explosion cells
-- When standing in danger, AI searches for a nearby safe cell and moves toward it
-- AI can attempt to place bombs when:
-  - a soft wall is nearby
-  - a living player is in the same unobstructed bomb line
-- AI checks for an escape route before placing a bomb by default
-- This is intentionally MVP behavior, not advanced pathfinding or tactical combat
-
-### Camera
-
-- `CameraController` provides an angled 3D overhead / light third-person style view
-- The camera follows Player1 by default
-- In `LocalVS`, the shared camera frames both players by focusing between them
-- The camera smoothly zooms out and increases FOV when LocalVS players move farther apart
-- `AIBattle` currently keeps Player1 readability first; optional AI framing can be enabled later
-- `CameraController.ShakeActiveCamera(duration, magnitude)` provides a lightweight screen shake interface
-- Bomb explosions call the camera shake interface for a small impact effect
-- The camera pass favors grid readability over cinematic movement
-
-### Bombs And Explosions
-
-- `Bomb.prefab` is available under `Assets/Prefabs/Gameplay`
-- Characters can place bombs on their current grid cell
-- The same grid cell cannot receive duplicate bombs
-- Bomb placement syncs with `MapManager` bomb occupancy
-- Characters have a max active bomb limit, currently based on `GameConstants.DefaultBombCount`
-- Bombs start a countdown after placement and explode when the fuse reaches zero
-- Bombs notify their owner when finished so the active bomb slot is released
-- `Bomb.prefab` now uses a Phase 2 bubble-bomb placeholder structure:
-  - root `Bomb` with `SphereCollider` and `BombController`
-  - `VisualRoot`
-  - `Body_BubbleSphere`
-  - `Body_CartoonHighlight`
-  - `TopCap_CreamButton`
-  - `Fuse_CurvedStem`
-  - `Fuse_Spark`
-- `BombController` drives countdown flash feedback through the prefab renderers
-- Bomb flashing becomes faster as the fuse gets closer to explosion
-- `ExplosionCenter.prefab` is available under `Assets/Prefabs/Gameplay`
-- `ExplosionHorizontal.prefab` and `ExplosionVertical.prefab` provide directional arm visuals
-- Explosion prefab structure uses a gameplay root with trigger collider, kinematic rigidbody, `ExplosionController`, and `VisualRoot`
-- Center explosion uses round pop bubbles and pink spark accents
-- Horizontal explosion uses an orange splash bar with side bubbles
-- Vertical explosion uses the same visual language rotated for the Z axis
-- `ExplosionController` drives short scale, rotation, and emission pulses with `MaterialPropertyBlock`
-- Explosions spawn grid-based placeholder cells
-- Explosion propagation is cross-shaped from the bomb center
-- Explosion range uses the character/bomb range setting
-- Hard walls stop explosion propagation immediately in that direction
-- Soft walls are destroyed when hit and stop further propagation in that direction
-- Explosion cells can kill characters by calling `CharacterBase.OnHitByExplosion`
-- Explosion cells can trigger nearby bombs early, enabling chain reactions
-- Chain reactions are guarded against duplicate explosions and duplicate occupancy cleanup
-- Bomb explosions can trigger light camera shake
-
-### Items And Power-Ups
-
-- `ItemBase` handles simple pickup and stat application
-- `ItemBase` stays focused on pickup rules, stat application, map cleanup, and pickup event dispatch
-- `ItemSpawner` listens for soft wall destruction and can spawn random items
-- Soft wall item drops use a configurable probability
-- Item spawn state syncs with `MapManager.SetItem`
-- `ItemVisualAnimator` adds visual-only floating, rotation, scale pulse, and emission pulse
-- `ItemPickupFeedback` adds a low-cost pickup disappear animation and an `AudioClip` hook
-- `CharacterPickupFeedback` gives the collecting character a short color-matched glow flash
-- `BattleUI` listens for `ItemBase.ItemPickedUp` and shows a temporary text/icon-style pickup toast
-- Current Phase 2 item placeholder prefabs:
-  - `Item_BombCountUp`
-    - cyan bubble token with a mini-bomb and plus icon
-  - `Item_ExplosionRangeUp`
-    - orange burst token with a yellow cross-range icon and pink sparks
-  - `Item_MoveSpeedUp`
-    - lime capsule token with a forward arrow and cyan speed wings
-- Current item prefab structure:
-  - root item object with trigger collider, kinematic rigidbody, `ItemBase`, `ItemPickupFeedback`, and `ItemVisualAnimator`
-  - `VisualRoot`
-  - primitive token/icon/glow children
-- Pickup feedback flow:
-  - item clears map item state
-  - item dispatches a pickup event for UI
-  - character flashes briefly
-  - item disables its trigger, rises, spins, shrinks, and then destroys itself
-  - optional pickup audio can be assigned through `ItemPickupFeedback.pickupClip`
-- Current item effects:
-  - increase max bomb count
-  - increase explosion range
-  - increase movement speed
-
-### Audio
-
-- `AudioManager` provides the first shared audio system structure
-- Supports separate BGM and SFX sources
-- Can auto-play scene BGM when clips are assigned:
-  - menu BGM for `MainMenu`, `ModeSelect`, and `MapSelect`
-  - battle BGM for `Battle`
-  - result BGM for `Result`
-- Key SFX events are wired through placeholder-safe interfaces:
-  - move
-  - place bomb
-  - explosion
-  - item pickup
-  - UI button click
-  - character death
-  - victory
-  - defeat
-- If no clips are assigned, all audio calls safely do nothing
-- Recommended clip folders:
-  - `Assets/Audio/BGM`
-  - `Assets/Audio/SFX`
-
-## 8. Current Test Controls
-
-For the full MVP loop, open `MainMenu` and press Play.
-
-Flow:
-
-1. Click `Start Game`
-2. Choose `Single Player`, `AI Battle`, or `Local VS`
-3. Choose a map card: `Candy Park`, `Open Field`, or `Jelly Maze`
-4. Click `START SELECTED MAP`
-5. Play the `Battle` scene
-6. Defeat a character or click `Force Result`
-7. Verify the `Result` screen
-8. Use `Retry` or `Main Menu`
-
-You can still open the `Battle` scene directly for gameplay-system testing.
+## Controls
 
 Player1:
 
@@ -511,120 +60,111 @@ Player1:
 
 Player2:
 
-- Move: Arrow keys
+- Move: arrow keys
 - Place bomb: `Enter` or `RightControl`
-- Player2 is mainly for `LocalVS` testing
 
-Basic things to verify:
+## How To Test
 
-- `Battle` creates `GeneratedMap_CandyPark` at runtime
-- Candy Park ground, hard walls, soft walls, and edge decorations appear in the Battle scene
-- Player movement stays on the grid
-- Movement is smooth between cells
-- Hard walls and soft walls block movement
-- Bombs block movement after placement
-- One character cannot place more bombs than its current limit
-- Bombs count down and explode
-- Bomb visuals flash and pulse faster near the end of the fuse
-- Explosion center and arms use different colorful placeholder visuals
-- Explosion cells form a cross shape
-- Hard walls stop explosion spread
-- Soft walls disappear when hit by an explosion
-- A character hit by an explosion dies and stops responding to input
-- A bomb touched by another explosion triggers early as a chain reaction
-- Destroyed soft walls can drop placeholder items
-- Dropped items float, rotate, and use glowing color pulses
-- Picked-up items play a short disappear animation
-- The collecting character flashes with a matching item color
-- The battle HUD shows a short pickup toast such as `[Bomb Slot +1]`
-- Characters automatically pick up items and apply stat changes
-- In `AIBattle`, the AI moves around the grid, tries to avoid bomb danger, and can place bombs near soft walls or players
-- The UI flow moves from menu screens into battle and then into the result screen
-- `MainMenu` and `ModeSelect` use colorful placeholder Q-style menu visuals
-- `MapSelect` uses map cards, simple color preview blocks, selected-state feedback, and a separate start button
-- Result screen shows the last winner/result and supports Retry/Main Menu
-- Player1, Player2, and AI use distinct chibi placeholder visuals with visible facing markers
-- Characters have visible idle bob, movement bounce, and a stronger bomb-placement squash/hop/glow
-- Characters shake and flash when hit by an explosion
-- Defeated characters briefly pop upward, spin/shrink, spawn tiny puffs, then disappear
-- The Battle HUD shows `READY / GO!`, mode, map, timer, player state, and ability values
-- In `LocalVS`, the shared camera keeps both players visible and zooms out as they separate
-- Bomb explosions create a light camera shake
-- Result screen shows outcome, mode, map, winner, placeholder score, placeholder reward, and star rating
-- If AudioClips are assigned, button clicks, bomb placement, explosions, item pickups, character death, and victory/defeat SFX should play
+1. Open the project in Unity.
+2. Open `Assets/Scenes/MainMenu.unity`.
+3. Press Play.
+4. Click `Start Game`.
+5. Choose a mode.
+6. Choose a map.
+7. Click `START SELECTED MAP`.
+8. Watch the `READY -> GO!` opening flow.
+9. Play Battle and verify Result / Retry / Main Menu.
 
-## 9. MVP Roadmap
+LocalVS test path:
 
-Completed or started:
+1. Choose `Local VS`.
+2. Defeat either player with bombs.
+3. Confirm the round winner prompt appears.
+4. Confirm the score updates as `P1 X - Y P2`.
+5. Confirm a new round starts automatically until one player reaches 2 points.
+6. Confirm Result shows the final match winner and VS score.
 
-- [x] Project initialization and folder structure
-- [x] GitHub-ready README and Unity `.gitignore`
-- [x] Scene skeleton and Build Settings order
-- [x] Core enums and shared constants
-- [x] Grid data layer and map occupancy APIs
-- [x] Bomberman-style map boundary and spawn rules
-- [x] Player1 movement
-- [x] Player2 local keyboard movement
-- [x] Movement blocking rules
-- [x] Basic angled 3D battle camera
-- [x] Bomb placement
-- [x] Bomb count limit
-- [x] Bomb countdown
-- [x] Phase 2 bubble-bomb placeholder prefab and countdown flash
-- [x] Center explosion placeholder
-- [x] Cross-shaped explosion propagation
-- [x] Phase 2 center/horizontal/vertical explosion placeholder prefabs
-- [x] Hard wall explosion blocking
-- [x] Soft wall destruction
-- [x] Character death from explosions
-- [x] Bomb chain reactions
-- [x] Soft wall item drops
-- [x] Bomb count, range, and speed power-ups
-- [x] Phase 2 recognizable 3D item placeholder prefabs
-- [x] Low-cost item pickup feedback with toast, character flash, and audio hook
-- [x] Basic game mode battle setup
-- [x] Basic AI random movement
-- [x] AI danger detection and simple bomb placement
-- [x] Minimal menu UI flow
-- [x] Q-style placeholder MainMenu and ModeSelect visual pass
-- [x] Card-based MapSelect placeholder UI with map previews
-- [x] Minimal result screen
-- [x] Retry and Main Menu result actions
-- [x] Phase 2 map placeholder art pass
-- [x] Runtime Candy Park map theme generation
-- [x] Hard/soft wall explosion feedback placeholders
-- [x] Phase 2 chibi character placeholder prefabs
-- [x] Shared character visual facing support
-- [x] Code-driven placeholder character animations
-- [x] Character bomb, hit, and defeat feedback polish
-- [x] Fuller Battle HUD with timer, mode, player state, abilities, Ready/Go, result prompt, and pickup toast
-- [x] Fuller Result UI with outcome, mode, map, score placeholder, star reward placeholder, Retry, and Main Menu
-- [x] Basic AudioManager with BGM/SFX sources and key event hooks
-- [x] Key SFX event wiring for bombs, explosions, item pickup, UI buttons, character death, and results
-- [x] Improved battle camera with LocalVS shared framing, distance-based zoom, FOV adjustment, and shake interface
+## Scene Order
 
-Still planned:
+Build Settings order:
 
-- [ ] More complete battle rules, scoring, timers, and win conditions
-- [ ] Replace IMGUI placeholder screens with polished Canvas or UI Toolkit menus
-- [ ] More robust AI pathfinding and battle decisions
-- [ ] Replace runtime primitive Candy Park decorations with reusable prop prefabs
-- [ ] Add more map theme variants beyond Candy Park
-- [ ] Polished Q-style bomb, explosion, item, UI, and audio assets
-- [ ] Add real BGM/SFX clips and tune volume/mix settings
-- [ ] Optional Blender/Blockbench replacement meshes for current primitive character prefabs
-- [ ] Animator-based character animation once real character meshes or rigs exist
-- [ ] Additional VFX and UI polish
+1. `MainMenu`
+2. `ModeSelect`
+3. `MapSelect`
+4. `Battle`
+5. `Result`
 
-## 10. Notes For Future Iterations
+## Project Structure
 
-- The current project is playable as a gameplay-system test, not yet a finished game loop
-- The `Battle` scene is the main development/test scene for now
-- Prefabs and editor setup scripts exist to reduce manual Unity Inspector work
-- Current result logic is intentionally simple and lives in `BattleUI`; later it can move into a dedicated battle rules/result service
-- Current UI is IMGUI-only for speed and stability; final UI should use proper prefabs, layout, styling, and navigation
-- Current Candy Park map visuals are generated from `MapManager` grid data; later prop prefabs can replace the primitive generated decorations
-- Current score, reward, and star values are placeholder presentation data; later they should come from a dedicated battle result data model
-- Audio hooks are wired, but final clips and mix tuning are still pending
-- Item pickup feedback and balancing can be improved after the current item visuals are stable
-- AI currently favors stability over intelligence; future work can add path scoring, target chasing, and better self-preservation
+```text
+Assets/
+  Art/
+  Audio/
+  Editor/
+  Materials/
+  Prefabs/
+    Characters/
+    Environment/
+    Gameplay/
+    Map/
+    UI/
+  Scenes/
+  Scripts/
+    AI/
+    Camera/
+    Characters/
+    Core/
+    Gameplay/
+    Items/
+    Managers/
+    Map/
+    UI/
+  UI/
+
+Docs/
+  CandyPark_MapTheme.md
+  EnvironmentDecorationGuide.md
+  JellyMaze_MapTheme.md
+  Phase2_ArtDirection.md
+```
+
+## Key Runtime Systems
+
+- `GameManager`: mode/map/session state, battle setup, LocalVS scoring
+- `SceneFlowManager`: scene transitions
+- `MapManager`: grid data, occupancy, wall/item/bomb state
+- `MapGenerator`: runtime map visuals and theme decoration generation
+- `CharacterBase`: shared movement, stats, bombs, life state, spawn protection
+- `PlayerController`: keyboard input for Player1/Player2
+- `AIController`: simple AI movement, danger checks, and bomb behavior
+- `BombController`: bomb countdown, explosion spawn, chain reaction
+- `ExplosionController`: explosion cell lifetime, hit detection, visual pulse
+- `ItemBase` / `ItemSpawner`: item pickup and soft-wall item drops
+- `BattleUI`: HUD, opening flow, result detection, LocalVS round flow
+- `ResultUI`: final result display and retry/main menu actions
+- `AudioManager`: BGM/SFX entry point
+
+## Documentation
+
+- `Docs/Phase2_ArtDirection.md`: visual direction and placeholder-art plan
+- `Docs/CandyPark_MapTheme.md`: Candy Park theme notes
+- `Docs/JellyMaze_MapTheme.md`: Jelly Maze theme notes
+- `Docs/EnvironmentDecorationGuide.md`: decoration placement and readability rules
+
+## Development Notes
+
+- Keep gameplay modular and avoid large manager-only logic.
+- Prefer small daily commits that are easy to test.
+- Use placeholder geometry first, then replace with proper prefabs/art later.
+- Keep gameplay roots stable so art can be replaced without breaking scripts.
+- Avoid official copyrighted characters, logos, UI, music, or exact asset recreations.
+
+## Near-Term Roadmap
+
+- Replace IMGUI placeholder screens with polished Canvas or UI Toolkit UI
+- Improve LocalVS match flow presentation and final scoring details
+- Add stronger AI pathfinding and battle decisions
+- Replace runtime primitive decorations with reusable environment prefabs
+- Add real BGM/SFX clips and volume tuning
+- Add more polished Q-style VFX and animation
+- Continue adding original map themes beyond Candy Park and Jelly Maze

@@ -188,6 +188,18 @@ Recommended low-cost props:
 - `Prop_CandyPark_RoundBush`
   - Squashed sphere with green material
   - Useful for background edge decoration
+- `Prop_CandyPark_SmallTree`
+  - Cylinder trunk plus rounded leaf puffs
+  - Best as static corner/edge decoration
+- `Prop_CandyPark_ToyBarrel`
+  - Cylinder body with colored bands
+  - Best as static edge decoration
+- `Prop_CandyPark_CandyLamp`
+  - Pole plus glowing sphere head
+  - Good for subtle bob or scale-pulse ambience
+- `Prop_CandyPark_BackgroundCloud`
+  - Clustered spheres placed higher and farther out
+  - Good for slow bobbing background motion
 
 Decoration rules:
 
@@ -195,6 +207,7 @@ Decoration rules:
 - If a prop needs a collider, put it outside the map boundary.
 - Prefer 6 to 12 repeated props rather than many unique meshes.
 - Keep colors softer than bombs, explosions, and items.
+- Use `EnvironmentDecorationAnimator` only for non-gameplay ambience props.
 
 ## Material List
 
@@ -274,6 +287,8 @@ Current generation responsibilities:
 - `MapGenerator.Generate(mapType, mapManager)` instantiates visuals based on `MapManager` grid data.
 - `MapGenerator` registers soft wall instances with `MapManager.RegisterSoftWallObject(gridPos, instance)`.
 - Decorations are generated outside the logical map bounds so they do not affect movement or explosions.
+- Small trees, toy barrels, candy lamps, and background clouds are generated under `DecorationRoot`.
+- Candy lamps and clouds use subtle code-driven motion without touching gameplay data.
 
 Recommended next step later:
 

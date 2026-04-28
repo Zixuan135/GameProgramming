@@ -51,6 +51,7 @@ namespace BubbleTown.UI
             public string MapName;
             public string OutcomeLabel;
             public string ScoreLabel;
+            public string MatchScoreLabel;
             public string RewardLabel;
             public string IconText;
             public string MoodText;
@@ -98,7 +99,16 @@ namespace BubbleTown.UI
         public void OnClickRematch()
         {
             AudioManager.Instance?.PlayButtonClickSFX();
-            GameManager.Instance?.ClearBattleResult();
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager != null)
+            {
+                gameManager.ClearBattleResult();
+                if (gameManager.CurrentGameMode == GameMode.LocalVS)
+                {
+                    gameManager.ResetLocalVsMatch();
+                }
+            }
+
             SceneFlowManager.Instance?.LoadBattle();
         }
 
@@ -132,6 +142,7 @@ namespace BubbleTown.UI
                 MapName = FormatMapName(mapType),
                 OutcomeLabel = FormatOutcome(outcome),
                 ScoreLabel = score.ToString("0000"),
+                MatchScoreLabel = FormatMatchScore(gameManager, mode),
                 RewardLabel = hasResult ? "Candy Coins +" + Mathf.Max(0, score / 10) : "Candy Coins +0",
                 IconText = FormatIconText(outcome),
                 MoodText = FormatMoodText(outcome),
@@ -345,8 +356,24 @@ namespace BubbleTown.UI
             DrawInfoCard("MAP", viewModel.MapName, new Color(0.48f, 0.9f, 0.34f, 1f));
             GUILayout.Space(12f);
             DrawInfoCard("WINNER", viewModel.Winner, viewModel.AccentColor);
+            if (!string.IsNullOrEmpty(viewModel.MatchScoreLabel))
+            {
+                GUILayout.Space(12f);
+                DrawInfoCard("VS SCORE", viewModel.MatchScoreLabel, new Color(0.52f, 0.9f, 0.35f, 1f));
+            }
+
             GUILayout.EndHorizontal();
             GUILayout.Space(14f);
+        }
+
+        private string FormatMatchScore(GameManager gameManager, GameMode mode)
+        {
+            if (gameManager == null || mode != GameMode.LocalVS)
+            {
+                return string.Empty;
+            }
+
+            return gameManager.LocalVsScoreLabel;
         }
 
         private void DrawInfoCard(string label, string value, Color accentColor)
