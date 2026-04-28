@@ -13,7 +13,7 @@ namespace BubbleTown.EditorTools
     public static class VisualStyleSetup
     {
         private const string BattleScenePath = "Assets/Scenes/Battle.unity";
-        private const string MaterialFolder = "Assets/Materials";
+        private const string MaterialRootFolder = "Assets/Materials";
         private const string VisualStyleRootName = "VisualStyleRoot";
         private const string BattleRootName = "BattleRoot";
 
@@ -102,7 +102,7 @@ namespace BubbleTown.EditorTools
 
         private static void ApplyMaterial(string materialName, string albedoHex, string emissionHex, float smoothness, bool useEmission)
         {
-            string materialPath = MaterialFolder + "/" + materialName + ".mat";
+            string materialPath = FindMaterialPath(materialName);
             Material material = AssetDatabase.LoadAssetAtPath<Material>(materialPath);
             if (material == null)
             {
@@ -138,6 +138,21 @@ namespace BubbleTown.EditorTools
             }
 
             EditorUtility.SetDirty(material);
+        }
+
+        private static string FindMaterialPath(string materialName)
+        {
+            string[] guids = AssetDatabase.FindAssets(materialName + " t:Material", new[] { MaterialRootFolder });
+            for (int i = 0; i < guids.Length; i++)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guids[i]);
+                if (System.IO.Path.GetFileNameWithoutExtension(path) == materialName)
+                {
+                    return path;
+                }
+            }
+
+            return MaterialRootFolder + "/" + materialName + ".mat";
         }
 
         private static void ApplyBattleSceneLighting()
