@@ -96,7 +96,8 @@ namespace BubbleTown.UI
                 new Color(0.58f, 0.92f, 0.72f, 1f),
                 new Color(1f, 0.86f, 0.48f, 1f),
                 new Color(0.48f, 0.82f, 1f, 1f),
-                selectedMapType == BattleMapType.Default))
+                selectedMapType == BattleMapType.Default,
+                SimpleUIFactory.MapPreviewPattern.Balanced))
             {
                 OnSelectDefault();
             }
@@ -112,7 +113,8 @@ namespace BubbleTown.UI
                 new Color(0.62f, 0.96f, 0.58f, 1f),
                 new Color(0.95f, 0.78f, 0.34f, 1f),
                 new Color(0.78f, 1f, 0.74f, 1f),
-                selectedMapType == BattleMapType.OpenField))
+                selectedMapType == BattleMapType.OpenField,
+                SimpleUIFactory.MapPreviewPattern.Open))
             {
                 OnSelectOpenField();
             }
@@ -123,12 +125,13 @@ namespace BubbleTown.UI
             if (SimpleUIFactory.MapCard(
                 "Jelly Maze",
                 "MAZE",
-                "Tighter routes for testing blockers, AI movement, and traps.",
+                "Neon jelly lanes, tighter routes, and clearer trap testing.",
                 mazeAccent,
-                new Color(0.78f, 0.72f, 1f, 1f),
-                new Color(1f, 0.78f, 0.9f, 1f),
-                new Color(0.56f, 0.9f, 1f, 1f),
-                selectedMapType == BattleMapType.Maze))
+                new Color(0.24f, 0.18f, 0.42f, 1f),
+                new Color(0.48f, 0.36f, 1f, 1f),
+                new Color(0.18f, 0.9f, 1f, 1f),
+                selectedMapType == BattleMapType.Maze,
+                SimpleUIFactory.MapPreviewPattern.Maze))
             {
                 OnSelectMaze();
             }

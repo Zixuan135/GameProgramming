@@ -41,6 +41,12 @@ namespace BubbleTown.Map
             CacheOriginalTransform();
         }
 
+        public void SetVisualRoot(Transform root)
+        {
+            visualRoot = root != null ? root : transform;
+            CacheOriginalTransform();
+        }
+
         public void PlayHardWallBlockedFeedback(Vector3 explosionWorldPosition)
         {
             if (!isActiveAndEnabled || isDestroying)

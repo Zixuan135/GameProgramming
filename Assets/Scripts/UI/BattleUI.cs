@@ -17,6 +17,7 @@ namespace BubbleTown.UI
 
         [Header("Result Flow")]
         [SerializeField, Min(0f)] private float resultSceneDelay = 0.95f;
+        [SerializeField, Min(0f)] private float localVsNextRoundDelay = 1.45f;
 
         [Header("Battle Timer")]
         [SerializeField] private bool countTimerOnlyWhileRunning = true;
@@ -26,8 +27,11 @@ namespace BubbleTown.UI
         [SerializeField] private bool showOpeningPrompt = true;
         [SerializeField, Min(0f)] private float readyPromptSeconds = 1.05f;
         [SerializeField, Min(0f)] private float goPromptSeconds = 0.75f;
+        [SerializeField, Min(0f)] private float spawnProtectionSeconds = 2.25f;
         [SerializeField] private string readyText = "READY";
         [SerializeField] private string goText = "GO!";
+        [SerializeField] private string readyBodyText = "Get ready. Controls unlock on GO!";
+        [SerializeField] private string goBodyText = "Move fast. Spawn shields are active!";
 
         [Header("Pickup Toast")]
         [SerializeField, Min(0f)] private float pickupToastSeconds = 1.45f;
@@ -49,7 +53,11 @@ namespace BubbleTown.UI
         private GUIStyle buttonStyle;
 
         private bool resultQueued;
+        private bool localVsNextRoundQueued;
+        private bool openingFlowStarted;
+        private bool roundStartTriggered;
         private float resultTimer;
+        private float localVsNextRoundTimer;
         private float battleElapsedSeconds;
         private float openingPromptTimer;
         private string hudHint = "Win/Lose MVP: defeat or get defeated by bombs. Use Force Result to test the Result scene.";
@@ -79,12 +87,14 @@ namespace BubbleTown.UI
 
         private void Update()
         {
-            TickBattleTimer();
+            EnsureOpeningFlowStarted();
             TickOpeningPrompt();
+            TickBattleTimer();
             TickQueuedResult();
+            TickQueuedLocalVsNextRound();
             TickPickupToast();
 
-            if (!resultQueued)
+            if (!resultQueued && !localVsNextRoundQueued)
             {
                 EvaluateBattleResult();
             }
@@ -110,7 +120,17 @@ namespace BubbleTown.UI
         public void OnClickRetry()
         {
             AudioManager.Instance?.PlayButtonClickSFX();
-            GameManager.Instance?.ClearBattleResult();
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager != null)
+            {
+                gameManager.ClearBattleResult();
+                if (gameManager.CurrentGameMode == GameMode.LocalVS)
+                {
+                    gameManager.ResetLocalVsMatch();
+                }
+            }
+
+            ResetBattleHudState();
             SceneFlowManager.Instance?.LoadBattle();
         }
 
@@ -131,14 +151,55 @@ namespace BubbleTown.UI
         private void ResetBattleHudState()
         {
             battleElapsedSeconds = 0f;
-            openingPromptTimer = showOpeningPrompt ? readyPromptSeconds + goPromptSeconds : 0f;
+            openingFlowStarted = false;
+            roundStartTriggered = false;
+            openingPromptTimer = 0f;
             resultQueued = false;
+            localVsNextRoundQueued = false;
             resultTimer = 0f;
+            localVsNextRoundTimer = 0f;
             resultPromptTitle = string.Empty;
             resultPromptDetail = string.Empty;
             pickupToastText = string.Empty;
             pickupToastTimer = 0f;
-            hudHint = "Break blocks, collect power-ups, and avoid the blast lines.";
+            hudHint = "Waiting for the round opening...";
+        }
+
+        private void EnsureOpeningFlowStarted()
+        {
+            if (openingFlowStarted)
+            {
+                return;
+            }
+
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager == null)
+            {
+                return;
+            }
+
+            bool canStartOpening = gameManager.CurrentGameState == GameState.BattlePreparing ||
+                                   gameManager.CurrentGameState == GameState.BattleRunning;
+            if (!canStartOpening)
+            {
+                return;
+            }
+
+            openingFlowStarted = true;
+            roundStartTriggered = gameManager.CurrentGameState == GameState.BattleRunning;
+            openingPromptTimer = showOpeningPrompt
+                ? roundStartTriggered ? goPromptSeconds : readyPromptSeconds + goPromptSeconds
+                : 0f;
+
+            if (!showOpeningPrompt && !roundStartTriggered)
+            {
+                StartRoundWithProtection();
+                return;
+            }
+
+            hudHint = roundStartTriggered
+                ? "GO! Spawn shields are active for a short moment."
+                : "READY... get set before the round starts.";
         }
 
         private void TickBattleTimer()
@@ -149,7 +210,7 @@ namespace BubbleTown.UI
                 return;
             }
 
-            if (resultQueued)
+            if (resultQueued || localVsNextRoundQueued)
             {
                 return;
             }
@@ -159,18 +220,43 @@ namespace BubbleTown.UI
 
         private void TickOpeningPrompt()
         {
-            if (openingPromptTimer <= 0f)
+            if (!openingFlowStarted || openingPromptTimer <= 0f)
             {
                 return;
             }
 
             GameManager gameManager = GameManager.Instance;
-            if (gameManager != null && gameManager.CurrentGameState != GameState.BattleRunning)
+            if (gameManager != null && gameManager.CurrentGameState == GameState.BattleFinished)
             {
                 return;
             }
 
             openingPromptTimer = Mathf.Max(0f, openingPromptTimer - Time.deltaTime);
+            if (!roundStartTriggered && openingPromptTimer <= goPromptSeconds)
+            {
+                StartRoundWithProtection();
+            }
+
+            if (roundStartTriggered && openingPromptTimer <= 0f)
+            {
+                hudHint = ResolveMaxProtectionRemaining(gameManager) > 0f
+                    ? "Opening shield is fading. Use this moment to take position."
+                    : "Break blocks, collect power-ups, and avoid the blast lines.";
+            }
+        }
+
+        private void StartRoundWithProtection()
+        {
+            if (roundStartTriggered)
+            {
+                return;
+            }
+
+            roundStartTriggered = true;
+            GameManager.Instance?.StartBattleRound(spawnProtectionSeconds);
+            hudHint = spawnProtectionSeconds > 0f
+                ? "GO! Spawn shields are active for a short moment."
+                : "GO! Battle started.";
         }
 
         private void EvaluateBattleResult()
@@ -227,19 +313,19 @@ namespace BubbleTown.UI
                 bool player2Alive = IsAliveAndActive(player2);
                 if (!player1Alive && !player2Alive)
                 {
-                    QueueResult("Draw", "Both players were defeated at the same time.", "None");
+                    QueueLocalVsRoundResult("Round Draw", "Both players were defeated at the same time.", "None");
                     return;
                 }
 
                 if (!player1Alive)
                 {
-                    QueueResult("Player 2 Wins", "Player1 was defeated.", "Player2");
+                    QueueLocalVsRoundResult("Player 2 Wins Round", "Player1 was defeated.", "Player2");
                     return;
                 }
 
                 if (!player2Alive)
                 {
-                    QueueResult("Player 1 Wins", "Player2 was defeated.", "Player1");
+                    QueueLocalVsRoundResult("Player 1 Wins Round", "Player2 was defeated.", "Player1");
                     return;
                 }
             }
@@ -260,8 +346,41 @@ namespace BubbleTown.UI
             resultPromptDetail = string.IsNullOrEmpty(detail) ? "The battle has ended." : detail;
             GameManager.Instance?.FinishBattle(resultPromptTitle, resultPromptDetail, winner);
             resultQueued = true;
+            localVsNextRoundQueued = false;
             resultTimer = resultSceneDelay;
             hudHint = "Battle finished. Loading result...";
+        }
+
+        private void QueueLocalVsRoundResult(string title, string detail, string roundWinner)
+        {
+            if (resultQueued || localVsNextRoundQueued)
+            {
+                return;
+            }
+
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager == null)
+            {
+                QueueResult(title, detail, roundWinner);
+                return;
+            }
+
+            bool matchComplete = gameManager.RegisterLocalVsRoundResult(roundWinner);
+            string roundDetail = $"{detail}\nScore: {gameManager.LocalVsScoreLabel}";
+            if (matchComplete)
+            {
+                string matchWinner = gameManager.ResolveLocalVsMatchWinner();
+                string matchTitle = matchWinner == "Player1" ? "Player 1 Wins Match" :
+                    matchWinner == "Player2" ? "Player 2 Wins Match" : "Local VS Draw";
+                QueueResult(matchTitle, $"{roundDetail}\nBest of 3 complete.", matchWinner);
+                return;
+            }
+
+            resultPromptTitle = string.IsNullOrEmpty(title) ? "Round Finished" : title;
+            resultPromptDetail = $"{roundDetail}\nNext round starts soon.";
+            localVsNextRoundQueued = true;
+            localVsNextRoundTimer = localVsNextRoundDelay;
+            hudHint = "Round finished. Loading the next Local VS round...";
         }
 
         private void TickQueuedResult()
@@ -278,6 +397,24 @@ namespace BubbleTown.UI
             }
 
             SceneFlowManager.Instance?.LoadResult();
+        }
+
+        private void TickQueuedLocalVsNextRound()
+        {
+            if (!localVsNextRoundQueued)
+            {
+                return;
+            }
+
+            localVsNextRoundTimer -= Time.deltaTime;
+            if (localVsNextRoundTimer > 0f)
+            {
+                return;
+            }
+
+            GameManager.Instance?.ClearBattleResult();
+            ResetBattleHudState();
+            SceneFlowManager.Instance?.LoadBattle();
         }
 
         private void TickPickupToast()
@@ -301,6 +438,7 @@ namespace BubbleTown.UI
             }
 
             DrawTopStatusBar(gameManager);
+            DrawLocalVsScoreboard(gameManager);
             DrawCharacterPanel(new Rect(18f, Screen.height - 176f, 318f, 152f), "PLAYER 1", gameManager.Player1, player1Color);
 
             CharacterBase rightCharacter = ResolveRightSideCharacter(gameManager, out string rightLabel, out Color rightColor);
@@ -317,8 +455,22 @@ namespace BubbleTown.UI
             DrawInfoPill(new Rect(x, y, 180f, 30f), "MODE", gameManager.CurrentGameMode.ToString(), new Color(0.12f, 0.72f, 1f));
             DrawInfoPill(new Rect(x + 190f, y, 180f, 30f), "MAP", FormatMapName(gameManager.CurrentMapType), new Color(0.48f, 0.9f, 0.34f));
             DrawInfoPill(new Rect(x + 380f, y, 150f, 30f), "TIME", FormatTime(battleElapsedSeconds), new Color(1f, 0.58f, 0.18f));
+            DrawInfoPill(new Rect(x + 540f, y, 150f, 30f), "ROUND", FormatRoundState(gameManager), neutralColor);
 
             GUI.Label(new Rect(topRect.x + 20f, topRect.y + 52f, topRect.width - 40f, 28f), hudHint, hudSmallStyle);
+        }
+
+        private void DrawLocalVsScoreboard(GameManager gameManager)
+        {
+            if (gameManager.CurrentGameMode != GameMode.LocalVS)
+            {
+                return;
+            }
+
+            Rect rect = new Rect(Screen.width * 0.5f - 190f, 116f, 380f, 66f);
+            DrawPanel(rect, new Color(1f, 0.95f, 0.72f, 0.94f), new Color(0.52f, 0.9f, 0.35f, 1f), 18, 3);
+            GUI.Label(new Rect(rect.x + 16f, rect.y + 8f, rect.width - 32f, 22f), FormatLocalVsRoundHeader(gameManager), hudSmallStyle);
+            GUI.Label(new Rect(rect.x + 20f, rect.y + 28f, rect.width - 40f, 30f), gameManager.LocalVsScoreLabel, hudValueStyle);
         }
 
         private CharacterBase ResolveRightSideCharacter(GameManager gameManager, out string label, out Color color)
@@ -391,27 +543,34 @@ namespace BubbleTown.UI
                 return;
             }
 
-            bool readyPhase = openingPromptTimer > goPromptSeconds;
+            bool readyPhase = !roundStartTriggered;
             string prompt = readyPhase ? readyText : goText;
             Color promptColor = readyPhase ? new Color(1f, 0.74f, 0.18f, 0.95f) : new Color(0.2f, 0.88f, 1f, 0.95f);
             float pulse = 1f + Mathf.Sin(Time.time * 10f) * 0.04f;
             Rect rect = new Rect(Screen.width * 0.5f - 160f * pulse, Screen.height * 0.5f - 58f * pulse, 320f * pulse, 116f * pulse);
             DrawPanel(rect, new Color(1f, 0.96f, 0.72f, 0.96f), promptColor, 24, 5);
             GUI.Label(new Rect(rect.x, rect.y + 18f, rect.width, 62f), prompt, promptTitleStyle);
-            GUI.Label(new Rect(rect.x + 18f, rect.y + 78f, rect.width - 36f, 24f), "Bubble battle begins!", promptBodyStyle);
+            string body = readyPhase ? readyBodyText : goBodyText;
+            float protectionRemaining = ResolveMaxProtectionRemaining(GameManager.Instance);
+            if (!readyPhase && protectionRemaining > 0f)
+            {
+                body = $"{body} Shield {protectionRemaining:0.0}s";
+            }
+
+            GUI.Label(new Rect(rect.x + 18f, rect.y + 78f, rect.width - 36f, 24f), body, promptBodyStyle);
         }
 
         private void DrawResultPrompt()
         {
-            if (!resultQueued)
+            if (!resultQueued && !localVsNextRoundQueued)
             {
                 return;
             }
 
-            Rect rect = new Rect(Screen.width * 0.5f - 210f, Screen.height * 0.5f - 78f, 420f, 156f);
+            Rect rect = new Rect(Screen.width * 0.5f - 230f, Screen.height * 0.5f - 92f, 460f, 184f);
             DrawPanel(rect, new Color(1f, 0.96f, 0.72f, 0.97f), new Color(1f, 0.58f, 0.18f), 24, 5);
             GUI.Label(new Rect(rect.x + 18f, rect.y + 22f, rect.width - 36f, 58f), resultPromptTitle, promptTitleStyle);
-            GUI.Label(new Rect(rect.x + 28f, rect.y + 84f, rect.width - 56f, 54f), resultPromptDetail, promptBodyStyle);
+            GUI.Label(new Rect(rect.x + 28f, rect.y + 84f, rect.width - 56f, 82f), resultPromptDetail, promptBodyStyle);
         }
 
         private void DrawPickupToast()
@@ -421,7 +580,8 @@ namespace BubbleTown.UI
                 return;
             }
 
-            Rect toastRect = new Rect(Screen.width * 0.5f - 190f, 116f, 380f, 56f);
+            float toastY = GameManager.Instance != null && GameManager.Instance.CurrentGameMode == GameMode.LocalVS ? 190f : 116f;
+            Rect toastRect = new Rect(Screen.width * 0.5f - 190f, toastY, 380f, 56f);
             DrawPanel(toastRect, pickupToastColor, Color.white, 18, 3);
             GUI.Label(toastRect, pickupToastText, toastStyle);
         }
@@ -526,7 +686,75 @@ namespace BubbleTown.UI
                 return "OFF";
             }
 
+            if (character.IsAlive && character.IsInvincible)
+            {
+                return $"SAFE {character.InvincibleSecondsRemaining:0.0}";
+            }
+
             return character.IsAlive ? "ALIVE" : "DOWN";
+        }
+
+        private string FormatRoundState(GameManager gameManager)
+        {
+            if (gameManager == null)
+            {
+                return "WAIT";
+            }
+
+            if (gameManager.CurrentGameState == GameState.BattlePreparing)
+            {
+                return "READY";
+            }
+
+            if (gameManager.CurrentGameState == GameState.BattleRunning && openingPromptTimer > 0f)
+            {
+                return "GO";
+            }
+
+            float protectionRemaining = ResolveMaxProtectionRemaining(gameManager);
+            if (protectionRemaining > 0f)
+            {
+                return $"SAFE {protectionRemaining:0.0}";
+            }
+
+            if (gameManager.CurrentGameState == GameState.BattleRunning)
+            {
+                return "FIGHT";
+            }
+
+            return gameManager.CurrentGameState.ToString();
+        }
+
+        private string FormatLocalVsRoundHeader(GameManager gameManager)
+        {
+            string matchLabel = gameManager.EnableLocalVsBestOf3
+                ? $"BEST OF {gameManager.LocalVsTargetScore * 2 - 1}"
+                : "SINGLE ROUND";
+            return $"{matchLabel}  |  ROUND {gameManager.LocalVsRoundNumber}";
+        }
+
+        private float ResolveMaxProtectionRemaining(GameManager gameManager)
+        {
+            if (gameManager == null)
+            {
+                return 0f;
+            }
+
+            float maxRemaining = 0f;
+            maxRemaining = Mathf.Max(maxRemaining, ResolveProtectionRemaining(gameManager.Player1));
+            maxRemaining = Mathf.Max(maxRemaining, ResolveProtectionRemaining(gameManager.Player2));
+            maxRemaining = Mathf.Max(maxRemaining, ResolveProtectionRemaining(gameManager.AIPlayer));
+            return maxRemaining;
+        }
+
+        private float ResolveProtectionRemaining(CharacterBase character)
+        {
+            if (character == null || !character.gameObject.activeInHierarchy || !character.IsAlive || !character.IsInvincible)
+            {
+                return 0f;
+            }
+
+            return character.InvincibleSecondsRemaining;
         }
 
         private string FormatTime(float seconds)
