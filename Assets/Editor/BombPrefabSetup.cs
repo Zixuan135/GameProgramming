@@ -12,16 +12,16 @@ namespace BubbleTown.EditorTools
     public static class BombPrefabSetup
     {
         private const string BattleScenePath = "Assets/Scenes/Battle.unity";
-        private const string BombPrefabPath = "Assets/Prefabs/Gameplay/Bomb.prefab";
-        private const string ExplosionPrefabPath = "Assets/Prefabs/Gameplay/ExplosionCenter.prefab";
-        private const string ExplosionHorizontalPrefabPath = "Assets/Prefabs/Gameplay/ExplosionHorizontal.prefab";
-        private const string ExplosionVerticalPrefabPath = "Assets/Prefabs/Gameplay/ExplosionVertical.prefab";
+        private const string BombPrefabPath = "Assets/Prefabs/Gameplay/Bombs/Bomb_Basic.prefab";
+        private const string ExplosionPrefabPath = "Assets/Prefabs/Gameplay/Explosions/Explosion_Center.prefab";
+        private const string ExplosionHorizontalPrefabPath = "Assets/Prefabs/Gameplay/Explosions/Explosion_Horizontal.prefab";
+        private const string ExplosionVerticalPrefabPath = "Assets/Prefabs/Gameplay/Explosions/Explosion_Vertical.prefab";
 
-        private const string BombBodyMaterialPath = "Assets/Materials/Mat_Bomb_Body_BubbleNavy.mat";
-        private const string BombHighlightMaterialPath = "Assets/Materials/Mat_Bomb_Highlight_Cyan.mat";
-        private const string BombCapMaterialPath = "Assets/Materials/Mat_Bomb_TopCap_Cream.mat";
-        private const string BombFuseMaterialPath = "Assets/Materials/Mat_Bomb_Fuse_Cocoa.mat";
-        private const string BombSparkMaterialPath = "Assets/Materials/Mat_Bomb_Spark_Yellow.mat";
+        private const string BombBodyMaterialPath = "Assets/Materials/Gameplay/Bombs/Mat_Bomb_Body_BubbleNavy.mat";
+        private const string BombHighlightMaterialPath = "Assets/Materials/Gameplay/Bombs/Mat_Bomb_Highlight_Cyan.mat";
+        private const string BombCapMaterialPath = "Assets/Materials/Gameplay/Bombs/Mat_Bomb_TopCap_Cream.mat";
+        private const string BombFuseMaterialPath = "Assets/Materials/Gameplay/Bombs/Mat_Bomb_Fuse_Cocoa.mat";
+        private const string BombSparkMaterialPath = "Assets/Materials/Gameplay/Bombs/Mat_Bomb_Spark_Yellow.mat";
 
         [MenuItem("BubbleTown/Setup/Ensure Bomb Prefab")]
         public static void EnsureBombPrefab()
