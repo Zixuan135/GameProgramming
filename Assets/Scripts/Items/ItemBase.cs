@@ -25,6 +25,8 @@ namespace BubbleTown.Items
         [SerializeField, Min(0)] protected int bombCountDelta = GameConstants.DefaultItemBombCountDelta;
         [SerializeField, Min(0)] protected int explosionRangeDelta = GameConstants.DefaultItemExplosionRangeDelta;
         [SerializeField, Min(0f)] protected float moveSpeedDelta = GameConstants.DefaultItemMoveSpeedDelta;
+        [SerializeField, Min(0)] protected int shieldChargesDelta = GameConstants.DefaultItemShieldChargesDelta;
+        [SerializeField, Min(0f)] protected float invincibleSeconds = GameConstants.DefaultItemInvincibleSeconds;
 
         [Header("Grid State")]
         [SerializeField] protected MapManager mapManager;
@@ -43,6 +45,8 @@ namespace BubbleTown.Items
         public int BombCountDelta => bombCountDelta;
         public int ExplosionRangeDelta => explosionRangeDelta;
         public float MoveSpeedDelta => moveSpeedDelta;
+        public int ShieldChargesDelta => shieldChargesDelta;
+        public float InvincibleSeconds => invincibleSeconds;
         public Vector2Int GridPosition => gridPosition;
         public bool HasGridPosition => hasGridPosition;
         public bool IsPickedUp => pickedUp;
@@ -127,7 +131,9 @@ namespace BubbleTown.Items
                 itemType,
                 bombCountDelta,
                 explosionRangeDelta,
-                moveSpeedDelta);
+                moveSpeedDelta,
+                shieldChargesDelta,
+                invincibleSeconds);
 
             if (!applied)
             {

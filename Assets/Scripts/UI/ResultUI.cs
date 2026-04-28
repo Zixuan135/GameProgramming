@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BubbleTown.CameraSystem;
 using BubbleTown.Core.Enums;
 using BubbleTown.Managers;
 using UnityEngine;
@@ -23,6 +24,13 @@ namespace BubbleTown.UI
         [SerializeField] private Color drawColor = new Color(1f, 0.72f, 0.22f, 1f);
         [SerializeField] private Color neutralColor = new Color(0.66f, 0.48f, 1f, 1f);
 
+        [Header("Feedback")]
+        [SerializeField, Min(0.01f)] private float panelEntranceSeconds = 0.35f;
+        [SerializeField, Min(0f)] private float resultCameraShakeDuration = 0.14f;
+        [SerializeField, Min(0f)] private float victoryCameraShakeMagnitude = 0.06f;
+        [SerializeField, Min(0f)] private float defeatCameraShakeMagnitude = 0.09f;
+        [SerializeField, Min(0f)] private float completeCameraShakeMagnitude = 0.045f;
+
         private GUIStyle cardTitleStyle;
         private GUIStyle cardValueStyle;
         private GUIStyle resultIconStyle;
@@ -31,6 +39,7 @@ namespace BubbleTown.UI
         private GUIStyle scoreStyle;
         private GUIStyle starStyle;
         private bool resultAudioPlayed;
+        private float shownAtTime;
 
         private enum ResultOutcome
         {
@@ -63,6 +72,7 @@ namespace BubbleTown.UI
         private void OnEnable()
         {
             resultAudioPlayed = false;
+            shownAtTime = Time.unscaledTime;
         }
 
         private void OnGUI()
@@ -73,6 +83,10 @@ namespace BubbleTown.UI
             ResultViewModel viewModel = BuildResultViewModel();
             PlayResultAudioOnce(viewModel);
             Rect panel = SimpleUIFactory.CenteredRect(840f, 660f);
+
+            Matrix4x4 previousMatrix = GUI.matrix;
+            float entranceScale = ResolvePanelEntranceScale();
+            GUIUtility.ScaleAroundPivot(new Vector2(entranceScale, entranceScale), panel.center);
             SimpleUIFactory.BeginPanel(panel);
 
             SimpleUIFactory.LabelPill(viewModel.HasResult ? "ROUND COMPLETE" : "RESULT WAITING");
@@ -94,6 +108,7 @@ namespace BubbleTown.UI
 
             SimpleUIFactory.SmallBody("Result data is currently passed through GameManager's latest battle result fields.");
             SimpleUIFactory.EndPanel();
+            GUI.matrix = previousMatrix;
         }
 
         public void OnClickRematch()
@@ -164,9 +179,15 @@ namespace BubbleTown.UI
             {
                 case ResultOutcome.Victory:
                     AudioManager.Instance?.PlayVictorySFX();
+                    CameraController.ShakeActiveCamera(resultCameraShakeDuration, victoryCameraShakeMagnitude);
                     break;
                 case ResultOutcome.Defeat:
                     AudioManager.Instance?.PlayDefeatSFX();
+                    CameraController.ShakeActiveCamera(resultCameraShakeDuration, defeatCameraShakeMagnitude);
+                    break;
+                case ResultOutcome.Draw:
+                case ResultOutcome.Complete:
+                    CameraController.ShakeActiveCamera(resultCameraShakeDuration, completeCameraShakeMagnitude);
                     break;
             }
         }
@@ -339,8 +360,12 @@ namespace BubbleTown.UI
             DrawPanel(cardRect, new Color(1f, 0.98f, 0.82f, 0.98f), viewModel.AccentColor, 24, 5);
 
             Rect iconCircle = new Rect(cardRect.x + 26f, cardRect.y + 24f, 82f, 82f);
+            Matrix4x4 previousMatrix = GUI.matrix;
+            float iconPulse = viewModel.HasResult ? 1f + Mathf.Sin(Time.unscaledTime * 7f) * 0.035f : 1f;
+            GUIUtility.ScaleAroundPivot(new Vector2(iconPulse, iconPulse), iconCircle.center);
             GUI.DrawTexture(iconCircle, GetCircleTexture(viewModel.AccentColor));
             GUI.Label(iconCircle, viewModel.IconText, resultIconStyle);
+            GUI.matrix = previousMatrix;
 
             GUI.Label(new Rect(cardRect.x + 128f, cardRect.y + 24f, cardRect.width - 154f, 38f), viewModel.OutcomeLabel, resultTitleStyle);
             GUI.Label(new Rect(cardRect.x + 128f, cardRect.y + 62f, cardRect.width - 154f, 28f), viewModel.MoodText, resultBodyStyle);
@@ -408,9 +433,26 @@ namespace BubbleTown.UI
                 bool isActive = i < starCount;
                 Color fill = isActive ? activeColor : new Color(0.78f, 0.82f, 0.86f, 1f);
                 Rect slotRect = new Rect(startX + i * (slotSize + gap), rect.y + 2f, slotSize, slotSize);
+                Matrix4x4 previousMatrix = GUI.matrix;
+                if (isActive)
+                {
+                    float starProgress = Mathf.Clamp01((Time.unscaledTime - shownAtTime - 0.15f * i) / 0.35f);
+                    float starScale = Mathf.Lerp(0.72f, 1f, Mathf.SmoothStep(0f, 1f, starProgress)) +
+                                      Mathf.Sin(starProgress * Mathf.PI) * 0.12f;
+                    GUIUtility.ScaleAroundPivot(new Vector2(starScale, starScale), slotRect.center);
+                }
+
                 DrawPanel(slotRect, fill, Color.white, 18, 2);
                 GUI.Label(slotRect, isActive ? "*" : "-", starStyle);
+                GUI.matrix = previousMatrix;
             }
+        }
+
+        private float ResolvePanelEntranceScale()
+        {
+            float progress = Mathf.Clamp01((Time.unscaledTime - shownAtTime) / Mathf.Max(0.01f, panelEntranceSeconds));
+            float eased = Mathf.SmoothStep(0f, 1f, progress);
+            return Mathf.Lerp(0.92f, 1f, eased) + Mathf.Sin(eased * Mathf.PI) * 0.035f;
         }
 
         private void EnsureStyles()

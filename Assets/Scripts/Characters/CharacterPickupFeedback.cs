@@ -22,6 +22,8 @@ namespace BubbleTown.Characters
         [SerializeField] private Color bombCountColor = new Color(0.25f, 0.9f, 1f);
         [SerializeField] private Color explosionRangeColor = new Color(1f, 0.58f, 0.12f);
         [SerializeField] private Color moveSpeedColor = new Color(0.48f, 1f, 0.28f);
+        [SerializeField] private Color shieldColor = new Color(0.38f, 0.78f, 1f);
+        [SerializeField] private Color invincibleColor = new Color(1f, 0.88f, 0.24f);
         [SerializeField] private Color fallbackColor = new Color(1f, 0.94f, 0.55f);
 
         private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
@@ -65,6 +67,10 @@ namespace BubbleTown.Characters
                     return explosionRangeColor;
                 case ItemType.MoveSpeedUp:
                     return moveSpeedColor;
+                case ItemType.Shield:
+                    return shieldColor;
+                case ItemType.TemporaryInvincible:
+                    return invincibleColor;
                 default:
                     return fallbackColor;
             }
