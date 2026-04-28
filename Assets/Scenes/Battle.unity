@@ -20,11 +20,11 @@ RenderSettings:
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
-  m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
-  m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
+  m_AmbientSkyColor: {r: 0.7490196, g: 0.9372549, b: 1, a: 1}
+  m_AmbientEquatorColor: {r: 1, g: 0.92156863, b: 0.7607843, a: 1}
+  m_AmbientGroundColor: {r: 0.4862745, g: 0.44313726, b: 0.59607846, a: 1}
   m_AmbientIntensity: 1
-  m_AmbientMode: 3
+  m_AmbientMode: 1
   m_SubtractiveShadowColor: {r: 0.42, g: 0.47, b: 0.627, a: 1}
   m_SkyboxMaterial: {fileID: 0}
   m_HaloStrength: 0.5
@@ -37,7 +37,7 @@ RenderSettings:
   m_ReflectionBounces: 1
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
-  m_Sun: {fileID: 0}
+  m_Sun: {fileID: 1012}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -164,8 +164,8 @@ Camera:
   m_GameObject: {fileID: 1000}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.7411765, g: 0.93333334, b: 1, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -269,7 +269,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1010}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.40821794, y: -0.23456973, z: 0.10938166, w: 0.8754261}
+  m_LocalRotation: {x: 0.40305823, y: -0.27253202, z: 0.12708378, w: 0.8643611}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -287,17 +287,17 @@ Light:
   serializedVersion: 10
   m_Type: 1
   m_Shape: 0
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 1
+  m_Color: {r: 1, g: 0.95686275, b: 0.8666667, a: 1}
+  m_Intensity: 1.18
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize: 10
   m_Shadows:
-    m_Type: 0
+    m_Type: 2
     m_Resolution: -1
     m_CustomResolution: -1
-    m_Strength: 1
+    m_Strength: 0.42
     m_Bias: 0.05
     m_NormalBias: 0.4
     m_NearPlane: 0.2
@@ -366,7 +366,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 177291835}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1030
@@ -572,6 +573,12 @@ MonoBehaviour:
   - itemType: 3
     prefab: {fileID: 8229450402797240169, guid: 222edd9b388a7473e8aba3ced174b447, type: 3}
     weight: 1
+  - itemType: 4
+    prefab: {fileID: 6181751157115104355, guid: a865922fdb8843209ab56000d0699206, type: 3}
+    weight: 0.75
+  - itemType: 5
+    prefab: {fileID: 8229450402797240169, guid: bc37108818374f06a785226edf85e0d0, type: 3}
+    weight: 0.45
   dropChance: 0.3
   registerMapItemState: 1
   preventSpawnOnBlockedCell: 1
@@ -654,8 +661,23 @@ MonoBehaviour:
   m_Name:
   m_EditorClassIdentifier:
   resultSceneDelay: 0.75
+  localVsNextRoundDelay: 1.45
+  countTimerOnlyWhileRunning: 1
+  resetTimerOnEnable: 1
+  showOpeningPrompt: 1
+  readyPromptSeconds: 1.05
+  goPromptSeconds: 0.75
+  spawnProtectionSeconds: 2.25
+  readyText: READY
+  goText: GO!
+  readyBodyText: Get ready. Controls unlock on GO!
+  goBodyText: Move fast. Spawn shields are active!
   pickupToastSeconds: 1.45
   pickupToastColor: {r: 1, g: 0.94, b: 0.55, a: 1}
+  player1Color: {r: 0.12, g: 0.72, b: 1, a: 1}
+  player2Color: {r: 1, g: 0.45, b: 0.26, a: 1}
+  aiColor: {r: 0.64, g: 0.46, b: 1, a: 1}
+  neutralColor: {r: 1, g: 0.82, b: 0.32, a: 1}
 --- !u!1001 &9493359
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2390,6 +2412,65 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2399681874472402468, guid: 54bdf907ef4d94ef99c258877ad6370e, type: 3}
   m_PrefabInstance: {fileID: 171200141}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &177291834
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 177291835}
+  - component: {fileID: 177291836}
+  m_Layer: 0
+  m_Name: VisualStyleRoot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &177291835
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 177291834}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1021}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &177291836
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 177291834}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aada393415e5746d49c36ed226cf7e37, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  targetCamera: {fileID: 1002}
+  directionalLight: {fileID: 1012}
+  autoFindReferences: 1
+  directionalLightEuler: {x: 50, y: -35, z: 0}
+  directionalLightColor: {r: 1, g: 0.95686275, b: 0.8666667, a: 1}
+  directionalLightIntensity: 1.18
+  shadowStrength: 0.42
+  candySkyColor: {r: 0.7411765, g: 0.93333334, b: 1, a: 1}
+  candyAmbientSky: {r: 0.7490196, g: 0.9372549, b: 1, a: 1}
+  candyAmbientEquator: {r: 1, g: 0.92156863, b: 0.7607843, a: 1}
+  candyAmbientGround: {r: 0.61960787, g: 0.72156864, b: 0.61960787, a: 1}
+  jellySkyColor: {r: 0.18039216, g: 0.2, b: 0.41960785, a: 1}
+  jellyAmbientSky: {r: 0.3529412, g: 0.38039216, b: 0.72156864, a: 1}
+  jellyAmbientEquator: {r: 0.2784314, g: 0.61960787, b: 0.78039217, a: 1}
+  jellyAmbientGround: {r: 0.14901961, g: 0.12156863, b: 0.25882354, a: 1}
 --- !u!1001 &213228557
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4522,6 +4603,8 @@ MonoBehaviour:
   moveSpeed: 4
   maxBombCount: 1
   bombRange: 2
+  shieldCharges: 0
+  maxShieldCharges: 3
   bombPrefab: {fileID: 2120576858052026143, guid: 77b186deaf51a466bb305349390980f6, type: 3}
   bombSpawnRoot: {fileID: 1051}
   activeBombCount: 0
@@ -4529,6 +4612,9 @@ MonoBehaviour:
   hideRenderersOnDeath: 1
   disableCollidersOnDeath: 1
   clearMapOccupationOnDeath: 1
+  isInvincible: 0
+  invincibleSecondsRemaining: 0
+  logProtectedExplosionHits: 1
   delayDeathPresentationForFeedback: 1
   deathPresentationDelay: 0.55
   disableCollidersImmediatelyOnDeath: 1
@@ -8754,6 +8840,8 @@ MonoBehaviour:
   moveSpeed: 4
   maxBombCount: 1
   bombRange: 2
+  shieldCharges: 0
+  maxShieldCharges: 3
   bombPrefab: {fileID: 2120576858052026143, guid: 77b186deaf51a466bb305349390980f6, type: 3}
   bombSpawnRoot: {fileID: 1051}
   activeBombCount: 0
@@ -8761,6 +8849,9 @@ MonoBehaviour:
   hideRenderersOnDeath: 1
   disableCollidersOnDeath: 1
   clearMapOccupationOnDeath: 1
+  isInvincible: 0
+  invincibleSecondsRemaining: 0
+  logProtectedExplosionHits: 1
   delayDeathPresentationForFeedback: 1
   deathPresentationDelay: 0.55
   disableCollidersImmediatelyOnDeath: 1
@@ -9198,6 +9289,8 @@ MonoBehaviour:
   moveSpeed: 4
   maxBombCount: 1
   bombRange: 2
+  shieldCharges: 0
+  maxShieldCharges: 3
   bombPrefab: {fileID: 2120576858052026143, guid: 77b186deaf51a466bb305349390980f6, type: 3}
   bombSpawnRoot: {fileID: 1051}
   activeBombCount: 0
@@ -9205,6 +9298,9 @@ MonoBehaviour:
   hideRenderersOnDeath: 1
   disableCollidersOnDeath: 1
   clearMapOccupationOnDeath: 1
+  isInvincible: 0
+  invincibleSecondsRemaining: 0
+  logProtectedExplosionHits: 1
   delayDeathPresentationForFeedback: 1
   deathPresentationDelay: 0.55
   disableCollidersImmediatelyOnDeath: 1
@@ -9218,15 +9314,28 @@ MonoBehaviour:
   enableDangerAvoidance: 1
   escapeSearchDepth: 6
   dangerMoveRetryDelay: 0.05
+  enableStrategicMovement: 1
+  playerChaseDistance: 7
+  softWallTargetSearchDepth: 8
+  strategicMoveRetryDelay: 0.18
+  postBombEscapeSeconds: 1.4
   enableBombPlacement: 1
   bombDecisionInterval: 2
+  urgentBombDecisionDelay: 0.12
   bombPlacementChance: 0.45
+  softWallBombPlacementChance: 0.72
+  adjacentSoftWallBombPlacementChance: 0.9
+  playerAttackBombPlacementChance: 0.85
   softWallCheckDistance: 1
   requireEscapeRouteBeforeBomb: 1
   bombEscapeSearchDepth: 6
   currentMoveDirection: {x: 0, y: 0}
   failedMoveAttempts: 0
   currentCellDangerous: 0
+  postBombEscapeTimer: 0
+  currentStrategicTarget: {x: 0, y: 0}
+  currentIntent: Idle
+  logDecisionDebug: 0
 --- !u!1001 &1369363391
 PrefabInstance:
   m_ObjectHideFlags: 0

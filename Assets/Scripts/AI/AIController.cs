@@ -35,10 +35,21 @@ namespace BubbleTown.AI
         [SerializeField, Min(1)] private int escapeSearchDepth = 6;
         [SerializeField, Min(0.01f)] private float dangerMoveRetryDelay = 0.05f;
 
+        [Header("AI Strategy")]
+        [SerializeField] private bool enableStrategicMovement = true;
+        [SerializeField, Min(1)] private int playerChaseDistance = 7;
+        [SerializeField, Min(1)] private int softWallTargetSearchDepth = 8;
+        [SerializeField, Min(0.1f)] private float strategicMoveRetryDelay = 0.18f;
+        [SerializeField, Min(0f)] private float postBombEscapeSeconds = 1.4f;
+
         [Header("AI Bomb Logic")]
         [SerializeField] private bool enableBombPlacement = true;
         [SerializeField, Min(0.25f)] private float bombDecisionInterval = 2f;
+        [SerializeField, Min(0.01f)] private float urgentBombDecisionDelay = 0.12f;
         [SerializeField, Range(0f, 1f)] private float bombPlacementChance = 0.45f;
+        [SerializeField, Range(0f, 1f)] private float softWallBombPlacementChance = 0.72f;
+        [SerializeField, Range(0f, 1f)] private float adjacentSoftWallBombPlacementChance = 0.9f;
+        [SerializeField, Range(0f, 1f)] private float playerAttackBombPlacementChance = 0.85f;
         [SerializeField, Min(1)] private int softWallCheckDistance = 1;
         [SerializeField] private bool requireEscapeRouteBeforeBomb = true;
         [SerializeField, Min(1)] private int bombEscapeSearchDepth = 6;
@@ -47,9 +58,18 @@ namespace BubbleTown.AI
         [SerializeField] private Vector2Int currentMoveDirection = Vector2Int.zero;
         [SerializeField] private int failedMoveAttempts;
         [SerializeField] private bool currentCellDangerous;
+        [SerializeField] private float postBombEscapeTimer;
+        [SerializeField] private Vector2Int currentStrategicTarget = Vector2Int.zero;
+        [SerializeField] private string currentIntent = "Idle";
+
+        [Header("AI Debug")]
+        [SerializeField] private bool logDecisionDebug;
 
         private float moveDecisionTimer;
         private float bombTimer;
+
+        public string CurrentIntent => currentIntent;
+        public Vector2Int CurrentStrategicTarget => currentStrategicTarget;
 
         private struct EscapeSearchNode
         {
@@ -79,6 +99,7 @@ namespace BubbleTown.AI
             }
 
             currentCellDangerous = enableDangerAvoidance && IsGridDangerous(CurrentGridPosition);
+            TickPostBombEscapeTimer();
             UpdateBombDecision();
             UpdateMovementDecision();
         }
@@ -106,7 +127,7 @@ namespace BubbleTown.AI
                 return;
             }
 
-            if (currentCellDangerous)
+            if (currentCellDangerous || postBombEscapeTimer > 0f)
             {
                 if (moveDecisionTimer > dangerMoveRetryDelay)
                 {
@@ -125,6 +146,11 @@ namespace BubbleTown.AI
 
             moveDecisionTimer -= Time.deltaTime;
             if (moveDecisionTimer > 0f)
+            {
+                return;
+            }
+
+            if (enableStrategicMovement && TryMoveStrategicDirection())
             {
                 return;
             }
@@ -149,10 +175,36 @@ namespace BubbleTown.AI
             RegisterFailedMove(dangerMoveRetryDelay);
         }
 
+        private bool TryMoveStrategicDirection()
+        {
+            if (TryFindPlayerAttackPositionDirection(out Vector2Int playerDirection, out Vector2Int playerTarget))
+            {
+                currentStrategicTarget = playerTarget;
+                currentIntent = "Chase Player";
+                LogDecision($"Moving toward player attack position via {playerDirection}. Target: {playerTarget}");
+                TryMoveOrRegisterFailure(playerDirection, strategicMoveRetryDelay);
+                return true;
+            }
+
+            if (TryFindSoftWallApproachDirection(out Vector2Int softWallDirection, out Vector2Int softWallTarget))
+            {
+                currentStrategicTarget = softWallTarget;
+                currentIntent = "Seek Soft Wall";
+                LogDecision($"Moving toward soft wall approach via {softWallDirection}. Target: {softWallTarget}");
+                TryMoveOrRegisterFailure(softWallDirection, strategicMoveRetryDelay);
+                return true;
+            }
+
+            currentIntent = "Patrol";
+            currentStrategicTarget = Vector2Int.zero;
+            return false;
+        }
+
         private void TryMoveRandomDirection()
         {
             if (UnityEngine.Random.value < idleChance)
             {
+                currentIntent = "Idle";
                 ScheduleNextMoveDecision(moveDecisionInterval);
                 return;
             }
@@ -163,6 +215,7 @@ namespace BubbleTown.AI
                 return;
             }
 
+            currentIntent = "Patrol";
             TryMoveOrRegisterFailure(nextDirection, moveDecisionInterval);
         }
 
@@ -271,7 +324,7 @@ namespace BubbleTown.AI
 
         private void UpdateBombDecision()
         {
-            if (!enableBombPlacement || IsMoving)
+            if (!enableBombPlacement || IsMoving || postBombEscapeTimer > 0f)
             {
                 return;
             }
@@ -279,6 +332,11 @@ namespace BubbleTown.AI
             bombTimer -= Time.deltaTime;
             if (bombTimer > 0f)
             {
+                if (HasImmediateBombOpportunity())
+                {
+                    bombTimer = Mathf.Min(bombTimer, urgentBombDecisionDelay);
+                }
+
                 return;
             }
 
@@ -288,31 +346,65 @@ namespace BubbleTown.AI
                 return;
             }
 
-            if (!HasBombPlacementOpportunity())
+            if (!TryEvaluateBombPlacementOpportunity(out float placementChance, out string reason))
             {
                 return;
             }
 
-            if (UnityEngine.Random.value > bombPlacementChance)
+            if (UnityEngine.Random.value > placementChance)
             {
+                LogDecision($"Skipped bomb chance. Reason: {reason}, Chance: {placementChance:0.00}");
                 return;
             }
 
             if (requireEscapeRouteBeforeBomb && !CanReachSafetyAfterPlacingBomb())
             {
+                LogDecision($"Skipped bomb because no escape route was found. Reason: {reason}");
                 return;
             }
 
             if (TryPlaceBomb())
             {
                 currentCellDangerous = true;
+                postBombEscapeTimer = postBombEscapeSeconds;
                 moveDecisionTimer = 0f;
+                currentIntent = "Escape After Bomb";
+                LogDecision($"Placed bomb. Reason: {reason}. Escape timer: {postBombEscapeTimer:0.00}s");
             }
         }
 
-        private bool HasBombPlacementOpportunity()
+        private bool HasImmediateBombOpportunity()
         {
-            return IsNearSoftWall() || IsPlayerInBombLine();
+            return HasAdjacentSoftWall(CurrentGridPosition) || IsPlayerInBombLine();
+        }
+
+        private bool TryEvaluateBombPlacementOpportunity(out float placementChance, out string reason)
+        {
+            placementChance = bombPlacementChance;
+            reason = string.Empty;
+
+            if (IsPlayerInBombLine())
+            {
+                placementChance = Mathf.Max(placementChance, playerAttackBombPlacementChance);
+                reason = "Player in blast line";
+                return true;
+            }
+
+            if (HasAdjacentSoftWall(CurrentGridPosition))
+            {
+                placementChance = Mathf.Max(placementChance, adjacentSoftWallBombPlacementChance);
+                reason = "Adjacent soft wall";
+                return true;
+            }
+
+            if (IsNearSoftWall())
+            {
+                placementChance = Mathf.Max(placementChance, softWallBombPlacementChance);
+                reason = "Soft wall nearby";
+                return true;
+            }
+
+            return false;
         }
 
         private bool IsNearSoftWall()
@@ -345,6 +437,25 @@ namespace BubbleTown.AI
             return false;
         }
 
+        private bool HasAdjacentSoftWall(Vector2Int gridPosition)
+        {
+            if (MapManager == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < MoveDirections.Length; i++)
+            {
+                GridCell cell = MapManager.GetCell(gridPosition + MoveDirections[i]);
+                if (cell != null && cell.IsSoftWall)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private bool IsPlayerInBombLine()
         {
             PlayerController[] players = FindObjectsOfType<PlayerController>();
@@ -365,6 +476,86 @@ namespace BubbleTown.AI
             return false;
         }
 
+        private bool TryFindPlayerAttackPositionDirection(out Vector2Int direction, out Vector2Int targetGridPosition)
+        {
+            direction = Vector2Int.zero;
+            targetGridPosition = Vector2Int.zero;
+
+            if (!TryFindNearestActivePlayer(out PlayerController nearestPlayer))
+            {
+                return false;
+            }
+
+            targetGridPosition = nearestPlayer.CurrentGridPosition;
+            Vector2Int playerGridPosition = targetGridPosition;
+            int distance = ManhattanDistance(CurrentGridPosition, playerGridPosition);
+            if (distance > playerChaseDistance)
+            {
+                return false;
+            }
+
+            if (IsGridInBombBlast(playerGridPosition, CurrentGridPosition, BombRange))
+            {
+                return false;
+            }
+
+            return TryFindDirectionToGoal(
+                position => position != CurrentGridPosition && IsGridInBombBlast(playerGridPosition, position, BombRange),
+                playerChaseDistance,
+                true,
+                out direction);
+        }
+
+        private bool TryFindNearestActivePlayer(out PlayerController nearestPlayer)
+        {
+            nearestPlayer = null;
+            int bestDistance = int.MaxValue;
+            PlayerController[] players = FindObjectsOfType<PlayerController>();
+            for (int i = 0; i < players.Length; i++)
+            {
+                PlayerController player = players[i];
+                if (player == null || !player.IsAlive || !player.gameObject.activeInHierarchy)
+                {
+                    continue;
+                }
+
+                int distance = ManhattanDistance(CurrentGridPosition, player.CurrentGridPosition);
+                if (distance >= bestDistance)
+                {
+                    continue;
+                }
+
+                bestDistance = distance;
+                nearestPlayer = player;
+            }
+
+            return nearestPlayer != null;
+        }
+
+        private bool TryFindSoftWallApproachDirection(out Vector2Int direction, out Vector2Int targetGridPosition)
+        {
+            direction = Vector2Int.zero;
+            targetGridPosition = Vector2Int.zero;
+
+            if (HasAdjacentSoftWall(CurrentGridPosition))
+            {
+                return false;
+            }
+
+            bool found = TryFindDirectionToGoal(
+                position => HasAdjacentSoftWall(position),
+                softWallTargetSearchDepth,
+                true,
+                out direction);
+
+            if (found)
+            {
+                targetGridPosition = CurrentGridPosition + direction;
+            }
+
+            return found;
+        }
+
         private bool CanReachSafetyAfterPlacingBomb()
         {
             Vector2Int hypotheticalBombGridPosition = CurrentGridPosition;
@@ -374,6 +565,68 @@ namespace BubbleTown.AI
                 true,
                 hypotheticalBombGridPosition,
                 out _);
+        }
+
+        private bool TryFindDirectionToGoal(
+            Func<Vector2Int, bool> isGoal,
+            int maxDepth,
+            bool avoidDangerousCells,
+            out Vector2Int direction)
+        {
+            direction = Vector2Int.zero;
+            if (MapManager == null || isGoal == null)
+            {
+                return false;
+            }
+
+            Queue<EscapeSearchNode> openNodes = new Queue<EscapeSearchNode>();
+            HashSet<Vector2Int> visitedPositions = new HashSet<Vector2Int>();
+            Vector2Int startPosition = CurrentGridPosition;
+
+            openNodes.Enqueue(new EscapeSearchNode(startPosition, Vector2Int.zero, 0));
+            visitedPositions.Add(startPosition);
+
+            while (openNodes.Count > 0)
+            {
+                EscapeSearchNode currentNode = openNodes.Dequeue();
+                if (currentNode.Depth > 0 && isGoal(currentNode.Position))
+                {
+                    direction = currentNode.FirstDirection;
+                    return true;
+                }
+
+                if (currentNode.Depth >= maxDepth)
+                {
+                    continue;
+                }
+
+                int startIndex = UnityEngine.Random.Range(0, MoveDirections.Length);
+                for (int i = 0; i < MoveDirections.Length; i++)
+                {
+                    Vector2Int stepDirection = MoveDirections[(startIndex + i) % MoveDirections.Length];
+                    Vector2Int nextPosition = currentNode.Position + stepDirection;
+                    if (visitedPositions.Contains(nextPosition))
+                    {
+                        continue;
+                    }
+
+                    if (!IsGridWalkable(nextPosition))
+                    {
+                        continue;
+                    }
+
+                    if (avoidDangerousCells && IsGridDangerous(nextPosition))
+                    {
+                        continue;
+                    }
+
+                    Vector2Int firstDirection = currentNode.Depth == 0 ? stepDirection : currentNode.FirstDirection;
+                    openNodes.Enqueue(new EscapeSearchNode(nextPosition, firstDirection, currentNode.Depth + 1));
+                    visitedPositions.Add(nextPosition);
+                }
+            }
+
+            return false;
         }
 
         private bool TryFindEscapeDirection(
@@ -551,8 +804,36 @@ namespace BubbleTown.AI
             currentMoveDirection = Vector2Int.zero;
             failedMoveAttempts = 0;
             currentCellDangerous = false;
+            postBombEscapeTimer = 0f;
+            currentStrategicTarget = Vector2Int.zero;
+            currentIntent = "Idle";
             moveDecisionTimer = UnityEngine.Random.Range(0f, moveDecisionInterval);
             bombTimer = UnityEngine.Random.Range(0f, bombDecisionInterval);
+        }
+
+        private void TickPostBombEscapeTimer()
+        {
+            if (postBombEscapeTimer <= 0f)
+            {
+                return;
+            }
+
+            postBombEscapeTimer = Mathf.Max(0f, postBombEscapeTimer - Time.deltaTime);
+        }
+
+        private int ManhattanDistance(Vector2Int a, Vector2Int b)
+        {
+            return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
+        }
+
+        private void LogDecision(string message)
+        {
+            if (!logDecisionDebug)
+            {
+                return;
+            }
+
+            Debug.Log($"[AIController] {name}: {message}");
         }
     }
 }

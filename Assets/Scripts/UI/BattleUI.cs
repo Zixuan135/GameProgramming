@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using BubbleTown.AI;
+using BubbleTown.CameraSystem;
 using BubbleTown.Characters;
 using BubbleTown.Core.Enums;
 using BubbleTown.Items;
@@ -36,6 +37,13 @@ namespace BubbleTown.UI
         [Header("Pickup Toast")]
         [SerializeField, Min(0f)] private float pickupToastSeconds = 1.45f;
         [SerializeField] private Color pickupToastColor = new Color(1f, 0.94f, 0.55f);
+
+        [Header("Feedback")]
+        [SerializeField] private bool enableHudFeedbackShake = true;
+        [SerializeField, Min(0f)] private float pickupCameraShakeDuration = 0.06f;
+        [SerializeField, Min(0f)] private float pickupCameraShakeMagnitude = 0.035f;
+        [SerializeField, Min(0f)] private float resultCameraShakeDuration = 0.14f;
+        [SerializeField, Min(0f)] private float resultCameraShakeMagnitude = 0.085f;
 
         [Header("HUD Colors")]
         [SerializeField] private Color player1Color = new Color(0.12f, 0.72f, 1f);
@@ -239,9 +247,7 @@ namespace BubbleTown.UI
 
             if (roundStartTriggered && openingPromptTimer <= 0f)
             {
-                hudHint = ResolveMaxProtectionRemaining(gameManager) > 0f
-                    ? "Opening shield is fading. Use this moment to take position."
-                    : "Break blocks, collect power-ups, and avoid the blast lines.";
+                hudHint = ResolvePostOpeningHint(gameManager);
             }
         }
 
@@ -333,6 +339,13 @@ namespace BubbleTown.UI
             {
                 QueueResult("Game Over", "Player1 was defeated during the single-player test.", "None");
             }
+            else if (gameManager.IsSinglePlayerObjectiveComplete)
+            {
+                QueueResult(
+                    "Objective Clear",
+                    $"Player1 cleared {gameManager.SinglePlayerObjectiveProgressLabel} soft walls.",
+                    "Player1");
+            }
         }
 
         private void QueueResult(string title, string detail, string winner)
@@ -349,6 +362,7 @@ namespace BubbleTown.UI
             localVsNextRoundQueued = false;
             resultTimer = resultSceneDelay;
             hudHint = "Battle finished. Loading result...";
+            PlayHudFeedbackShake(resultCameraShakeDuration, resultCameraShakeMagnitude);
         }
 
         private void QueueLocalVsRoundResult(string title, string detail, string roundWinner)
@@ -381,6 +395,7 @@ namespace BubbleTown.UI
             localVsNextRoundQueued = true;
             localVsNextRoundTimer = localVsNextRoundDelay;
             hudHint = "Round finished. Loading the next Local VS round...";
+            PlayHudFeedbackShake(resultCameraShakeDuration, resultCameraShakeMagnitude * 0.75f);
         }
 
         private void TickQueuedResult()
@@ -438,6 +453,7 @@ namespace BubbleTown.UI
             }
 
             DrawTopStatusBar(gameManager);
+            DrawSinglePlayerObjectivePanel(gameManager);
             DrawLocalVsScoreboard(gameManager);
             DrawCharacterPanel(new Rect(18f, Screen.height - 176f, 318f, 152f), "PLAYER 1", gameManager.Player1, player1Color);
 
@@ -458,6 +474,30 @@ namespace BubbleTown.UI
             DrawInfoPill(new Rect(x + 540f, y, 150f, 30f), "ROUND", FormatRoundState(gameManager), neutralColor);
 
             GUI.Label(new Rect(topRect.x + 20f, topRect.y + 52f, topRect.width - 40f, 28f), hudHint, hudSmallStyle);
+        }
+
+        private void DrawSinglePlayerObjectivePanel(GameManager gameManager)
+        {
+            if (gameManager.CurrentGameMode != GameMode.SinglePlayer || !gameManager.IsSinglePlayerObjectiveEnabled)
+            {
+                return;
+            }
+
+            Rect rect = new Rect(Screen.width * 0.5f - 210f, 116f, 420f, 72f);
+            DrawPanel(rect, new Color(1f, 0.95f, 0.72f, 0.94f), new Color(1f, 0.58f, 0.18f), 18, 3);
+
+            GUI.Label(new Rect(rect.x + 18f, rect.y + 7f, rect.width - 36f, 22f), "SOLO OBJECTIVE", hudSmallStyle);
+            GUI.Label(new Rect(rect.x + 20f, rect.y + 28f, rect.width * 0.58f, 30f), gameManager.SinglePlayerObjectiveLabel, hudTextStyle);
+            GUI.Label(new Rect(rect.x + rect.width * 0.62f, rect.y + 24f, rect.width * 0.32f, 34f), gameManager.SinglePlayerObjectiveProgressLabel, hudValueStyle);
+
+            float progress = gameManager.SinglePlayerSoftWallTarget > 0
+                ? Mathf.Clamp01((float)gameManager.SinglePlayerSoftWallsCleared / gameManager.SinglePlayerSoftWallTarget)
+                : 1f;
+            Rect progressBack = new Rect(rect.x + 22f, rect.y + rect.height - 13f, rect.width - 44f, 6f);
+            GUI.DrawTexture(progressBack, GetRoundedTexture(new Color(0.16f, 0.34f, 0.44f, 0.28f), Color.clear, 3, 0));
+            GUI.DrawTexture(
+                new Rect(progressBack.x, progressBack.y, progressBack.width * progress, progressBack.height),
+                GetRoundedTexture(new Color(1f, 0.62f, 0.16f, 0.95f), Color.clear, 3, 0));
         }
 
         private void DrawLocalVsScoreboard(GameManager gameManager)
@@ -500,7 +540,7 @@ namespace BubbleTown.UI
             if (character == null || !character.gameObject.activeInHierarchy)
             {
                 GUI.Label(new Rect(rect.x + 18f, rect.y + 58f, rect.width - 36f, 58f), "Not active in this mode", hudTextStyle);
-                DrawAbilityRow(rect, 0, 0, 0, 0f, accentColor);
+                DrawAbilityRow(rect, 0, 0, 0, 0f, 0, accentColor);
                 return;
             }
 
@@ -510,16 +550,18 @@ namespace BubbleTown.UI
                 character.MaxBombCount,
                 character.BombRange,
                 character.MoveSpeed,
+                character.ShieldCharges,
                 accentColor);
         }
 
-        private void DrawAbilityRow(Rect panelRect, int remainingBombs, int maxBombs, int range, float speed, Color accentColor)
+        private void DrawAbilityRow(Rect panelRect, int remainingBombs, int maxBombs, int range, float speed, int shieldCharges, Color accentColor)
         {
             float y = panelRect.y + 58f;
-            float itemWidth = (panelRect.width - 44f) / 3f;
+            float itemWidth = (panelRect.width - 52f) / 4f;
             DrawAbilityBox(new Rect(panelRect.x + 14f, y, itemWidth, 74f), "BOMBS", remainingBombs + "/" + maxBombs, accentColor);
             DrawAbilityBox(new Rect(panelRect.x + 22f + itemWidth, y, itemWidth, 74f), "RANGE", range.ToString(), new Color(1f, 0.58f, 0.18f));
             DrawAbilityBox(new Rect(panelRect.x + 30f + itemWidth * 2f, y, itemWidth, 74f), "SPEED", speed.ToString("0.0"), new Color(0.48f, 0.9f, 0.34f));
+            DrawAbilityBox(new Rect(panelRect.x + 38f + itemWidth * 3f, y, itemWidth, 74f), "GUARD", shieldCharges.ToString(), new Color(0.35f, 0.78f, 1f));
         }
 
         private void DrawAbilityBox(Rect rect, string label, string value, Color accentColor)
@@ -568,9 +610,17 @@ namespace BubbleTown.UI
             }
 
             Rect rect = new Rect(Screen.width * 0.5f - 230f, Screen.height * 0.5f - 92f, 460f, 184f);
+            Matrix4x4 previousMatrix = GUI.matrix;
+            float entrance = ResolveQueuedPromptEntrance();
+            float easedEntrance = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(entrance / 0.28f));
+            float pulse = 1f + Mathf.Sin(Time.unscaledTime * 8f) * 0.025f;
+            float scale = Mathf.Lerp(0.86f, 1f, easedEntrance) * pulse;
+            GUIUtility.ScaleAroundPivot(new Vector2(scale, scale), rect.center);
+
             DrawPanel(rect, new Color(1f, 0.96f, 0.72f, 0.97f), new Color(1f, 0.58f, 0.18f), 24, 5);
             GUI.Label(new Rect(rect.x + 18f, rect.y + 22f, rect.width - 36f, 58f), resultPromptTitle, promptTitleStyle);
             GUI.Label(new Rect(rect.x + 28f, rect.y + 84f, rect.width - 56f, 82f), resultPromptDetail, promptBodyStyle);
+            GUI.matrix = previousMatrix;
         }
 
         private void DrawPickupToast()
@@ -582,8 +632,23 @@ namespace BubbleTown.UI
 
             float toastY = GameManager.Instance != null && GameManager.Instance.CurrentGameMode == GameMode.LocalVS ? 190f : 116f;
             Rect toastRect = new Rect(Screen.width * 0.5f - 190f, toastY, 380f, 56f);
+            float elapsed01 = pickupToastSeconds <= 0f ? 1f : Mathf.Clamp01(1f - pickupToastTimer / pickupToastSeconds);
+            float pop01 = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed01 / 0.22f));
+            float fadeAlpha = pickupToastSeconds <= 0f
+                ? 1f
+                : Mathf.Clamp01(pickupToastTimer / Mathf.Min(0.35f, Mathf.Max(0.01f, pickupToastSeconds)));
+            float scale = Mathf.Lerp(0.9f, 1f, pop01) + Mathf.Sin(pop01 * Mathf.PI) * 0.08f;
+            float slideOffset = Mathf.Lerp(-18f, 0f, pop01);
+            toastRect.y += slideOffset;
+
+            Matrix4x4 previousMatrix = GUI.matrix;
+            Color previousColor = GUI.color;
+            GUI.color = new Color(previousColor.r, previousColor.g, previousColor.b, previousColor.a * fadeAlpha);
+            GUIUtility.ScaleAroundPivot(new Vector2(scale, scale), toastRect.center);
             DrawPanel(toastRect, pickupToastColor, Color.white, 18, 3);
             GUI.Label(toastRect, pickupToastText, toastStyle);
+            GUI.matrix = previousMatrix;
+            GUI.color = previousColor;
         }
 
         private void DrawActionButtons()
@@ -592,22 +657,34 @@ namespace BubbleTown.UI
             DrawPanel(buttonRect, new Color(1f, 0.96f, 0.72f, 0.92f), new Color(1f, 0.58f, 0.18f), 18, 3);
             GUILayout.BeginArea(new Rect(buttonRect.x + 12f, buttonRect.y + 12f, buttonRect.width - 24f, buttonRect.height - 24f));
 
-            if (GUILayout.Button("Retry", buttonStyle, GUILayout.Height(38f)))
+            if (AnimatedActionButton("Retry"))
             {
                 OnClickRetry();
             }
 
-            if (GUILayout.Button("Force Result", buttonStyle, GUILayout.Height(38f)))
+            if (AnimatedActionButton("Force Result"))
             {
                 OnClickForceResult();
             }
 
-            if (GUILayout.Button("Main Menu", buttonStyle, GUILayout.Height(38f)))
+            if (AnimatedActionButton("Main Menu"))
             {
                 OnClickBackToMenu();
             }
 
             GUILayout.EndArea();
+        }
+
+        private bool AnimatedActionButton(string text)
+        {
+            Rect rect = GUILayoutUtility.GetRect(130f, 38f, GUILayout.ExpandWidth(true));
+            Matrix4x4 previousMatrix = GUI.matrix;
+            float scale = ResolveButtonScale(rect);
+            GUIUtility.ScaleAroundPivot(new Vector2(scale, scale), rect.center);
+            bool clicked = GUI.Button(rect, text, buttonStyle);
+            GUI.matrix = previousMatrix;
+            GUILayout.Space(6f);
+            return clicked;
         }
 
         private string FormatCharacterName(CharacterBase character)
@@ -645,6 +722,14 @@ namespace BubbleTown.UI
                     return "[Range +1]";
                 case ItemType.MoveSpeedUp:
                     return "[Speed Up]";
+                case ItemType.Shield:
+                    return "[Shield]";
+                case ItemType.TemporaryInvincible:
+                    return "[Invincible]";
+                case ItemType.KickBomb:
+                    return "[Kick Bomb]";
+                case ItemType.PierceExplosion:
+                    return "[Pierce Blast]";
                 default:
                     return "[Power-Up]";
             }
@@ -664,6 +749,47 @@ namespace BubbleTown.UI
 
             pickupToastText = $"{FormatCharacterName(character)} picked up {FormatItemName(item.ItemType)}";
             pickupToastTimer = pickupToastSeconds;
+            PlayHudFeedbackShake(pickupCameraShakeDuration, pickupCameraShakeMagnitude);
+        }
+
+        private float ResolveQueuedPromptEntrance()
+        {
+            float total = resultQueued ? resultSceneDelay : localVsNextRoundDelay;
+            float remaining = resultQueued ? resultTimer : localVsNextRoundTimer;
+            if (total <= 0f)
+            {
+                return 1f;
+            }
+
+            return Mathf.Clamp01(1f - remaining / total);
+        }
+
+        private float ResolveButtonScale(Rect rect)
+        {
+            Event currentEvent = Event.current;
+            bool isHovering = currentEvent != null && rect.Contains(currentEvent.mousePosition);
+            if (!isHovering)
+            {
+                return 1f;
+            }
+
+            bool isPressing = currentEvent.type == EventType.MouseDown || currentEvent.type == EventType.MouseDrag;
+            if (isPressing)
+            {
+                return 0.965f;
+            }
+
+            return 1.026f + Mathf.Sin(Time.unscaledTime * 11f) * 0.004f;
+        }
+
+        private void PlayHudFeedbackShake(float duration, float magnitude)
+        {
+            if (!enableHudFeedbackShake || duration <= 0f || magnitude <= 0f)
+            {
+                return;
+            }
+
+            CameraController.ShakeActiveCamera(duration, magnitude);
         }
 
         private string FormatMapName(BattleMapType mapType)
@@ -689,6 +815,11 @@ namespace BubbleTown.UI
             if (character.IsAlive && character.IsInvincible)
             {
                 return $"SAFE {character.InvincibleSecondsRemaining:0.0}";
+            }
+
+            if (character.IsAlive && character.HasShield)
+            {
+                return $"SHIELD {character.ShieldCharges}";
             }
 
             return character.IsAlive ? "ALIVE" : "DOWN";
@@ -723,6 +854,21 @@ namespace BubbleTown.UI
             }
 
             return gameManager.CurrentGameState.ToString();
+        }
+
+        private string ResolvePostOpeningHint(GameManager gameManager)
+        {
+            if (ResolveMaxProtectionRemaining(gameManager) > 0f)
+            {
+                return "Opening shield is fading. Use this moment to take position.";
+            }
+
+            if (gameManager != null && gameManager.CurrentGameMode == GameMode.SinglePlayer && gameManager.IsSinglePlayerObjectiveEnabled)
+            {
+                return $"Solo goal: clear soft walls. Progress {gameManager.SinglePlayerObjectiveProgressLabel}.";
+            }
+
+            return "Break blocks, collect power-ups, and avoid the blast lines.";
         }
 
         private string FormatLocalVsRoundHeader(GameManager gameManager)
@@ -831,7 +977,23 @@ namespace BubbleTown.UI
                 alignment = TextAnchor.MiddleCenter,
                 fontSize = 14,
                 fontStyle = FontStyle.Bold,
-                normal = { textColor = textPrimary }
+                border = new RectOffset(12, 12, 12, 12),
+                margin = new RectOffset(0, 0, 0, 0),
+                normal =
+                {
+                    textColor = Color.white,
+                    background = GetRoundedTexture(new Color(0.12f, 0.72f, 1f, 1f), Color.white, 12, 2)
+                },
+                hover =
+                {
+                    textColor = Color.white,
+                    background = GetRoundedTexture(new Color(0.25f, 0.86f, 1f, 1f), Color.white, 12, 2)
+                },
+                active =
+                {
+                    textColor = Color.white,
+                    background = GetRoundedTexture(new Color(0.05f, 0.52f, 0.82f, 1f), Color.white, 12, 2)
+                }
             };
         }
 

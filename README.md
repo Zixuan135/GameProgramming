@@ -35,6 +35,7 @@ The project is developed through small daily iterations: keep the architecture s
 - Battle opening flow with `READY -> GO!`
 - Short spawn protection at round start
 - Basic AI movement, danger detection, and bomb placement
+- Lightweight game-feel feedback for explosions, pickups, buttons, and results
 
 ## Current Presentation
 
@@ -48,7 +49,10 @@ The project is developed through small daily iterations: keep the architecture s
 - Center/horizontal/vertical explosion placeholder prefabs
 - Recognizable 3D item placeholders with floating/glow animation
 - Battle HUD shows mode, map, timer, round state, player stats, pickup toasts, and LocalVS score
-- Result screen shows outcome, mode, map, winner, score placeholder, reward placeholder, stars, Retry, and Main Menu
+- Battle HUD includes animated pickup toasts, result prompts, and testing buttons
+- Result screen shows outcome, mode, map, winner, score placeholder, reward placeholder, animated stars, Retry, and Main Menu
+- Menu buttons and map/mode cards have lightweight hover/click animation
+- Camera shake is used as low-cost feedback for explosions, pickups, and result moments
 - AudioManager supports BGM/SFX hooks; final audio clips are still placeholder-ready
 
 ## Controls
@@ -140,8 +144,10 @@ Docs/
 - `BombController`: bomb countdown, explosion spawn, chain reaction
 - `ExplosionController`: explosion cell lifetime, hit detection, visual pulse
 - `ItemBase` / `ItemSpawner`: item pickup and soft-wall item drops
+- `SimpleUIFactory`: shared colorful IMGUI menu/card/button presentation
 - `BattleUI`: HUD, opening flow, result detection, LocalVS round flow
 - `ResultUI`: final result display and retry/main menu actions
+- `CameraController`: angled battle camera, shared LocalVS framing, and shake feedback
 - `AudioManager`: BGM/SFX entry point
 
 ## Documentation

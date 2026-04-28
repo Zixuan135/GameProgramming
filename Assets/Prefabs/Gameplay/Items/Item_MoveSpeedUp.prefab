@@ -550,6 +550,8 @@ MonoBehaviour:
   bombCountDelta: 1
   explosionRangeDelta: 1
   moveSpeedDelta: 0.5
+  shieldChargesDelta: 1
+  invincibleSeconds: 4
   mapManager: {fileID: 0}
   gridPosition: {x: 0, y: 0}
   hasGridPosition: 0
