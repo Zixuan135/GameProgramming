@@ -14,8 +14,8 @@ namespace BubbleTown.EditorTools
     public static class MapArtSetup
     {
         private const string BattleScenePath = "Assets/Scenes/Battle.unity";
-        private const string MaterialFolder = "Assets/Materials";
-        private const string MapPrefabFolder = "Assets/Prefabs/Map";
+        private const string MaterialFolder = "Assets/Materials/Map/CandyPark";
+        private const string MapPrefabFolder = "Assets/Prefabs/Map/CandyPark";
 
         private const string GroundPrefabPath = MapPrefabFolder + "/Tile_Ground_CandyPark.prefab";
         private const string HardWallPrefabPath = MapPrefabFolder + "/Wall_Hard_RoundedBlock.prefab";
@@ -59,7 +59,10 @@ namespace BubbleTown.EditorTools
         private static void EnsureFolders()
         {
             EnsureFolder("Assets", "Materials");
+            EnsureFolder("Assets/Materials", "Map");
+            EnsureFolder("Assets/Materials/Map", "CandyPark");
             EnsureFolder("Assets/Prefabs", "Map");
+            EnsureFolder("Assets/Prefabs/Map", "CandyPark");
         }
 
         private static void EnsureFolder(string parentFolder, string childFolder)

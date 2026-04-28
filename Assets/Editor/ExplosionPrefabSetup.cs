@@ -10,15 +10,15 @@ namespace BubbleTown.EditorTools
     /// </summary>
     public static class ExplosionPrefabSetup
     {
-        private const string BombPrefabPath = "Assets/Prefabs/Gameplay/Bomb.prefab";
-        private const string ExplosionCenterPrefabPath = "Assets/Prefabs/Gameplay/ExplosionCenter.prefab";
-        private const string ExplosionHorizontalPrefabPath = "Assets/Prefabs/Gameplay/ExplosionHorizontal.prefab";
-        private const string ExplosionVerticalPrefabPath = "Assets/Prefabs/Gameplay/ExplosionVertical.prefab";
+        private const string BombPrefabPath = "Assets/Prefabs/Gameplay/Bombs/Bomb_Basic.prefab";
+        private const string ExplosionCenterPrefabPath = "Assets/Prefabs/Gameplay/Explosions/Explosion_Center.prefab";
+        private const string ExplosionHorizontalPrefabPath = "Assets/Prefabs/Gameplay/Explosions/Explosion_Horizontal.prefab";
+        private const string ExplosionVerticalPrefabPath = "Assets/Prefabs/Gameplay/Explosions/Explosion_Vertical.prefab";
 
-        private const string CoreMaterialPath = "Assets/Materials/Mat_Explosion_Core_Cream.mat";
-        private const string BubbleMaterialPath = "Assets/Materials/Mat_Explosion_Bubble_Cyan.mat";
-        private const string ArmMaterialPath = "Assets/Materials/Mat_Explosion_Arm_Orange.mat";
-        private const string SparkMaterialPath = "Assets/Materials/Mat_Explosion_Spark_Pink.mat";
+        private const string CoreMaterialPath = "Assets/Materials/Gameplay/Explosions/Mat_Explosion_Core_Cream.mat";
+        private const string BubbleMaterialPath = "Assets/Materials/Gameplay/Explosions/Mat_Explosion_Bubble_Cyan.mat";
+        private const string ArmMaterialPath = "Assets/Materials/Gameplay/Explosions/Mat_Explosion_Arm_Orange.mat";
+        private const string SparkMaterialPath = "Assets/Materials/Gameplay/Explosions/Mat_Explosion_Spark_Pink.mat";
 
         private enum ExplosionVisualKind
         {

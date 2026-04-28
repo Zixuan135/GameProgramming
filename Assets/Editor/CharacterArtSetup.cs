@@ -16,13 +16,13 @@ namespace BubbleTown.EditorTools
     public static class CharacterArtSetup
     {
         private const string BattleScenePath = "Assets/Scenes/Battle.unity";
-        private const string MaterialFolder = "Assets/Materials";
+        private const string MaterialFolder = "Assets/Materials/Characters";
         private const string CharacterPrefabFolder = "Assets/Prefabs/Characters";
 
         private const string Player1PrefabPath = CharacterPrefabFolder + "/Character_Player1_Chibi.prefab";
         private const string Player2PrefabPath = CharacterPrefabFolder + "/Character_Player2_Chibi.prefab";
         private const string AIPrefabPath = CharacterPrefabFolder + "/Character_AI_Chibi.prefab";
-        private const string BombPrefabPath = "Assets/Prefabs/Gameplay/Bomb.prefab";
+        private const string BombPrefabPath = "Assets/Prefabs/Gameplay/Bombs/Bomb_Basic.prefab";
 
         private const string CharactersRootName = "CharactersRoot";
         private const string BombsRootName = "BombsRoot";
@@ -124,6 +124,7 @@ namespace BubbleTown.EditorTools
         private static void EnsureFolders()
         {
             EnsureFolder("Assets", "Materials");
+            EnsureFolder("Assets/Materials", "Characters");
             EnsureFolder("Assets/Prefabs", "Characters");
         }
 

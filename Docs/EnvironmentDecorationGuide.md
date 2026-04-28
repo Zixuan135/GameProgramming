@@ -1,62 +1,49 @@
 # Environment Decoration Guide
 
-This guide defines how BubbleTown should add Battle scene decoration without hurting grid readability or gameplay stability.
+This guide defines how BubbleTown adds Battle scene decoration without hurting grid readability or gameplay stability.
 
 ## Goals
 
-- Make the Battle scene feel richer and less like an empty test board.
-- Keep decoration outside the playable grid unless it is purely visual and non-blocking.
-- Keep gameplay readability stronger than background charm.
-- Use cheap primitive props first, then replace them with reusable prefabs later.
+- Make Battle scenes feel richer than a plain logic test board.
+- Keep the playable grid easy to read from the angled camera.
+- Keep decorations visual-only unless they are safely outside the map boundary.
+- Use runtime primitives now, then migrate the strongest props into prefabs later.
+
+## Placement Rules
+
+- Keep decorative props outside the hard wall border whenever possible.
+- Do not register decorations with `MapManager`.
+- Avoid colliders unless the prop is far outside the playable grid.
+- Do not place decorations where they can look like bombs, items, destructible walls, or walkable tiles.
+- Keep spawn areas visually clean.
+- Keep the center grid quieter than the outer border.
 
 ## Static Decoration
 
-Static decoration is best for objects that should support the theme without drawing too much attention.
+Good static props:
 
-Good examples:
-
-- Small trees
-- Bushes
-- Barrels
-- Crates
-- Sign posts
+- Trees and bushes
+- Barrels and crates
 - Fence rails
+- Sign boards
 - Crystal clusters
 - Data towers
-- Background clouds or distant silhouettes
+- Background clouds or silhouettes
 
-Rules:
+Static props should support the theme without attracting more attention than gameplay objects.
 
-- Place these outside the hard wall border.
-- Do not register them with `MapManager`.
-- Avoid colliders unless the object is far outside the playable area.
-- Keep colors slightly softer than bombs, explosions, players, and items.
+## Animated Decoration
 
-## Simple Animated Decoration
-
-Animated decoration is best for small atmosphere details that make the scene feel alive.
-
-Good examples:
+Good animated props:
 
 - Lamps with subtle scale pulse
 - Balloons with slight bobbing
 - Floating glow orbs
-- Signal beacon lights
+- Signal beacons
 - Hologram signs
-- Slow-moving background clouds
+- Slow background clouds
 
-Current implementation:
-
-- `EnvironmentDecorationAnimator` provides lightweight bob, spin, and scale-pulse motion.
-- It is intended for decorative objects only.
-- It should not be used on gameplay walls, players, bombs, items, or explosions.
-
-Rules:
-
-- Keep motion small and slow.
-- Do not animate the whole map root.
-- Avoid fast spinning near the center of the gameplay grid.
-- Use stronger animation only at the outer edge or in the background.
+`EnvironmentDecorationAnimator` provides lightweight bob, spin, and scale-pulse motion. Use it only on ambience props, never on gameplay walls, players, bombs, items, or explosions.
 
 ## Runtime Hierarchy
 
@@ -66,27 +53,15 @@ Generated decoration should live under the active map theme root:
 MapRoot
   GeneratedMap_CandyPark
     DecorationRoot
-      Fence_South
-      LollipopTree_SouthWest
-      SmallTree_WestSouth
-      ToyBarrel_West
-      CandyLamp_NorthWest
-      Cloud_Background_NorthWest
 
 MapRoot
   GeneratedMap_JellyMaze
     DecorationRoot
-      NeonGate_South
-      CrystalCluster_SouthWest
-      EnergyBarrel_WestSouth
-      FloatingOrb_NorthWest
-      HoloSign_JellyMaze
-      DataTower_East
 ```
 
-## Future Prefab Organization
+## Prefab Organization
 
-Recommended folder structure:
+When a runtime primitive prop is worth keeping, turn it into a prefab under the matching theme folder:
 
 ```text
 Assets/Prefabs/Environment/CandyPark
@@ -102,53 +77,9 @@ Assets/Prefabs/Environment/JellyMaze
   Prop_JellyMaze_DataTower.prefab
 ```
 
-Naming rules:
+## Naming Rules
 
 - Pure decoration prefabs should start with `Prop_`.
-- Theme-specific prefabs should include the theme name.
-- Animated decoration can include a child named `AnimatedRoot`.
-- Keep visible child names descriptive, such as `LampHead_Glow`, `OrbCore`, or `BarrelBody`.
-
-## Readability Rules
-
-Use these checks before adding more decoration:
-
-- The player spawn areas must remain visually clear.
-- The center gameplay grid must stay less noisy than the outer border.
-- Bombs and explosion arms must remain the brightest moving objects.
-- Soft walls must remain easier to identify than background props.
-- Decoration should never look like a walkable tile, bomb, item, or destructible wall.
-- Prefer fewer larger props at corners over many tiny props along every edge.
-
-## Current Theme Additions
-
-Candy Park additions:
-
-- `SmallTree_WestSouth`
-- `SmallTree_EastNorth`
-- `ToyBarrel_West`
-- `ToyBarrel_East`
-- `CandyLamp_NorthWest`
-- `CandyLamp_SouthEast`
-- `Cloud_Background_NorthWest`
-- `Cloud_Background_SouthEast`
-
-Jelly Maze additions:
-
-- `EnergyBarrel_WestSouth`
-- `EnergyBarrel_EastNorth`
-- `FloatingOrb_NorthWest`
-- `FloatingOrb_SouthEast`
-- `HoloSign_JellyMaze`
-- `DataTower_East`
-- `DataTower_West`
-
-## Low-Cost Upgrade Path
-
-Suggested next steps:
-
-1. Keep runtime primitives while tuning placement and density.
-2. Convert the most successful props into prefabs under `Assets/Prefabs/Environment`.
-3. Add simple material variants per theme.
-4. Add subtle particle effects only to lamps, orbs, and beacons.
-5. Add per-map decoration density settings after the first two themes feel stable.
+- Theme-specific props should include the theme name.
+- Animated props can include a child named `AnimatedRoot`.
+- Visual children should use descriptive names such as `LampHead_Glow`, `OrbCore`, or `BarrelBody`.
