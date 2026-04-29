@@ -8,7 +8,7 @@ using UnityEditor;
 namespace BubbleTown.UI
 {
     /// <summary>
-    /// Main menu button callbacks and chibi-style placeholder layout.
+    /// Main menu button callbacks and chibi-style layout.
     /// </summary>
     public class MainMenuUI : MonoBehaviour
     {
@@ -55,14 +55,7 @@ namespace BubbleTown.UI
 
             if (showGuide)
             {
-                bool shouldClose = SimpleUIFactory.MenuModal(
-                    "Guide",
-                    new[]
-                    {
-                        "Player 1: WASD to move, Space to place a bomb.",
-                        "Player 2: Arrow keys to move, Enter or Right Ctrl to place a bomb.",
-                        "Break soft blocks, grab power-ups, and avoid cross-shaped explosions."
-                    });
+                bool shouldClose = SimpleUIFactory.GuideModal();
                 if (shouldClose)
                 {
                     OnClosePopup();
@@ -75,9 +68,9 @@ namespace BubbleTown.UI
                     "Settings",
                     new[]
                     {
-                        "Settings are prepared for the next polish pass.",
-                        "Current build uses default music, sound, and shared camera settings.",
-                        "Audio sliders and key remapping can be added here later."
+                        "Music: On",
+                        "Sound Effects: On",
+                        "Camera: Auto Follow"
                     });
                 if (shouldClose)
                 {

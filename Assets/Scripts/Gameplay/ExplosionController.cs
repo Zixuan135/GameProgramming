@@ -12,7 +12,7 @@ namespace BubbleTown.Gameplay
         [Header("Lifetime")]
         [SerializeField, Min(0.05f)] private float lifeSeconds = GameConstants.DefaultExplosionDuration;
 
-        [Header("Placeholder Visual")]
+        [Header("Explosion Visual")]
         [SerializeField] private Transform visualRoot;
         [SerializeField] private Vector3 startScale = new Vector3(0.35f, 0.35f, 0.35f);
         [SerializeField] private Vector3 peakScale = new Vector3(1.15f, 1.15f, 1.15f);
