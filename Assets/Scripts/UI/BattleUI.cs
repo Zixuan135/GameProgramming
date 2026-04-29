@@ -16,7 +16,7 @@ namespace BubbleTown.UI
     {
         private const int TextureSize = 64;
 
-        [Header("Result Flow")]
+        [Header("Result Timing")]
         [SerializeField, Min(0f)] private float resultSceneDelay = 0.95f;
         [SerializeField, Min(0f)] private float localVsNextRoundDelay = 1.45f;
 
@@ -68,7 +68,7 @@ namespace BubbleTown.UI
         private float localVsNextRoundTimer;
         private float battleElapsedSeconds;
         private float openingPromptTimer;
-        private string hudHint = "Win/Lose MVP: defeat or get defeated by bombs. Use Force Result to test the Result scene.";
+        private string hudHint = "Dodge blasts, break blocks, and chase the win.";
         private string pickupToastText;
         private float pickupToastTimer;
         private string resultPromptTitle;
@@ -140,15 +140,6 @@ namespace BubbleTown.UI
 
             ResetBattleHudState();
             SceneFlowManager.Instance?.LoadBattle();
-        }
-
-        public void OnClickForceResult()
-        {
-            AudioManager.Instance?.PlayButtonClickSFX();
-            ShowBattleResultPrompt(
-                "Battle Finished",
-                "Manual result button was pressed for MVP flow testing.",
-                "Manual Test");
         }
 
         public void ShowBattleResultPrompt(string title, string detail, string winner)
@@ -337,7 +328,7 @@ namespace BubbleTown.UI
             }
             else if (!player1Alive)
             {
-                QueueResult("Game Over", "Player1 was defeated during the single-player test.", "None");
+                QueueResult("Game Over", "Player1 was caught by an explosion.", "None");
             }
             else if (gameManager.IsSinglePlayerObjectiveComplete)
             {
@@ -361,7 +352,7 @@ namespace BubbleTown.UI
             resultQueued = true;
             localVsNextRoundQueued = false;
             resultTimer = resultSceneDelay;
-            hudHint = "Battle finished. Loading result...";
+            hudHint = "Battle finished. Opening results...";
             PlayHudFeedbackShake(resultCameraShakeDuration, resultCameraShakeMagnitude);
         }
 
@@ -448,7 +439,7 @@ namespace BubbleTown.UI
             if (gameManager == null)
             {
                 DrawPanel(new Rect(18f, 18f, 420f, 86f), new Color(1f, 0.96f, 0.72f, 0.94f), neutralColor);
-                GUI.Label(new Rect(36f, 36f, 380f, 44f), "Battle HUD waiting for GameManager...", hudTextStyle);
+                GUI.Label(new Rect(36f, 36f, 380f, 44f), "Preparing arena...", hudTextStyle);
                 return;
             }
 
@@ -660,11 +651,6 @@ namespace BubbleTown.UI
             if (AnimatedActionButton("Retry"))
             {
                 OnClickRetry();
-            }
-
-            if (AnimatedActionButton("Force Result"))
-            {
-                OnClickForceResult();
             }
 
             if (AnimatedActionButton("Main Menu"))
