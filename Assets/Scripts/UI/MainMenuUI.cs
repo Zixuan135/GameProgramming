@@ -1,6 +1,10 @@
 using BubbleTown.Managers;
 using UnityEngine;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 namespace BubbleTown.UI
 {
     /// <summary>
@@ -8,30 +12,78 @@ namespace BubbleTown.UI
     /// </summary>
     public class MainMenuUI : MonoBehaviour
     {
+        private bool showGuide;
+        private bool showSettings;
+
         private void OnGUI()
         {
             SimpleUIFactory.DrawCandyBackground();
 
             Rect panel = SimpleUIFactory.CenteredRect(680f, 540f);
             SimpleUIFactory.BeginPanel(panel);
-            SimpleUIFactory.LabelPill("CANDY ARENA TEST BUILD");
             SimpleUIFactory.Title("BubbleTown");
-            SimpleUIFactory.Body("A cute 3D grid battle with bubble bombs, toy blocks, and bright power-ups.");
-            SimpleUIFactory.FeatureRow("GRID ARENA", "BUBBLE BOMBS", "POWER UPS");
-            SimpleUIFactory.FlexibleSpace();
+            SimpleUIFactory.Body("A candy castle adventure with bubble bombs.");
+            SimpleUIFactory.MainMenuDecorations();
 
-            if (SimpleUIFactory.PrimaryButton("START GAME"))
+            bool popupOpen = showGuide || showSettings;
+            GUI.enabled = !popupOpen;
+            GUILayout.BeginHorizontal();
+            if (SimpleUIFactory.MenuTileButton("START GAME", SimpleUIFactory.MenuButtonIcon.Play, new Color(0.08f, 0.72f, 1f, 1f)))
             {
                 OnClickStart();
             }
 
-            if (SimpleUIFactory.SecondaryButton("QUIT"))
+            if (SimpleUIFactory.MenuTileButton("GUIDE", SimpleUIFactory.MenuButtonIcon.Guide, new Color(0.38f, 0.86f, 0.36f, 1f)))
+            {
+                OnClickGuide();
+            }
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+            if (SimpleUIFactory.MenuTileButton("SETTINGS", SimpleUIFactory.MenuButtonIcon.Settings, new Color(1f, 0.66f, 0.22f, 1f)))
+            {
+                OnClickSettings();
+            }
+
+            if (SimpleUIFactory.MenuTileButton("QUIT", SimpleUIFactory.MenuButtonIcon.Quit, new Color(1f, 0.44f, 0.36f, 1f)))
             {
                 OnClickQuit();
             }
-
-            SimpleUIFactory.SmallBody("Placeholder UI pass: IMGUI now, Canvas polish later.");
+            GUILayout.EndHorizontal();
+            GUI.enabled = true;
             SimpleUIFactory.EndPanel();
+
+            if (showGuide)
+            {
+                bool shouldClose = SimpleUIFactory.MenuModal(
+                    "Guide",
+                    new[]
+                    {
+                        "Player 1: WASD to move, Space to place a bomb.",
+                        "Player 2: Arrow keys to move, Enter or Right Ctrl to place a bomb.",
+                        "Break soft blocks, grab power-ups, and avoid cross-shaped explosions."
+                    });
+                if (shouldClose)
+                {
+                    OnClosePopup();
+                }
+            }
+
+            if (showSettings)
+            {
+                bool shouldClose = SimpleUIFactory.MenuModal(
+                    "Settings",
+                    new[]
+                    {
+                        "Settings are prepared for the next polish pass.",
+                        "Current build uses default music, sound, and shared camera settings.",
+                        "Audio sliders and key remapping can be added here later."
+                    });
+                if (shouldClose)
+                {
+                    OnClosePopup();
+                }
+            }
         }
 
         public void OnClickStart()
@@ -41,11 +93,37 @@ namespace BubbleTown.UI
             SceneFlowManager.Instance?.LoadModeSelect();
         }
 
+        public void OnClickGuide()
+        {
+            AudioManager.Instance?.PlayButtonClickSFX();
+            showGuide = true;
+            showSettings = false;
+        }
+
+        public void OnClickSettings()
+        {
+            AudioManager.Instance?.PlayButtonClickSFX();
+            showSettings = true;
+            showGuide = false;
+        }
+
         public void OnClickQuit()
         {
             AudioManager.Instance?.PlayButtonClickSFX();
             Debug.Log("[MainMenuUI] Quit requested.");
+
+#if UNITY_EDITOR
+            EditorApplication.isPlaying = false;
+#else
             Application.Quit();
+#endif
+        }
+
+        private void OnClosePopup()
+        {
+            AudioManager.Instance?.PlayButtonClickSFX();
+            showGuide = false;
+            showSettings = false;
         }
     }
 }
