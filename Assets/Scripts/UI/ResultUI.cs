@@ -8,7 +8,6 @@ namespace BubbleTown.UI
 {
     /// <summary>
     /// Result screen display and callbacks.
-    /// Shows the latest battle summary stored by GameManager.
     /// </summary>
     public class ResultUI : MonoBehaviour
     {
@@ -106,7 +105,6 @@ namespace BubbleTown.UI
                 OnClickBackToMenu();
             }
 
-            SimpleUIFactory.SmallBody("Result data is currently passed through GameManager's latest battle result fields.");
             SimpleUIFactory.EndPanel();
             GUI.matrix = previousMatrix;
         }
@@ -139,7 +137,7 @@ namespace BubbleTown.UI
             GameManager gameManager = GameManager.Instance;
             bool hasResult = gameManager != null && gameManager.HasBattleResult;
             string title = hasResult ? gameManager.LastResultTitle : "No Result Yet";
-            string detail = hasResult ? gameManager.LastResultDetail : "No completed battle result was found. Start or retry a battle to create one.";
+            string detail = hasResult ? gameManager.LastResultDetail : "Play a round to see your adventure result.";
             string winner = hasResult ? gameManager.LastResultWinner : "None";
             GameMode mode = gameManager != null ? gameManager.CurrentGameMode : GameMode.SinglePlayer;
             BattleMapType mapType = gameManager != null ? gameManager.CurrentMapType : BattleMapType.Default;
