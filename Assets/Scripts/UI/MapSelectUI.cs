@@ -91,7 +91,7 @@ namespace BubbleTown.UI
             if (SimpleUIFactory.MapCard(
                 "Candy Park",
                 "DEFAULT",
-                "Balanced walls and safe spawn pockets for everyday testing.",
+                "Balanced walls, cozy paths, and sweet hiding spots.",
                 defaultAccent,
                 new Color(0.58f, 0.92f, 0.72f, 1f),
                 new Color(1f, 0.86f, 0.48f, 1f),
@@ -108,7 +108,7 @@ namespace BubbleTown.UI
             if (SimpleUIFactory.MapCard(
                 "Open Field",
                 "FAST",
-                "More room to move, dodge, and test long explosion chains.",
+                "Wide lanes for fast dodges and big blast chains.",
                 openFieldAccent,
                 new Color(0.62f, 0.96f, 0.58f, 1f),
                 new Color(0.95f, 0.78f, 0.34f, 1f),
@@ -125,7 +125,7 @@ namespace BubbleTown.UI
             if (SimpleUIFactory.MapCard(
                 "Jelly Maze",
                 "MAZE",
-                "Neon jelly lanes, tighter routes, and clearer trap testing.",
+                "Neon jelly lanes, tight corners, and sneaky traps.",
                 mazeAccent,
                 new Color(0.24f, 0.18f, 0.42f, 1f),
                 new Color(0.48f, 0.36f, 1f, 1f),

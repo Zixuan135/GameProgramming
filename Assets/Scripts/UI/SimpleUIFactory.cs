@@ -4,8 +4,7 @@ using UnityEngine;
 namespace BubbleTown.UI
 {
     /// <summary>
-    /// Lightweight IMGUI helper for MVP scene flow screens.
-    /// This keeps placeholder UI package-free while giving the menus a more colorful chibi style.
+    /// Lightweight IMGUI helper for colorful chibi-style game screens.
     /// </summary>
     public static class SimpleUIFactory
     {
@@ -39,6 +38,8 @@ namespace BubbleTown.UI
         private static GUIStyle menuButtonTextStyle;
         private static GUIStyle modalTitleStyle;
         private static GUIStyle modalBodyStyle;
+        private static GUIStyle guideTitleStyle;
+        private static GUIStyle guideTextStyle;
         private static GUIStyle invisibleButtonStyle;
 
         private enum MenuDecorationIcon
@@ -46,6 +47,14 @@ namespace BubbleTown.UI
             Bomb,
             Blocks,
             PowerUp
+        }
+
+        private enum GuideRowIcon
+        {
+            PlayerOne,
+            PlayerTwo,
+            Bomb,
+            Goal
         }
 
         private static readonly Dictionary<string, Texture2D> RoundedTextureCache = new Dictionary<string, Texture2D>();
@@ -273,6 +282,35 @@ namespace BubbleTown.UI
             return shouldClose;
         }
 
+        public static bool GuideModal()
+        {
+            EnsureStyles();
+            GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), GetSolidTexture(new Color(0.02f, 0.09f, 0.14f, 0.42f)));
+
+            Rect rect = CenteredRect(560f, 340f);
+            DrawRoundedRect(new Rect(rect.x + 8f, rect.y + 10f, rect.width, rect.height), PanelShadow, PanelShadow, 24, 0);
+            GUILayout.BeginArea(rect, panelStyle);
+            GUILayout.Space(4f);
+            GUILayout.Label("Guide", modalTitleStyle);
+            GUILayout.Space(6f);
+
+            Rect gridRect = GUILayoutUtility.GetRect(480f, 178f, GUILayout.ExpandWidth(true));
+            DrawGuideCompactGrid(gridRect);
+
+            GUILayout.Space(6f);
+            Rect buttonSlot = GUILayoutUtility.GetRect(180f, 48f, GUILayout.ExpandWidth(true));
+            Rect buttonRect = new Rect(buttonSlot.center.x - 110f, buttonSlot.y, 220f, buttonSlot.height);
+            bool shouldClose = CartoonButton(
+                buttonRect,
+                "CLOSE",
+                new Color(0.09f, 0.72f, 1f, 1f),
+                new Color(0.2f, 0.86f, 1f, 1f),
+                new Color(0.05f, 0.58f, 0.85f, 1f),
+                Color.white);
+            GUILayout.EndArea();
+            return shouldClose;
+        }
+
         public static bool ModeCard(string title, string tag, string description, Color accentColor)
         {
             EnsureStyles();
@@ -283,6 +321,13 @@ namespace BubbleTown.UI
         public static bool ModeCard(Rect rect, string title, string tag, string description, Color accentColor)
         {
             EnsureStyles();
+            return DrawModeCard(rect, title, tag, description, accentColor);
+        }
+
+        public static bool CompactModeCard(string title, string tag, string description, Color accentColor)
+        {
+            EnsureStyles();
+            Rect rect = GUILayoutUtility.GetRect(180f, 176f, GUILayout.ExpandWidth(true));
             return DrawModeCard(rect, title, tag, description, accentColor);
         }
 
@@ -352,7 +397,8 @@ namespace BubbleTown.UI
 
         private static bool DrawModeCard(Rect rect, string title, string tag, string description, Color accentColor)
         {
-            bool isHovering = rect.Contains(Event.current.mousePosition);
+            Event currentEvent = Event.current;
+            bool isHovering = currentEvent != null && rect.Contains(currentEvent.mousePosition);
             Color cardFill = isHovering ? new Color(1f, 0.98f, 0.83f, 1f) : new Color(1f, 0.94f, 0.72f, 1f);
             Color border = Color.Lerp(accentColor, Color.white, 0.25f);
             Matrix4x4 previousMatrix = GUI.matrix;
@@ -360,14 +406,15 @@ namespace BubbleTown.UI
 
             DrawRoundedRect(new Rect(rect.x + 4f, rect.y + 7f, rect.width, rect.height), PanelShadow, PanelShadow, 20, 0);
             DrawRoundedRect(rect, cardFill, border, 20, 3);
-            DrawRoundedRect(new Rect(rect.x + 14f, rect.y + 14f, rect.width - 28f, 12f), accentColor, accentColor, 6, 0);
+            DrawModeCardScene(rect, accentColor, tag);
 
-            Rect iconRect = new Rect(rect.x + rect.width * 0.5f - 34f, rect.y + 38f, 68f, 68f);
-            DrawBubble(iconRect, new Color(accentColor.r, accentColor.g, accentColor.b, 0.85f));
-            GUI.Label(iconRect, tag, cardTagStyle);
+            float iconSize = Mathf.Clamp(rect.height * 0.33f, 46f, 68f);
+            float iconBob = Mathf.Sin(Time.unscaledTime * 2f + rect.x * 0.01f) * 4f;
+            Rect iconRect = new Rect(rect.x + rect.width * 0.5f - iconSize * 0.5f, rect.y + rect.height * 0.18f + iconBob, iconSize, iconSize);
+            DrawModeIcon(iconRect, tag, accentColor);
 
-            GUI.Label(new Rect(rect.x + 14f, rect.y + 112f, rect.width - 28f, 34f), title, cardTitleStyle);
-            GUI.Label(new Rect(rect.x + 20f, rect.y + 148f, rect.width - 40f, 52f), description, cardBodyStyle);
+            GUI.Label(new Rect(rect.x + 14f, rect.y + rect.height * 0.58f, rect.width - 28f, 30f), title, cardTitleStyle);
+            GUI.Label(new Rect(rect.x + 20f, rect.y + rect.height * 0.75f, rect.width - 40f, rect.height * 0.22f), description, cardBodyStyle);
 
             GUI.matrix = previousMatrix;
             return GUI.Button(rect, GUIContent.none, invisibleButtonStyle);
@@ -527,6 +574,166 @@ namespace BubbleTown.UI
             GUILayout.Space(6f);
         }
 
+        private static void DrawGuideCompactGrid(Rect rect)
+        {
+            float contentWidth = Mathf.Min(rect.width, 480f);
+            Rect contentRect = new Rect(rect.x + (rect.width - contentWidth) * 0.5f, rect.y, contentWidth, rect.height);
+            float gap = 10f;
+            float cardWidth = (contentRect.width - gap) * 0.5f;
+            float cardHeight = (contentRect.height - gap) * 0.5f;
+
+            DrawGuideCompactCard(
+                new Rect(contentRect.x, contentRect.y, cardWidth, cardHeight),
+                "Player 1",
+                "WASD  +  Space",
+                "Grid movement and bombs.",
+                new Color(0.1f, 0.72f, 1f, 1f),
+                GuideRowIcon.PlayerOne);
+            DrawGuideCompactCard(
+                new Rect(contentRect.x + cardWidth + gap, contentRect.y, cardWidth, cardHeight),
+                "Player 2",
+                "Arrows  +  Enter / RCtrl",
+                "Second local player.",
+                new Color(1f, 0.48f, 0.3f, 1f),
+                GuideRowIcon.PlayerTwo);
+            DrawGuideCompactCard(
+                new Rect(contentRect.x, contentRect.y + cardHeight + gap, cardWidth, cardHeight),
+                "Bombs",
+                "Cross blasts",
+                "Walls stop. Blocks pop.",
+                new Color(1f, 0.62f, 0.2f, 1f),
+                GuideRowIcon.Bomb);
+            DrawGuideCompactCard(
+                new Rect(contentRect.x + cardWidth + gap, contentRect.y + cardHeight + gap, cardWidth, cardHeight),
+                "Goal",
+                "Clear blocks or beat rivals",
+                "Grab items for upgrades.",
+                new Color(0.42f, 0.88f, 0.38f, 1f),
+                GuideRowIcon.Goal);
+        }
+
+        private static void DrawGuideCompactCard(Rect rect, string title, string keyText, string detail, Color accentColor, GuideRowIcon icon)
+        {
+            DrawRoundedRect(new Rect(rect.x + 3f, rect.y + 5f, rect.width, rect.height), PanelShadow, PanelShadow, 16, 0);
+            DrawRoundedRect(rect, new Color(1f, 0.96f, 0.76f, 0.96f), Color.Lerp(accentColor, Color.white, 0.18f), 16, 2);
+            DrawRoundedRect(new Rect(rect.x + 9f, rect.y + 10f, 6f, rect.height - 20f), accentColor, Color.clear, 4, 0);
+
+            Rect iconRect = new Rect(rect.x + 24f, rect.y + rect.height * 0.5f - 16f, 32f, 32f);
+            DrawGuideRowIcon(iconRect, accentColor, icon);
+
+            GUI.Label(new Rect(rect.x + 64f, rect.y + 10f, rect.width - 76f, 18f), title, guideTitleStyle);
+            GUI.Label(new Rect(rect.x + 64f, rect.y + 31f, rect.width - 76f, 18f), keyText, guideTextStyle);
+            GUI.Label(new Rect(rect.x + 64f, rect.y + 51f, rect.width - 76f, rect.height - 56f), detail, guideTextStyle);
+        }
+
+        private static void DrawGuideRowIcon(Rect rect, Color accentColor, GuideRowIcon icon)
+        {
+            float phase = rect.x * 0.04f + rect.y * 0.03f;
+            float bob = Mathf.Sin(Time.unscaledTime * 2.8f + phase) * 2.4f;
+            float scale = 1f + Mathf.Sin(Time.unscaledTime * 3.1f + phase) * 0.04f;
+            Rect animatedRect = new Rect(rect.x, rect.y + bob, rect.width, rect.height);
+
+            Matrix4x4 previousMatrix = GUI.matrix;
+            GUIUtility.ScaleAroundPivot(new Vector2(scale, scale), animatedRect.center);
+            DrawBubble(
+                new Rect(animatedRect.x - 3f, animatedRect.y + 4f, animatedRect.width + 6f, animatedRect.height + 6f),
+                new Color(accentColor.r, accentColor.g, accentColor.b, 0.18f));
+
+            switch (icon)
+            {
+                case GuideRowIcon.PlayerTwo:
+                    DrawTinyCharacter(new Rect(animatedRect.x - 2f, animatedRect.y + 1f, animatedRect.width * 0.82f, animatedRect.height * 0.82f), accentColor);
+                    DrawTinyCharacter(new Rect(animatedRect.x + animatedRect.width * 0.42f, animatedRect.y + animatedRect.height * 0.16f, animatedRect.width * 0.72f, animatedRect.height * 0.72f), new Color(0.1f, 0.72f, 1f, 1f));
+                    break;
+                case GuideRowIcon.Bomb:
+                    GUIUtility.RotateAroundPivot(Mathf.Sin(Time.unscaledTime * 4f + phase) * 4f, animatedRect.center);
+                    DrawGuideBombIcon(animatedRect, accentColor);
+                    break;
+                case GuideRowIcon.Goal:
+                    DrawPowerUpIcon(animatedRect, accentColor);
+                    DrawSparkle(new Rect(animatedRect.x + animatedRect.width * 0.58f, animatedRect.y - 1f, 12f, 12f), new Color(1f, 0.94f, 0.48f, 0.92f));
+                    break;
+                default:
+                    DrawTinyCharacter(animatedRect, accentColor);
+                    break;
+            }
+
+            GUI.matrix = previousMatrix;
+        }
+
+        private static void DrawModeCardScene(Rect rect, Color accentColor, string tag)
+        {
+            Rect sky = new Rect(rect.x + 12f, rect.y + 12f, rect.width - 24f, rect.height * 0.42f);
+            DrawRoundedRect(sky, new Color(0.63f, 0.9f, 1f, 0.44f), new Color(1f, 1f, 1f, 0.45f), 15, 1);
+            DrawCloud(new Rect(sky.x + sky.width * 0.08f, sky.y + 8f, 50f, 20f), new Color(1f, 1f, 1f, 0.5f));
+            DrawCloud(new Rect(sky.x + sky.width * 0.68f, sky.y + 14f, 58f, 22f), new Color(1f, 1f, 1f, 0.44f));
+            DrawRoundedRect(
+                new Rect(rect.x + 16f, rect.y + rect.height * 0.48f, rect.width - 32f, 12f),
+                Color.Lerp(accentColor, Color.white, 0.35f),
+                Color.clear,
+                8,
+                0);
+
+            if (tag == "AI")
+            {
+                DrawSparkle(new Rect(rect.x + rect.width * 0.22f, rect.y + rect.height * 0.25f, 16f, 16f), new Color(1f, 0.96f, 0.48f, 0.8f));
+                DrawSparkle(new Rect(rect.x + rect.width * 0.72f, rect.y + rect.height * 0.18f, 18f, 18f), new Color(0.65f, 1f, 0.9f, 0.75f));
+                return;
+            }
+
+            DrawTree(new Rect(rect.x + 18f, rect.y + rect.height * 0.31f, 28f, 38f), new Color(0.35f, 0.84f, 0.44f, 0.92f));
+            if (tag == "2P")
+            {
+                DrawTree(new Rect(rect.x + rect.width - 48f, rect.y + rect.height * 0.29f, 30f, 40f), new Color(0.28f, 0.75f, 0.5f, 0.92f));
+            }
+            else
+            {
+                DrawHouse(new Rect(rect.x + rect.width - 52f, rect.y + rect.height * 0.34f, 38f, 30f), accentColor);
+            }
+        }
+
+        private static void DrawModeIcon(Rect rect, string tag, Color accentColor)
+        {
+            if (tag == "AI")
+            {
+                DrawAiModeIcon(rect, accentColor);
+                return;
+            }
+
+            if (tag == "2P")
+            {
+                Rect left = new Rect(rect.x - rect.width * 0.2f, rect.y + rect.height * 0.05f, rect.width * 0.75f, rect.height * 0.75f);
+                Rect right = new Rect(rect.x + rect.width * 0.45f, rect.y + rect.height * 0.15f, rect.width * 0.75f, rect.height * 0.75f);
+                DrawTinyCharacter(left, new Color(0.1f, 0.72f, 1f, 1f));
+                DrawTinyCharacter(right, new Color(1f, 0.5f, 0.3f, 1f));
+                DrawRoundedRect(new Rect(rect.x + rect.width * 0.36f, rect.y + rect.height * 0.48f, rect.width * 0.28f, 5f), new Color(1f, 0.92f, 0.56f, 1f), Color.white, 3, 1);
+                return;
+            }
+
+            DrawTinyCharacter(rect, accentColor);
+            DrawRoundedRect(new Rect(rect.x + rect.width * 0.72f, rect.y + rect.height * 0.1f, 3f, rect.height * 0.32f), new Color(0.15f, 0.32f, 0.42f, 1f), Color.clear, 2, 0);
+            DrawRoundedRect(new Rect(rect.x + rect.width * 0.76f, rect.y + rect.height * 0.1f, rect.width * 0.22f, rect.height * 0.12f), new Color(1f, 0.56f, 0.72f, 1f), Color.white, 4, 1);
+        }
+
+        private static void DrawTinyCharacter(Rect rect, Color accentColor)
+        {
+            DrawBubble(new Rect(rect.x + rect.width * 0.16f, rect.y + rect.height * 0.02f, rect.width * 0.68f, rect.height * 0.68f), new Color(1f, 0.9f, 0.7f, 1f));
+            DrawRoundedRect(new Rect(rect.x + rect.width * 0.28f, rect.y + rect.height * 0.58f, rect.width * 0.44f, rect.height * 0.32f), accentColor, Color.white, 10, 2);
+            DrawBubble(new Rect(rect.x + rect.width * 0.3f, rect.y + rect.height * 0.22f, rect.width * 0.11f, rect.height * 0.11f), new Color(0.1f, 0.25f, 0.32f, 0.88f));
+            DrawBubble(new Rect(rect.x + rect.width * 0.59f, rect.y + rect.height * 0.22f, rect.width * 0.11f, rect.height * 0.11f), new Color(0.1f, 0.25f, 0.32f, 0.88f));
+            DrawRoundedRect(new Rect(rect.x + rect.width * 0.39f, rect.y + rect.height * 0.41f, rect.width * 0.22f, 3f), new Color(0.1f, 0.25f, 0.32f, 0.75f), Color.clear, 2, 0);
+        }
+
+        private static void DrawAiModeIcon(Rect rect, Color accentColor)
+        {
+            DrawRoundedRect(new Rect(rect.x + rect.width * 0.16f, rect.y + rect.height * 0.18f, rect.width * 0.68f, rect.height * 0.55f), accentColor, Color.white, 16, 3);
+            DrawRoundedRect(new Rect(rect.x + rect.width * 0.45f, rect.y + rect.height * 0.04f, rect.width * 0.1f, rect.height * 0.2f), new Color(0.15f, 0.32f, 0.42f, 1f), Color.clear, 3, 0);
+            DrawBubble(new Rect(rect.x + rect.width * 0.42f, rect.y, rect.width * 0.16f, rect.width * 0.16f), new Color(1f, 0.95f, 0.48f, 1f));
+            DrawBubble(new Rect(rect.x + rect.width * 0.3f, rect.y + rect.height * 0.34f, rect.width * 0.12f, rect.width * 0.12f), new Color(0.1f, 0.25f, 0.32f, 0.88f));
+            DrawBubble(new Rect(rect.x + rect.width * 0.58f, rect.y + rect.height * 0.34f, rect.width * 0.12f, rect.width * 0.12f), new Color(0.1f, 0.25f, 0.32f, 0.88f));
+            DrawRoundedRect(new Rect(rect.x + rect.width * 0.36f, rect.y + rect.height * 0.56f, rect.width * 0.28f, 4f), new Color(0.1f, 0.25f, 0.32f, 0.78f), Color.clear, 2, 0);
+        }
+
         private static void DrawMenuButtonIcon(Rect rect, MenuButtonIcon icon)
         {
             switch (icon)
@@ -670,6 +877,22 @@ namespace BubbleTown.UI
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.58f, rect.y + 4f, 16f, 12f), new Color(1f, 0.92f, 0.48f, 1f), Color.white, 5, 1);
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.72f, rect.y - 4f, 24f, 7f), new Color(0.12f, 0.28f, 0.36f, 1f), Color.clear, 4, 0);
             DrawBubble(new Rect(rect.x + rect.width * 0.9f, rect.y - 11f, 15f, 15f), new Color(1f, 0.65f, 0.2f, 0.9f));
+        }
+
+        private static void DrawGuideBombIcon(Rect rect, Color accentColor)
+        {
+            Rect body = new Rect(rect.x + 2f, rect.y + 6f, rect.width * 0.72f, rect.height * 0.72f);
+            DrawBubble(body, new Color(accentColor.r, accentColor.g, accentColor.b, 0.95f));
+            DrawBubble(new Rect(body.x + body.width * 0.18f, body.y + body.height * 0.14f, body.width * 0.18f, body.height * 0.18f), new Color(1f, 1f, 1f, 0.4f));
+
+            Rect cap = new Rect(body.x + body.width * 0.58f, body.y + body.height * 0.15f, rect.width * 0.26f, rect.height * 0.2f);
+            DrawRoundedRect(cap, new Color(1f, 0.92f, 0.48f, 1f), Color.white, 4, 1);
+
+            Rect fuse = new Rect(body.x + body.width * 0.72f, body.y - 1f, rect.width * 0.32f, 5f);
+            DrawRotatedRoundedRect(fuse, new Color(0.12f, 0.28f, 0.36f, 1f), -8f, 3);
+
+            DrawBubble(new Rect(body.x + body.width * 0.97f, body.y - 6f, 10f, 10f), new Color(1f, 0.66f, 0.18f, 0.9f));
+            DrawSparkle(new Rect(body.x + body.width * 1.12f, body.y - 8f, 9f, 9f), new Color(1f, 0.96f, 0.45f, 0.8f));
         }
 
         private static void DrawBlockIcon(Rect rect, Color accentColor)
@@ -859,6 +1082,24 @@ namespace BubbleTown.UI
                 normal = { textColor = TextSecondary }
             };
             LockTextColor(modalBodyStyle, TextSecondary);
+
+            guideTitleStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                fontSize = 16,
+                fontStyle = FontStyle.Bold,
+                normal = { textColor = TextPrimary }
+            };
+            LockTextColor(guideTitleStyle, TextPrimary);
+
+            guideTextStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.UpperLeft,
+                fontSize = 12,
+                wordWrap = true,
+                normal = { textColor = TextSecondary }
+            };
+            LockTextColor(guideTextStyle, TextSecondary);
 
             invisibleButtonStyle = new GUIStyle(GUIStyle.none);
         }

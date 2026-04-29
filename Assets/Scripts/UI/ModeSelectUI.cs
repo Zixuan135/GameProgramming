@@ -17,11 +17,11 @@ namespace BubbleTown.UI
         {
             SimpleUIFactory.DrawCandyBackground();
 
-            Rect panel = SimpleUIFactory.CenteredRect(900f, 610f);
+            Rect panel = SimpleUIFactory.CenteredRect(900f, 560f);
             SimpleUIFactory.BeginPanel(panel);
             SimpleUIFactory.LabelPill("CHOOSE YOUR ROUND");
             SimpleUIFactory.Title("Select Mode");
-            SimpleUIFactory.Body("Pick a quick test mode. Each card keeps the current scene flow and battle setup intact.");
+            SimpleUIFactory.Body("Choose how you want to play today.");
 
             if (Screen.width >= 820f)
             {
@@ -32,7 +32,7 @@ namespace BubbleTown.UI
                 DrawModeCardsVertical();
             }
 
-            SimpleUIFactory.FlexibleSpace();
+            GUILayout.Space(6f);
             if (SimpleUIFactory.SecondaryButton("BACK"))
             {
                 OnClickBack();
@@ -45,7 +45,7 @@ namespace BubbleTown.UI
         {
             GUILayout.BeginHorizontal();
 
-            if (SimpleUIFactory.ModeCard(
+            if (SimpleUIFactory.CompactModeCard(
                 "Single Player",
                 "P1",
                 "Practice movement, bombs, items, and map rules alone.",
@@ -55,7 +55,7 @@ namespace BubbleTown.UI
             }
 
             GUILayout.Space(14f);
-            if (SimpleUIFactory.ModeCard(
+            if (SimpleUIFactory.CompactModeCard(
                 "AI Battle",
                 "AI",
                 "Fight a simple toy opponent that can move, dodge, and bomb.",
@@ -65,10 +65,10 @@ namespace BubbleTown.UI
             }
 
             GUILayout.Space(14f);
-            if (SimpleUIFactory.ModeCard(
+            if (SimpleUIFactory.CompactModeCard(
                 "Local VS",
                 "2P",
-                "Two players share one keyboard for a couch battle test.",
+                "Two players share one keyboard for a couch battle.",
                 localVsColor))
             {
                 OnSelectLocalVS();
@@ -80,7 +80,7 @@ namespace BubbleTown.UI
 
         private void DrawModeCardsVertical()
         {
-            if (SimpleUIFactory.ModeCard(
+            if (SimpleUIFactory.CompactModeCard(
                 "Single Player",
                 "P1",
                 "Practice movement, bombs, items, and map rules alone.",
@@ -89,7 +89,7 @@ namespace BubbleTown.UI
                 OnSelectSinglePlayer();
             }
 
-            if (SimpleUIFactory.ModeCard(
+            if (SimpleUIFactory.CompactModeCard(
                 "AI Battle",
                 "AI",
                 "Fight a simple toy opponent that can move, dodge, and bomb.",
@@ -98,10 +98,10 @@ namespace BubbleTown.UI
                 OnSelectAIBattle();
             }
 
-            if (SimpleUIFactory.ModeCard(
+            if (SimpleUIFactory.CompactModeCard(
                 "Local VS",
                 "2P",
-                "Two players share one keyboard for a couch battle test.",
+                "Two players share one keyboard for a couch battle.",
                 localVsColor))
             {
                 OnSelectLocalVS();
