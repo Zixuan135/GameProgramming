@@ -126,6 +126,16 @@ namespace BubbleTown.UI
             GUILayout.Space(6f);
         }
 
+        public static void CompactTitle(string text)
+        {
+            EnsureStyles();
+            Rect rect = GUILayoutUtility.GetRect(240f, 54f, GUILayout.ExpandWidth(true));
+            GUI.Label(new Rect(rect.x, rect.y + 4f, rect.width, rect.height), text, titleShadowStyle);
+            GUI.Label(new Rect(rect.x, rect.y - 2f, rect.width, rect.height), text, titleHighlightStyle);
+            GUI.Label(rect, text, titleStyle);
+            GUILayout.Space(2f);
+        }
+
         public static void Body(string text)
         {
             EnsureStyles();
@@ -158,10 +168,32 @@ namespace BubbleTown.UI
                 Color.white);
         }
 
+        public static bool FixedPrimaryButton(Rect rect, string text)
+        {
+            return CartoonButton(
+                rect,
+                text,
+                new Color(0.09f, 0.72f, 1f, 1f),
+                new Color(0.2f, 0.86f, 1f, 1f),
+                new Color(0.05f, 0.58f, 0.85f, 1f),
+                Color.white);
+        }
+
         public static bool SecondaryButton(string text)
         {
             GUILayout.Space(8f);
             Rect rect = GUILayoutUtility.GetRect(220f, 52f, GUILayout.ExpandWidth(true));
+            return CartoonButton(
+                rect,
+                text,
+                new Color(1f, 0.6f, 0.28f, 1f),
+                new Color(1f, 0.72f, 0.36f, 1f),
+                new Color(0.88f, 0.45f, 0.18f, 1f),
+                Color.white);
+        }
+
+        public static bool FixedSecondaryButton(Rect rect, string text)
+        {
             return CartoonButton(
                 rect,
                 text,
@@ -189,6 +221,16 @@ namespace BubbleTown.UI
             DrawRoundedRect(pillRect, new Color(0.23f, 0.77f, 0.95f, 1f), new Color(1f, 1f, 1f, 0.75f), 18, 2);
             GUI.Label(pillRect, text, pillStyle);
             GUILayout.Space(6f);
+        }
+
+        public static void CompactLabelPill(string text)
+        {
+            EnsureStyles();
+            Rect rect = GUILayoutUtility.GetRect(180f, 28f, GUILayout.ExpandWidth(true));
+            Rect pillRect = new Rect(rect.x + rect.width * 0.22f, rect.y, rect.width * 0.56f, rect.height);
+            DrawRoundedRect(pillRect, new Color(0.23f, 0.77f, 0.95f, 1f), new Color(1f, 1f, 1f, 0.75f), 16, 2);
+            GUI.Label(pillRect, text, pillStyle);
+            GUILayout.Space(3f);
         }
 
         public static void FeatureRow(params string[] labels)
@@ -257,6 +299,42 @@ namespace BubbleTown.UI
             DrawSparkle(new Rect(contentRect.x + contentRect.width * 0.72f, contentRect.y + 24f + Mathf.Cos(t * 1.9f) * 4f, 20f, 20f), new Color(1f, 0.55f, 0.78f, 0.8f));
 
             GUILayout.Space(4f);
+        }
+
+        public static void MapSelectDecorations(float panelWidth, float panelHeight)
+        {
+            EnsureStyles();
+            float t = Time.unscaledTime;
+            Rect rowRect = GUILayoutUtility.GetRect(520f, 50f, GUILayout.ExpandWidth(true));
+            float contentWidth = Mathf.Min(rowRect.width, 640f);
+            Rect contentRect = new Rect(rowRect.x + (rowRect.width - contentWidth) * 0.5f, rowRect.y, contentWidth, rowRect.height);
+
+            DrawRoundedRect(
+                new Rect(contentRect.x + 22f, contentRect.y + 21f + Mathf.Sin(t * 0.8f) * 1.5f, contentRect.width - 44f, 18f),
+                new Color(0.45f, 0.88f, 0.42f, 0.38f),
+                new Color(0.85f, 1f, 0.7f, 0.45f),
+                14,
+                1);
+            DrawRoundedRect(
+                new Rect(contentRect.x + 96f, contentRect.y + 27f + Mathf.Sin(t * 0.8f) * 1.5f, contentRect.width - 192f, 7f),
+                new Color(1f, 0.86f, 0.48f, 0.58f),
+                Color.clear,
+                5,
+                0);
+
+            DrawCloud(new Rect(contentRect.x + 18f + Mathf.Sin(t * 0.6f) * 4f, contentRect.y + 5f, 72f, 24f), new Color(1f, 1f, 1f, 0.58f));
+            DrawCloud(new Rect(contentRect.x + contentRect.width - 94f + Mathf.Cos(t * 0.55f) * 4f, contentRect.y + 8f, 78f, 25f), new Color(1f, 1f, 1f, 0.52f));
+            DrawTree(new Rect(contentRect.x + 128f, contentRect.y + 14f + Mathf.Sin(t * 1.1f) * 2f, 25f, 32f), new Color(0.32f, 0.82f, 0.42f, 0.82f));
+            DrawHouse(new Rect(contentRect.x + contentRect.width - 170f, contentRect.y + 15f + Mathf.Cos(t * 0.9f) * 2f, 36f, 29f), new Color(0.35f, 0.76f, 1f, 0.78f));
+            DrawFloatingMenuIcon(
+                new Rect(contentRect.x + contentRect.width * 0.5f - 12f, contentRect.y + 9f, 24f, 24f),
+                new Color(1f, 0.62f, 0.22f, 0.82f),
+                MenuDecorationIcon.Blocks,
+                -6f,
+                1.4f);
+            DrawSparkle(new Rect(contentRect.x + contentRect.width * 0.25f, contentRect.y + 10f + Mathf.Sin(t * 2.2f) * 3f, 14f, 14f), new Color(1f, 0.96f, 0.45f, 0.72f));
+            DrawSparkle(new Rect(contentRect.x + contentRect.width * 0.74f, contentRect.y + 12f + Mathf.Cos(t * 1.8f) * 3f, 15f, 15f), new Color(1f, 0.55f, 0.78f, 0.66f));
+            GUILayout.Space(1f);
         }
 
         public static bool MenuModal(string title, string[] lines)
@@ -343,7 +421,7 @@ namespace BubbleTown.UI
             MapPreviewPattern previewPattern = MapPreviewPattern.Balanced)
         {
             EnsureStyles();
-            Rect rect = GUILayoutUtility.GetRect(190f, 230f, GUILayout.ExpandWidth(true));
+            Rect rect = GUILayoutUtility.GetRect(190f, 170f, GUILayout.ExpandWidth(true));
             return DrawMapCard(rect, title, tag, description, accentColor, groundColor, blockColor, pathColor, isSelected, previewPattern);
         }
 
@@ -436,7 +514,10 @@ namespace BubbleTown.UI
             Color cardFill = isSelected
                 ? new Color(1f, 0.98f, 0.8f, 1f)
                 : isHovering ? new Color(1f, 0.96f, 0.78f, 1f) : new Color(1f, 0.92f, 0.66f, 1f);
-            Color border = isSelected ? accentColor : Color.Lerp(accentColor, Color.white, 0.35f);
+            float selectedPulse = (Mathf.Sin(Time.unscaledTime * 3f + rect.x * 0.01f) + 1f) * 0.5f;
+            Color border = isSelected
+                ? Color.Lerp(accentColor, Color.white, 0.18f + selectedPulse * 0.16f)
+                : Color.Lerp(accentColor, Color.white, 0.35f);
             int borderSize = isSelected ? 5 : 3;
             Matrix4x4 previousMatrix = GUI.matrix;
             ApplyScaleAround(rect, ResolveInteractiveScale(rect, 1.015f, 0.974f));
@@ -444,21 +525,22 @@ namespace BubbleTown.UI
             DrawRoundedRect(new Rect(rect.x + 5f, rect.y + 8f, rect.width, rect.height), PanelShadow, PanelShadow, 20, 0);
             DrawRoundedRect(rect, cardFill, border, 20, borderSize);
 
-            Rect previewRect = new Rect(rect.x + 16f, rect.y + 18f, rect.width - 32f, 96f);
+            Rect previewRect = new Rect(rect.x + 16f, rect.y + 12f, rect.width - 32f, 60f);
             DrawMapPreview(previewRect, groundColor, blockColor, pathColor, accentColor, previewPattern);
 
-            Rect selectedPill = new Rect(rect.x + rect.width - 86f, rect.y + 14f, 68f, 26f);
             if (isSelected)
             {
-                DrawRoundedRect(selectedPill, accentColor, Color.white, 13, 2);
-                GUI.Label(selectedPill, "READY", pillStyle);
+                Rect readyRect = new Rect(previewRect.x + previewRect.width - 64f, previewRect.y + 6f, 54f, 20f);
+                DrawRoundedRect(readyRect, accentColor, Color.white, 11, 2);
+                GUI.Label(readyRect, "READY", pillStyle);
             }
 
-            GUI.Label(new Rect(rect.x + 16f, rect.y + 124f, rect.width - 32f, 30f), title, cardTitleStyle);
-            Rect tagRect = new Rect(rect.x + rect.width * 0.5f - 42f, rect.y + 153f, 84f, 24f);
+            GUI.Label(new Rect(rect.x + 16f, rect.y + 76f, rect.width - 32f, 28f), title, cardTitleStyle);
+            float tagWidth = Mathf.Min(rect.width - 42f, Mathf.Max(92f, 58f + tag.Length * 8f));
+            Rect tagRect = new Rect(rect.x + rect.width * 0.5f - tagWidth * 0.5f, rect.y + 106f, tagWidth, 25f);
             DrawRoundedRect(tagRect, accentColor, Color.white, 12, 2);
             GUI.Label(tagRect, tag, cardTagStyle);
-            GUI.Label(new Rect(rect.x + 18f, rect.y + 180f, rect.width - 36f, 42f), description, cardBodyStyle);
+            GUI.Label(new Rect(rect.x + 18f, rect.y + 135f, rect.width - 36f, 24f), description, cardBodyStyle);
 
             GUI.matrix = previousMatrix;
             return GUI.Button(rect, GUIContent.none, invisibleButtonStyle);
@@ -621,9 +703,9 @@ namespace BubbleTown.UI
             Rect iconRect = new Rect(rect.x + 24f, rect.y + rect.height * 0.5f - 16f, 32f, 32f);
             DrawGuideRowIcon(iconRect, accentColor, icon);
 
-            GUI.Label(new Rect(rect.x + 64f, rect.y + 10f, rect.width - 76f, 18f), title, guideTitleStyle);
-            GUI.Label(new Rect(rect.x + 64f, rect.y + 31f, rect.width - 76f, 18f), keyText, guideTextStyle);
-            GUI.Label(new Rect(rect.x + 64f, rect.y + 51f, rect.width - 76f, rect.height - 56f), detail, guideTextStyle);
+            GUI.Label(new Rect(rect.x + 64f, rect.y + 7f, rect.width - 76f, 24f), title, guideTitleStyle);
+            GUI.Label(new Rect(rect.x + 64f, rect.y + 34f, rect.width - 76f, 18f), keyText, guideTextStyle);
+            GUI.Label(new Rect(rect.x + 64f, rect.y + 54f, rect.width - 76f, rect.height - 59f), detail, guideTextStyle);
         }
 
         private static void DrawGuideRowIcon(Rect rect, Color accentColor, GuideRowIcon icon)
@@ -1040,7 +1122,7 @@ namespace BubbleTown.UI
             cardTagStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 20,
+                fontSize = 16,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = Color.white }
             };

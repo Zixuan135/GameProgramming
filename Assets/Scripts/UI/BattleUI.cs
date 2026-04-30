@@ -31,8 +31,6 @@ namespace BubbleTown.UI
         [SerializeField, Min(0f)] private float spawnProtectionSeconds = 2.25f;
         [SerializeField] private string readyText = "READY";
         [SerializeField] private string goText = "GO!";
-        [SerializeField] private string readyBodyText = "Get ready. Controls unlock on GO!";
-        [SerializeField] private string goBodyText = "Move fast. Spawn shields are active!";
 
         [Header("Pickup Toast")]
         [SerializeField, Min(0f)] private float pickupToastSeconds = 1.45f;
@@ -68,7 +66,6 @@ namespace BubbleTown.UI
         private float localVsNextRoundTimer;
         private float battleElapsedSeconds;
         private float openingPromptTimer;
-        private string hudHint = "Dodge blasts, break blocks, and chase the win.";
         private string pickupToastText;
         private float pickupToastTimer;
         private string resultPromptTitle;
@@ -161,7 +158,6 @@ namespace BubbleTown.UI
             resultPromptDetail = string.Empty;
             pickupToastText = string.Empty;
             pickupToastTimer = 0f;
-            hudHint = "Waiting for the round opening...";
         }
 
         private void EnsureOpeningFlowStarted()
@@ -196,9 +192,6 @@ namespace BubbleTown.UI
                 return;
             }
 
-            hudHint = roundStartTriggered
-                ? "GO! Spawn shields are active for a short moment."
-                : "READY... get set before the round starts.";
         }
 
         private void TickBattleTimer()
@@ -236,10 +229,6 @@ namespace BubbleTown.UI
                 StartRoundWithProtection();
             }
 
-            if (roundStartTriggered && openingPromptTimer <= 0f)
-            {
-                hudHint = ResolvePostOpeningHint(gameManager);
-            }
         }
 
         private void StartRoundWithProtection()
@@ -251,9 +240,6 @@ namespace BubbleTown.UI
 
             roundStartTriggered = true;
             GameManager.Instance?.StartBattleRound(spawnProtectionSeconds);
-            hudHint = spawnProtectionSeconds > 0f
-                ? "GO! Spawn shields are active for a short moment."
-                : "GO! Battle started.";
         }
 
         private void EvaluateBattleResult()
@@ -352,7 +338,6 @@ namespace BubbleTown.UI
             resultQueued = true;
             localVsNextRoundQueued = false;
             resultTimer = resultSceneDelay;
-            hudHint = "Battle finished. Opening results...";
             PlayHudFeedbackShake(resultCameraShakeDuration, resultCameraShakeMagnitude);
         }
 
@@ -385,7 +370,6 @@ namespace BubbleTown.UI
             resultPromptDetail = $"{roundDetail}\nNext round starts soon.";
             localVsNextRoundQueued = true;
             localVsNextRoundTimer = localVsNextRoundDelay;
-            hudHint = "Round finished. Loading the next Local VS round...";
             PlayHudFeedbackShake(resultCameraShakeDuration, resultCameraShakeMagnitude * 0.75f);
         }
 
@@ -438,33 +422,38 @@ namespace BubbleTown.UI
             GameManager gameManager = GameManager.Instance;
             if (gameManager == null)
             {
-                DrawPanel(new Rect(18f, 18f, 420f, 86f), new Color(1f, 0.96f, 0.72f, 0.94f), neutralColor);
-                GUI.Label(new Rect(36f, 36f, 380f, 44f), "Preparing arena...", hudTextStyle);
+                DrawPanel(new Rect(14f, 14f, 260f, 46f), new Color(1f, 0.96f, 0.72f, 0.86f), neutralColor, 16, 2);
+                GUI.Label(new Rect(28f, 22f, 232f, 28f), "Preparing arena...", hudTextStyle);
                 return;
             }
 
             DrawTopStatusBar(gameManager);
             DrawSinglePlayerObjectivePanel(gameManager);
             DrawLocalVsScoreboard(gameManager);
-            DrawCharacterPanel(new Rect(18f, Screen.height - 176f, 318f, 152f), "PLAYER 1", gameManager.Player1, player1Color);
 
             CharacterBase rightCharacter = ResolveRightSideCharacter(gameManager, out string rightLabel, out Color rightColor);
-            DrawCharacterPanel(new Rect(Screen.width - 336f, Screen.height - 176f, 318f, 152f), rightLabel, rightCharacter, rightColor);
+            float player1PanelY = rightCharacter != null && rightCharacter.gameObject.activeInHierarchy
+                ? Screen.height - 180f
+                : Screen.height - 96f;
+            DrawCharacterPanel(new Rect(14f, player1PanelY, 286f, 78f), "PLAYER 1", gameManager.Player1, player1Color);
+
+            if (rightCharacter != null && rightCharacter.gameObject.activeInHierarchy)
+            {
+                DrawCharacterPanel(new Rect(14f, Screen.height - 96f, 286f, 78f), rightLabel, rightCharacter, rightColor);
+            }
         }
 
         private void DrawTopStatusBar(GameManager gameManager)
         {
-            Rect topRect = new Rect(18f, 18f, Mathf.Min(Screen.width - 236f, 720f), 90f);
-            DrawPanel(topRect, new Color(1f, 0.96f, 0.72f, 0.95f), new Color(0.18f, 0.67f, 0.95f, 1f));
+            Rect topRect = new Rect(14f, 14f, 286f, 76f);
+            DrawPanel(topRect, new Color(1f, 0.96f, 0.72f, 0.86f), new Color(0.18f, 0.67f, 0.95f, 0.94f), 16, 2);
 
-            float x = topRect.x + 18f;
-            float y = topRect.y + 14f;
-            DrawInfoPill(new Rect(x, y, 180f, 30f), "MODE", gameManager.CurrentGameMode.ToString(), new Color(0.12f, 0.72f, 1f));
-            DrawInfoPill(new Rect(x + 190f, y, 180f, 30f), "MAP", FormatMapName(gameManager.CurrentMapType), new Color(0.48f, 0.9f, 0.34f));
-            DrawInfoPill(new Rect(x + 380f, y, 150f, 30f), "TIME", FormatTime(battleElapsedSeconds), new Color(1f, 0.58f, 0.18f));
-            DrawInfoPill(new Rect(x + 540f, y, 150f, 30f), "ROUND", FormatRoundState(gameManager), neutralColor);
-
-            GUI.Label(new Rect(topRect.x + 20f, topRect.y + 52f, topRect.width - 40f, 28f), hudHint, hudSmallStyle);
+            float x = topRect.x + 10f;
+            float y = topRect.y + 9f;
+            DrawInfoPill(new Rect(x, y, 128f, 25f), "MODE", FormatModeName(gameManager.CurrentGameMode), new Color(0.12f, 0.72f, 1f));
+            DrawInfoPill(new Rect(x + 138f, y, 128f, 25f), "MAP", FormatMapName(gameManager.CurrentMapType), new Color(0.48f, 0.9f, 0.34f));
+            DrawInfoPill(new Rect(x, y + 33f, 128f, 25f), "TIME", FormatTime(battleElapsedSeconds), new Color(1f, 0.58f, 0.18f));
+            DrawInfoPill(new Rect(x + 138f, y + 33f, 128f, 25f), "STATE", FormatRoundState(gameManager), neutralColor);
         }
 
         private void DrawSinglePlayerObjectivePanel(GameManager gameManager)
@@ -474,17 +463,16 @@ namespace BubbleTown.UI
                 return;
             }
 
-            Rect rect = new Rect(Screen.width * 0.5f - 210f, 116f, 420f, 72f);
-            DrawPanel(rect, new Color(1f, 0.95f, 0.72f, 0.94f), new Color(1f, 0.58f, 0.18f), 18, 3);
+            Rect rect = new Rect(14f, 98f, 286f, 46f);
+            DrawPanel(rect, new Color(1f, 0.95f, 0.72f, 0.84f), new Color(1f, 0.58f, 0.18f, 0.92f), 16, 2);
 
-            GUI.Label(new Rect(rect.x + 18f, rect.y + 7f, rect.width - 36f, 22f), "SOLO OBJECTIVE", hudSmallStyle);
-            GUI.Label(new Rect(rect.x + 20f, rect.y + 28f, rect.width * 0.58f, 30f), gameManager.SinglePlayerObjectiveLabel, hudTextStyle);
-            GUI.Label(new Rect(rect.x + rect.width * 0.62f, rect.y + 24f, rect.width * 0.32f, 34f), gameManager.SinglePlayerObjectiveProgressLabel, hudValueStyle);
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 5f, rect.width * 0.46f, 18f), gameManager.SinglePlayerObjectiveLabel, hudTextStyle);
+            GUI.Label(new Rect(rect.x + rect.width * 0.5f, rect.y + 5f, rect.width * 0.44f, 18f), gameManager.SinglePlayerObjectiveProgressLabel, hudSmallStyle);
 
             float progress = gameManager.SinglePlayerSoftWallTarget > 0
                 ? Mathf.Clamp01((float)gameManager.SinglePlayerSoftWallsCleared / gameManager.SinglePlayerSoftWallTarget)
                 : 1f;
-            Rect progressBack = new Rect(rect.x + 22f, rect.y + rect.height - 13f, rect.width - 44f, 6f);
+            Rect progressBack = new Rect(rect.x + 16f, rect.y + rect.height - 12f, rect.width - 32f, 6f);
             GUI.DrawTexture(progressBack, GetRoundedTexture(new Color(0.16f, 0.34f, 0.44f, 0.28f), Color.clear, 3, 0));
             GUI.DrawTexture(
                 new Rect(progressBack.x, progressBack.y, progressBack.width * progress, progressBack.height),
@@ -498,10 +486,10 @@ namespace BubbleTown.UI
                 return;
             }
 
-            Rect rect = new Rect(Screen.width * 0.5f - 190f, 116f, 380f, 66f);
-            DrawPanel(rect, new Color(1f, 0.95f, 0.72f, 0.94f), new Color(0.52f, 0.9f, 0.35f, 1f), 18, 3);
-            GUI.Label(new Rect(rect.x + 16f, rect.y + 8f, rect.width - 32f, 22f), FormatLocalVsRoundHeader(gameManager), hudSmallStyle);
-            GUI.Label(new Rect(rect.x + 20f, rect.y + 28f, rect.width - 40f, 30f), gameManager.LocalVsScoreLabel, hudValueStyle);
+            Rect rect = new Rect(14f, 98f, 286f, 46f);
+            DrawPanel(rect, new Color(1f, 0.95f, 0.72f, 0.84f), new Color(0.52f, 0.9f, 0.35f, 0.92f), 16, 2);
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 5f, rect.width - 24f, 18f), FormatLocalVsRoundHeader(gameManager), hudSmallStyle);
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 22f, rect.width - 24f, 20f), gameManager.LocalVsScoreLabel, hudTextStyle);
         }
 
         private CharacterBase ResolveRightSideCharacter(GameManager gameManager, out string label, out Color color)
@@ -525,13 +513,12 @@ namespace BubbleTown.UI
 
         private void DrawCharacterPanel(Rect rect, string label, CharacterBase character, Color accentColor)
         {
-            DrawPanel(rect, new Color(1f, 0.94f, 0.72f, 0.94f), accentColor);
-            DrawInfoPill(new Rect(rect.x + 14f, rect.y + 12f, rect.width - 28f, 30f), label, FormatLifeState(character), accentColor);
+            DrawPanel(rect, new Color(1f, 0.94f, 0.72f, 0.82f), new Color(accentColor.r, accentColor.g, accentColor.b, 0.92f), 16, 2);
+            DrawInfoPill(new Rect(rect.x + 10f, rect.y + 8f, rect.width - 20f, 24f), label, FormatLifeState(character), accentColor);
 
             if (character == null || !character.gameObject.activeInHierarchy)
             {
-                GUI.Label(new Rect(rect.x + 18f, rect.y + 58f, rect.width - 36f, 58f), "Not active in this mode", hudTextStyle);
-                DrawAbilityRow(rect, 0, 0, 0, 0f, 0, accentColor);
+                GUI.Label(new Rect(rect.x + 14f, rect.y + 40f, rect.width - 28f, 26f), "Not active", hudSmallStyle);
                 return;
             }
 
@@ -547,19 +534,19 @@ namespace BubbleTown.UI
 
         private void DrawAbilityRow(Rect panelRect, int remainingBombs, int maxBombs, int range, float speed, int shieldCharges, Color accentColor)
         {
-            float y = panelRect.y + 58f;
-            float itemWidth = (panelRect.width - 52f) / 4f;
-            DrawAbilityBox(new Rect(panelRect.x + 14f, y, itemWidth, 74f), "BOMBS", remainingBombs + "/" + maxBombs, accentColor);
-            DrawAbilityBox(new Rect(panelRect.x + 22f + itemWidth, y, itemWidth, 74f), "RANGE", range.ToString(), new Color(1f, 0.58f, 0.18f));
-            DrawAbilityBox(new Rect(panelRect.x + 30f + itemWidth * 2f, y, itemWidth, 74f), "SPEED", speed.ToString("0.0"), new Color(0.48f, 0.9f, 0.34f));
-            DrawAbilityBox(new Rect(panelRect.x + 38f + itemWidth * 3f, y, itemWidth, 74f), "GUARD", shieldCharges.ToString(), new Color(0.35f, 0.78f, 1f));
+            float y = panelRect.y + 40f;
+            float itemWidth = (panelRect.width - 44f) / 4f;
+            DrawAbilityBox(new Rect(panelRect.x + 10f, y, itemWidth, 26f), "B", remainingBombs + "/" + maxBombs, accentColor);
+            DrawAbilityBox(new Rect(panelRect.x + 18f + itemWidth, y, itemWidth, 26f), "R", range.ToString(), new Color(1f, 0.58f, 0.18f));
+            DrawAbilityBox(new Rect(panelRect.x + 26f + itemWidth * 2f, y, itemWidth, 26f), "S", speed.ToString("0.0"), new Color(0.48f, 0.9f, 0.34f));
+            DrawAbilityBox(new Rect(panelRect.x + 34f + itemWidth * 3f, y, itemWidth, 26f), "G", shieldCharges.ToString(), new Color(0.35f, 0.78f, 1f));
         }
 
         private void DrawAbilityBox(Rect rect, string label, string value, Color accentColor)
         {
-            DrawPanel(rect, new Color(1f, 0.98f, 0.86f, 0.94f), Color.Lerp(accentColor, Color.white, 0.2f), 14, 2);
-            GUI.Label(new Rect(rect.x + 6f, rect.y + 8f, rect.width - 12f, 20f), label, hudSmallStyle);
-            GUI.Label(new Rect(rect.x + 6f, rect.y + 30f, rect.width - 12f, 34f), value, hudValueStyle);
+            DrawPanel(rect, new Color(1f, 0.98f, 0.86f, 0.86f), Color.Lerp(accentColor, Color.white, 0.2f), 12, 1);
+            GUI.Label(new Rect(rect.x + 4f, rect.y + 3f, rect.width * 0.34f, rect.height - 6f), label, hudSmallStyle);
+            GUI.Label(new Rect(rect.x + rect.width * 0.35f, rect.y + 3f, rect.width * 0.58f, rect.height - 6f), value, hudSmallStyle);
         }
 
         private void DrawInfoPill(Rect rect, string label, string value, Color accentColor)
@@ -583,11 +570,11 @@ namespace BubbleTown.UI
             Rect rect = new Rect(Screen.width * 0.5f - 160f * pulse, Screen.height * 0.5f - 58f * pulse, 320f * pulse, 116f * pulse);
             DrawPanel(rect, new Color(1f, 0.96f, 0.72f, 0.96f), promptColor, 24, 5);
             GUI.Label(new Rect(rect.x, rect.y + 18f, rect.width, 62f), prompt, promptTitleStyle);
-            string body = readyPhase ? readyBodyText : goBodyText;
+            string body = readyPhase ? "Controls unlock on GO" : "Move!";
             float protectionRemaining = ResolveMaxProtectionRemaining(GameManager.Instance);
             if (!readyPhase && protectionRemaining > 0f)
             {
-                body = $"{body} Shield {protectionRemaining:0.0}s";
+                body = $"Shield {protectionRemaining:0.0}s";
             }
 
             GUI.Label(new Rect(rect.x + 18f, rect.y + 78f, rect.width - 36f, 24f), body, promptBodyStyle);
@@ -621,8 +608,8 @@ namespace BubbleTown.UI
                 return;
             }
 
-            float toastY = GameManager.Instance != null && GameManager.Instance.CurrentGameMode == GameMode.LocalVS ? 190f : 116f;
-            Rect toastRect = new Rect(Screen.width * 0.5f - 190f, toastY, 380f, 56f);
+            float toastY = Screen.height - 152f;
+            Rect toastRect = new Rect(Screen.width * 0.5f - 150f, toastY, 300f, 40f);
             float elapsed01 = pickupToastSeconds <= 0f ? 1f : Mathf.Clamp01(1f - pickupToastTimer / pickupToastSeconds);
             float pop01 = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed01 / 0.22f));
             float fadeAlpha = pickupToastSeconds <= 0f
@@ -644,9 +631,10 @@ namespace BubbleTown.UI
 
         private void DrawActionButtons()
         {
-            Rect buttonRect = new Rect(Screen.width - 198f, 18f, 180f, 160f);
-            DrawPanel(buttonRect, new Color(1f, 0.96f, 0.72f, 0.92f), new Color(1f, 0.58f, 0.18f), 18, 3);
-            GUILayout.BeginArea(new Rect(buttonRect.x + 12f, buttonRect.y + 12f, buttonRect.width - 24f, buttonRect.height - 24f));
+            Rect buttonRect = new Rect(14f, 152f, 286f, 46f);
+            DrawPanel(buttonRect, new Color(1f, 0.96f, 0.72f, 0.84f), new Color(1f, 0.58f, 0.18f, 0.92f), 16, 2);
+            GUILayout.BeginArea(new Rect(buttonRect.x + 10f, buttonRect.y + 10f, buttonRect.width - 20f, buttonRect.height - 20f));
+            GUILayout.BeginHorizontal();
 
             if (AnimatedActionButton("Retry"))
             {
@@ -658,18 +646,19 @@ namespace BubbleTown.UI
                 OnClickBackToMenu();
             }
 
+            GUILayout.EndHorizontal();
             GUILayout.EndArea();
         }
 
         private bool AnimatedActionButton(string text)
         {
-            Rect rect = GUILayoutUtility.GetRect(130f, 38f, GUILayout.ExpandWidth(true));
+            Rect rect = GUILayoutUtility.GetRect(118f, 26f, GUILayout.ExpandWidth(true));
             Matrix4x4 previousMatrix = GUI.matrix;
             float scale = ResolveButtonScale(rect);
             GUIUtility.ScaleAroundPivot(new Vector2(scale, scale), rect.center);
             bool clicked = GUI.Button(rect, text, buttonStyle);
             GUI.matrix = previousMatrix;
-            GUILayout.Space(6f);
+            GUILayout.Space(4f);
             return clicked;
         }
 
@@ -791,6 +780,19 @@ namespace BubbleTown.UI
             }
         }
 
+        private string FormatModeName(GameMode gameMode)
+        {
+            switch (gameMode)
+            {
+                case GameMode.AIBattle:
+                    return "AI";
+                case GameMode.LocalVS:
+                    return "VS";
+                default:
+                    return "Solo";
+            }
+        }
+
         private string FormatLifeState(CharacterBase character)
         {
             if (character == null || !character.gameObject.activeInHierarchy)
@@ -840,21 +842,6 @@ namespace BubbleTown.UI
             }
 
             return gameManager.CurrentGameState.ToString();
-        }
-
-        private string ResolvePostOpeningHint(GameManager gameManager)
-        {
-            if (ResolveMaxProtectionRemaining(gameManager) > 0f)
-            {
-                return "Opening shield is fading. Use this moment to take position.";
-            }
-
-            if (gameManager != null && gameManager.CurrentGameMode == GameMode.SinglePlayer && gameManager.IsSinglePlayerObjectiveEnabled)
-            {
-                return $"Solo goal: clear soft walls. Progress {gameManager.SinglePlayerObjectiveProgressLabel}.";
-            }
-
-            return "Break blocks, collect power-ups, and avoid the blast lines.";
         }
 
         private string FormatLocalVsRoundHeader(GameManager gameManager)
@@ -953,7 +940,7 @@ namespace BubbleTown.UI
             toastStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 16,
+                fontSize = 14,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = textPrimary }
             };
@@ -961,7 +948,7 @@ namespace BubbleTown.UI
             buttonStyle = new GUIStyle(GUI.skin.button)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 14,
+                fontSize = 13,
                 fontStyle = FontStyle.Bold,
                 border = new RectOffset(12, 12, 12, 12),
                 margin = new RectOffset(0, 0, 0, 0),
