@@ -57,11 +57,16 @@ namespace BubbleTown.UI
         private GUIStyle promptBodyStyle;
         private GUIStyle toastStyle;
         private GUIStyle buttonStyle;
+        private GUIStyle guideTitleStyle;
+        private GUIStyle guideItemNameStyle;
+        private GUIStyle guideItemBodyStyle;
+        private GUIStyle guideTipStyle;
 
         private bool resultQueued;
         private bool localVsNextRoundQueued;
         private bool openingFlowStarted;
         private bool roundStartTriggered;
+        private bool isItemGuideOpen;
         private float resultTimer;
         private float localVsNextRoundTimer;
         private float battleElapsedSeconds;
@@ -109,10 +114,11 @@ namespace BubbleTown.UI
         {
             EnsureStyles();
             DrawBattleHud();
+            DrawActionButtons();
+            DrawItemGuide();
             DrawPickupToast();
             DrawOpeningPrompt();
             DrawResultPrompt();
-            DrawActionButtons();
         }
 
         public void OnClickBackToMenu()
@@ -152,6 +158,7 @@ namespace BubbleTown.UI
             openingPromptTimer = 0f;
             resultQueued = false;
             localVsNextRoundQueued = false;
+            isItemGuideOpen = false;
             resultTimer = 0f;
             localVsNextRoundTimer = 0f;
             resultPromptTitle = string.Empty;
@@ -316,12 +323,16 @@ namespace BubbleTown.UI
             {
                 QueueResult("Game Over", "Player1 was caught by an explosion.", "None");
             }
-            else if (gameManager.IsSinglePlayerObjectiveComplete)
+            else if (gameManager.CurrentGameMode == GameMode.SinglePlayer)
             {
-                QueueResult(
-                    "Objective Clear",
-                    $"Player1 cleared {gameManager.SinglePlayerObjectiveProgressLabel} soft walls.",
-                    "Player1");
+                gameManager.RefreshSinglePlayerRouteObjective();
+                if (gameManager.IsSinglePlayerObjectiveComplete)
+                {
+                    QueueResult(
+                        "Objective Clear",
+                        "Player1 opened a path through the soft walls and reached the exit.",
+                        "Player1");
+                }
             }
         }
 
@@ -469,9 +480,7 @@ namespace BubbleTown.UI
             GUI.Label(new Rect(rect.x + 12f, rect.y + 5f, rect.width * 0.46f, 18f), gameManager.SinglePlayerObjectiveLabel, hudTextStyle);
             GUI.Label(new Rect(rect.x + rect.width * 0.5f, rect.y + 5f, rect.width * 0.44f, 18f), gameManager.SinglePlayerObjectiveProgressLabel, hudSmallStyle);
 
-            float progress = gameManager.SinglePlayerSoftWallTarget > 0
-                ? Mathf.Clamp01((float)gameManager.SinglePlayerSoftWallsCleared / gameManager.SinglePlayerSoftWallTarget)
-                : 1f;
+            float progress = Mathf.Clamp01(gameManager.SinglePlayerRouteProgress);
             Rect progressBack = new Rect(rect.x + 16f, rect.y + rect.height - 12f, rect.width - 32f, 6f);
             GUI.DrawTexture(progressBack, GetRoundedTexture(new Color(0.16f, 0.34f, 0.44f, 0.28f), Color.clear, 3, 0));
             GUI.DrawTexture(
@@ -650,6 +659,206 @@ namespace BubbleTown.UI
             GUILayout.EndArea();
         }
 
+        private void DrawItemGuide()
+        {
+            Rect buttonPanelRect = new Rect(14f, 206f, 286f, 44f);
+            DrawPanel(buttonPanelRect, new Color(1f, 0.96f, 0.72f, 0.84f), new Color(0.35f, 0.78f, 1f, 0.92f), 16, 2);
+
+            Rect buttonRect = new Rect(buttonPanelRect.x + 10f, buttonPanelRect.y + 9f, buttonPanelRect.width - 20f, 26f);
+            if (AnimatedFixedButton(buttonRect, isItemGuideOpen ? "Hide Guide" : "Item Guide"))
+            {
+                AudioManager.Instance?.PlayButtonClickSFX();
+                isItemGuideOpen = !isItemGuideOpen;
+            }
+
+            if (isItemGuideOpen)
+            {
+                DrawItemGuidePanel();
+            }
+        }
+
+        private void DrawItemGuidePanel()
+        {
+            GUI.DrawTexture(
+                new Rect(0f, 0f, Screen.width, Screen.height),
+                GetRoundedTexture(new Color(0.07f, 0.2f, 0.28f, 0.24f), Color.clear, 1, 0));
+
+            Rect panelRect = ResolveCenteredItemGuideRect();
+            DrawPanel(panelRect, new Color(1f, 0.96f, 0.74f, 0.95f), new Color(0.18f, 0.67f, 0.95f, 0.98f), 22, 4);
+
+            Rect titleRect = new Rect(panelRect.x + panelRect.width * 0.5f - 118f, panelRect.y + 14f, 236f, 34f);
+            DrawPanel(titleRect, new Color(0.12f, 0.72f, 1f, 0.96f), Color.white, 17, 2);
+            DrawLockedLabel(titleRect, "ITEM GUIDE", guideTitleStyle);
+
+            Rect closeRect = new Rect(panelRect.x + panelRect.width - 54f, panelRect.y + 14f, 34f, 28f);
+            if (AnimatedFixedButton(closeRect, "X"))
+            {
+                AudioManager.Instance?.PlayButtonClickSFX();
+                isItemGuideOpen = false;
+            }
+
+            float contentX = panelRect.x + 24f;
+            float contentY = panelRect.y + 66f;
+            float gap = 10f;
+            float cardHeight = 56f;
+            float cardWidth = (panelRect.width - 48f - gap) * 0.5f;
+
+            DrawItemGuideCard(new Rect(contentX, contentY, cardWidth, cardHeight), ItemType.BombCountUp, "Bomb Slot", "Extra bomb slot.", new Color(0.12f, 0.72f, 1f));
+            DrawItemGuideCard(new Rect(contentX + cardWidth + gap, contentY, cardWidth, cardHeight), ItemType.ExplosionRangeUp, "Blast Range", "Longer blast lines.", new Color(1f, 0.58f, 0.18f));
+            DrawItemGuideCard(new Rect(contentX, contentY + cardHeight + gap, cardWidth, cardHeight), ItemType.MoveSpeedUp, "Speed Boots", "Move faster.", new Color(0.48f, 0.9f, 0.34f));
+            DrawItemGuideCard(new Rect(contentX + cardWidth + gap, contentY + cardHeight + gap, cardWidth, cardHeight), ItemType.Shield, "Shield", "Blocks one hit.", new Color(0.35f, 0.78f, 1f));
+            DrawItemGuideCard(new Rect(contentX, contentY + (cardHeight + gap) * 2f, panelRect.width - 48f, cardHeight), ItemType.TemporaryInvincible, "Invincible", "Brief safety time.", new Color(0.72f, 0.48f, 1f));
+
+            float tipWidth = Mathf.Min(340f, panelRect.width - 140f);
+            Rect tipRect = new Rect(panelRect.center.x - tipWidth * 0.5f, panelRect.y + panelRect.height - 40f, tipWidth, 24f);
+            DrawPanel(tipRect, new Color(0.48f, 0.9f, 0.34f, 0.72f), Color.white, 12, 1);
+            DrawLockedLabel(tipRect, "Soft blocks hide power-ups.", guideTipStyle);
+        }
+
+        private Rect ResolveCenteredItemGuideRect()
+        {
+            float width = Mathf.Min(620f, Mathf.Max(420f, Screen.width - 70f));
+            float height = Mathf.Min(330f, Mathf.Max(312f, Screen.height - 70f));
+            return new Rect(
+                Mathf.Max(16f, (Screen.width - width) * 0.5f),
+                Mathf.Max(16f, (Screen.height - height) * 0.5f),
+                width,
+                height);
+        }
+
+        private void DrawItemGuideCard(Rect cardRect, ItemType itemType, string title, string body, Color accentColor)
+        {
+            DrawPanel(cardRect, new Color(1f, 0.99f, 0.88f, 0.9f), Color.Lerp(accentColor, Color.white, 0.18f), 15, 2);
+
+            Rect iconRect = new Rect(cardRect.x + 10f, cardRect.y + 9f, 40f, 40f);
+            DrawAnimatedItemGuideIcon(iconRect, itemType, accentColor);
+
+            DrawLockedLabel(new Rect(cardRect.x + 60f, cardRect.y + 9f, cardRect.width - 70f, 20f), title, guideItemNameStyle);
+            DrawLockedLabel(new Rect(cardRect.x + 60f, cardRect.y + 30f, cardRect.width - 70f, 18f), body, guideItemBodyStyle);
+        }
+
+        private void DrawLockedLabel(Rect rect, string text, GUIStyle style)
+        {
+            if (style == null)
+            {
+                GUI.Label(rect, text);
+                return;
+            }
+
+            Color textColor = style.normal.textColor;
+            LockStyleTextColor(style, textColor);
+
+            Color previousContentColor = GUI.contentColor;
+            GUI.contentColor = Color.white;
+            GUI.Label(rect, text, style);
+            GUI.contentColor = previousContentColor;
+        }
+
+        private void LockStyleTextColor(GUIStyle style, Color textColor)
+        {
+            style.normal.textColor = textColor;
+            style.hover.textColor = textColor;
+            style.active.textColor = textColor;
+            style.focused.textColor = textColor;
+            style.onNormal.textColor = textColor;
+            style.onHover.textColor = textColor;
+            style.onActive.textColor = textColor;
+            style.onFocused.textColor = textColor;
+        }
+
+        private void DrawAnimatedItemGuideIcon(Rect iconRect, ItemType itemType, Color accentColor)
+        {
+            Matrix4x4 previousMatrix = GUI.matrix;
+            float phase = (int)itemType * 0.73f;
+            float pulse = 1f + Mathf.Sin(Time.unscaledTime * 4.2f + phase) * 0.045f;
+            float bob = Mathf.Sin(Time.unscaledTime * 3.1f + phase) * 1.4f;
+            float tilt = Mathf.Sin(Time.unscaledTime * 2.5f + phase) * 4.5f;
+            Rect animatedRect = new Rect(iconRect.x, iconRect.y + bob, iconRect.width, iconRect.height);
+
+            GUIUtility.RotateAroundPivot(tilt, animatedRect.center);
+            GUIUtility.ScaleAroundPivot(new Vector2(pulse, pulse), animatedRect.center);
+            DrawStickerIconBack(animatedRect, accentColor);
+            DrawItemGuideIcon(animatedRect, itemType);
+            GUI.matrix = previousMatrix;
+        }
+
+        private void DrawStickerIconBack(Rect iconRect, Color accentColor)
+        {
+            DrawCircle(new Rect(iconRect.x + 2f, iconRect.y + 4f, iconRect.width - 2f, iconRect.height - 2f), new Color(0.04f, 0.22f, 0.34f, 0.22f));
+            DrawCircle(iconRect, Color.white);
+            DrawCircle(new Rect(iconRect.x + 4f, iconRect.y + 4f, iconRect.width - 8f, iconRect.height - 8f), Color.Lerp(accentColor, Color.white, 0.08f));
+            DrawCircle(new Rect(iconRect.x + 9f, iconRect.y + 8f, 8f, 8f), new Color(1f, 1f, 1f, 0.55f));
+        }
+
+        private void DrawItemGuideIcon(Rect iconRect, ItemType itemType)
+        {
+            Rect inner = new Rect(iconRect.x + 6f, iconRect.y + 6f, iconRect.width - 12f, iconRect.height - 12f);
+            Color cream = new Color(1f, 0.98f, 0.76f, 1f);
+            Color navy = new Color(0.09f, 0.25f, 0.36f, 1f);
+            Color pink = new Color(1f, 0.5f, 0.78f, 1f);
+            Color yellow = new Color(1f, 0.88f, 0.28f, 1f);
+            Color cyan = new Color(0.26f, 0.9f, 1f, 1f);
+
+            switch (itemType)
+            {
+                case ItemType.BombCountUp:
+                    DrawCircle(new Rect(inner.x + 2f, inner.y + 8f, 18f, 18f), navy);
+                    DrawCircle(new Rect(inner.x + 6f, inner.y + 10f, 5f, 5f), cyan);
+                    DrawSolidRect(new Rect(inner.x + 17f, inner.y + 5f, 8f, 6f), yellow, 3);
+                    DrawSolidRect(new Rect(inner.x + 22f, inner.y + 2f, 4f, 6f), cream, 2);
+                    DrawCircle(new Rect(inner.x + 25f, inner.y, 6f, 6f), pink);
+                    DrawCircle(new Rect(inner.x + 20f, inner.y - 2f, 4f, 4f), yellow);
+                    break;
+                case ItemType.ExplosionRangeUp:
+                    DrawCircle(new Rect(inner.x + 10f, inner.y + 10f, 10f, 10f), yellow);
+                    DrawSolidRect(new Rect(inner.x + 2f, inner.y + 13f, 26f, 5f), yellow, 3);
+                    DrawSolidRect(new Rect(inner.x + 13f, inner.y + 2f, 5f, 26f), yellow, 3);
+                    DrawCircle(new Rect(inner.x, inner.y + 10f, 10f, 10f), cream);
+                    DrawCircle(new Rect(inner.x + 21f, inner.y + 10f, 10f, 10f), cream);
+                    DrawCircle(new Rect(inner.x + 10f, inner.y, 10f, 10f), pink);
+                    DrawCircle(new Rect(inner.x + 10f, inner.y + 21f, 10f, 10f), cyan);
+                    break;
+                case ItemType.MoveSpeedUp:
+                    DrawSolidRect(new Rect(inner.x + 7f, inner.y + 17f, 18f, 7f), cream, 4);
+                    DrawSolidRect(new Rect(inner.x + 11f, inner.y + 7f, 9f, 13f), cream, 4);
+                    DrawSolidRect(new Rect(inner.x + 21f, inner.y + 21f, 9f, 4f), yellow, 2);
+                    DrawCircle(new Rect(inner.x + 20f, inner.y + 7f, 6f, 6f), yellow);
+                    DrawSolidRect(new Rect(inner.x + 1f, inner.y + 8f, 8f, 3f), cyan, 2);
+                    DrawSolidRect(new Rect(inner.x - 1f, inner.y + 15f, 10f, 3f), cyan, 2);
+                    DrawSolidRect(new Rect(inner.x + 1f, inner.y + 22f, 8f, 3f), cyan, 2);
+                    break;
+                case ItemType.Shield:
+                    DrawCircle(new Rect(inner.x + 5f, inner.y + 3f, 20f, 20f), cream);
+                    DrawSolidRect(new Rect(inner.x + 8f, inner.y + 17f, 14f, 8f), cream, 5);
+                    DrawSolidRect(new Rect(inner.x + 12f, inner.y + 8f, 7f, 14f), cyan, 3);
+                    DrawSolidRect(new Rect(inner.x + 8f, inner.y + 12f, 15f, 5f), cyan, 2);
+                    DrawCircle(new Rect(inner.x + 4f, inner.y + 2f, 5f, 5f), Color.white);
+                    break;
+                case ItemType.TemporaryInvincible:
+                    DrawSolidRect(new Rect(inner.x + 14f, inner.y + 2f, 5f, 27f), yellow, 3);
+                    DrawSolidRect(new Rect(inner.x + 3f, inner.y + 13f, 27f, 5f), yellow, 3);
+                    DrawCircle(new Rect(inner.x + 10f, inner.y + 9f, 13f, 13f), pink);
+                    DrawCircle(new Rect(inner.x + 1f, inner.y + 3f, 5f, 5f), cream);
+                    DrawCircle(new Rect(inner.x + 25f, inner.y + 21f, 5f, 5f), cream);
+                    DrawCircle(new Rect(inner.x + 23f, inner.y + 2f, 4f, 4f), cyan);
+                    break;
+                default:
+                    DrawCircle(new Rect(inner.x + 6f, inner.y + 5f, 17f, 17f), cream);
+                    DrawSolidRect(new Rect(inner.x + 13f, inner.y + 9f, 4f, 9f), navy, 2);
+                    break;
+            }
+        }
+
+        private void DrawSolidRect(Rect rect, Color color, int radius = 1)
+        {
+            GUI.DrawTexture(rect, GetRoundedTexture(color, Color.clear, radius, 0));
+        }
+
+        private void DrawCircle(Rect rect, Color color)
+        {
+            GUI.DrawTexture(rect, GetRoundedTexture(color, Color.clear, Mathf.RoundToInt(Mathf.Min(rect.width, rect.height) * 0.5f), 0));
+        }
+
         private bool AnimatedActionButton(string text)
         {
             Rect rect = GUILayoutUtility.GetRect(118f, 26f, GUILayout.ExpandWidth(true));
@@ -659,6 +868,16 @@ namespace BubbleTown.UI
             bool clicked = GUI.Button(rect, text, buttonStyle);
             GUI.matrix = previousMatrix;
             GUILayout.Space(4f);
+            return clicked;
+        }
+
+        private bool AnimatedFixedButton(Rect rect, string text)
+        {
+            Matrix4x4 previousMatrix = GUI.matrix;
+            float scale = ResolveButtonScale(rect);
+            GUIUtility.ScaleAroundPivot(new Vector2(scale, scale), rect.center);
+            bool clicked = GUI.Button(rect, text, buttonStyle);
+            GUI.matrix = previousMatrix;
             return clicked;
         }
 
@@ -886,7 +1105,17 @@ namespace BubbleTown.UI
 
         private void EnsureStyles()
         {
-            if (hudTextStyle != null)
+            if (hudTextStyle != null &&
+                hudSmallStyle != null &&
+                hudValueStyle != null &&
+                promptTitleStyle != null &&
+                promptBodyStyle != null &&
+                toastStyle != null &&
+                buttonStyle != null &&
+                guideTitleStyle != null &&
+                guideItemNameStyle != null &&
+                guideItemBodyStyle != null &&
+                guideTipStyle != null)
             {
                 return;
             }
@@ -967,6 +1196,67 @@ namespace BubbleTown.UI
                     textColor = Color.white,
                     background = GetRoundedTexture(new Color(0.05f, 0.52f, 0.82f, 1f), Color.white, 12, 2)
                 }
+            };
+
+            guideTitleStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 20,
+                fontStyle = FontStyle.Bold,
+                normal = { textColor = Color.white },
+                hover = { textColor = Color.white },
+                active = { textColor = Color.white },
+                focused = { textColor = Color.white },
+                onNormal = { textColor = Color.white },
+                onHover = { textColor = Color.white },
+                onActive = { textColor = Color.white },
+                onFocused = { textColor = Color.white }
+            };
+
+            guideItemNameStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                fontSize = 14,
+                fontStyle = FontStyle.Bold,
+                normal = { textColor = textPrimary },
+                hover = { textColor = textPrimary },
+                active = { textColor = textPrimary },
+                focused = { textColor = textPrimary },
+                onNormal = { textColor = textPrimary },
+                onHover = { textColor = textPrimary },
+                onActive = { textColor = textPrimary },
+                onFocused = { textColor = textPrimary }
+            };
+
+            guideItemBodyStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                fontSize = 11,
+                fontStyle = FontStyle.Bold,
+                wordWrap = true,
+                normal = { textColor = textSecondary },
+                hover = { textColor = textSecondary },
+                active = { textColor = textSecondary },
+                focused = { textColor = textSecondary },
+                onNormal = { textColor = textSecondary },
+                onHover = { textColor = textSecondary },
+                onActive = { textColor = textSecondary },
+                onFocused = { textColor = textSecondary }
+            };
+
+            guideTipStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 12,
+                fontStyle = FontStyle.Bold,
+                normal = { textColor = textPrimary },
+                hover = { textColor = textPrimary },
+                active = { textColor = textPrimary },
+                focused = { textColor = textPrimary },
+                onNormal = { textColor = textPrimary },
+                onHover = { textColor = textPrimary },
+                onActive = { textColor = textPrimary },
+                onFocused = { textColor = textPrimary }
             };
         }
 

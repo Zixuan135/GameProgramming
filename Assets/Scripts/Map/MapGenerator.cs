@@ -1,5 +1,6 @@
 using BubbleTown.Core;
 using BubbleTown.Core.Enums;
+using BubbleTown.Managers;
 using UnityEngine;
 
 namespace BubbleTown.Map
@@ -21,6 +22,7 @@ namespace BubbleTown.Map
         private const string HardWallRootName = "HardWallRoot";
         private const string SoftWallRootName = "SoftWallRoot";
         private const string DecorationRootName = "DecorationRoot";
+        private const string GoalRootName = "GoalRoot";
 
         [Header("Grid")]
         [SerializeField] private int mapWidth = GameConstants.DefaultMapWidth;
@@ -94,8 +96,10 @@ namespace BubbleTown.Map
             Transform hardWallRoot = CreateChildRoot(root, HardWallRootName);
             Transform softWallRoot = CreateChildRoot(root, SoftWallRootName);
             Transform decorationRoot = CreateChildRoot(root, DecorationRootName);
+            Transform goalRoot = CreateChildRoot(root, GoalRootName);
 
             GenerateGridVisuals(mapManager, groundRoot, hardWallRoot, softWallRoot, visualTheme);
+            GenerateSinglePlayerGoalVisual(mapManager, goalRoot, visualTheme);
             if (generateDecorations)
             {
                 GenerateDecorations(mapType, visualTheme, decorationRoot);
@@ -192,6 +196,35 @@ namespace BubbleTown.Map
                     GenerateCandyParkDecorations(mapType, decorationRoot);
                     break;
             }
+        }
+
+        private void GenerateSinglePlayerGoalVisual(MapManager mapManager, Transform goalRoot, MapVisualTheme visualTheme)
+        {
+            if (mapManager == null || goalRoot == null || GameManager.Instance == null ||
+                GameManager.Instance.CurrentGameMode != GameMode.SinglePlayer)
+            {
+                return;
+            }
+
+            Vector2Int goalGrid = mapManager.GetSinglePlayerGoalGrid();
+            Vector3 goalWorld = mapManager.GridToWorld(goalGrid);
+            GameObject goal = new GameObject($"Goal_Exit_{goalGrid.x:00}_{goalGrid.y:00}");
+            Transform goalTransform = goal.transform;
+            goalTransform.SetParent(goalRoot);
+            goalTransform.position = goalWorld;
+            goalTransform.rotation = Quaternion.identity;
+
+            Material baseMaterial = visualTheme == MapVisualTheme.JellyMaze ? GetJellyTileInsetMaterial() : GetPropMintMaterial();
+            Material accentMaterial = visualTheme == MapVisualTheme.JellyMaze ? GetJellyGlowMaterial() : GetPropYellowMaterial();
+            Material flagMaterial = visualTheme == MapVisualTheme.JellyMaze ? GetJellyPropPinkMaterial() : GetPropPinkMaterial();
+
+            CreatePrimitiveChild(goalTransform, "GoalPad", PrimitiveType.Cylinder, new Vector3(0f, 0.055f, 0f), new Vector3(0.72f, 0.04f, 0.72f), baseMaterial);
+            CreatePrimitiveChild(goalTransform, "GoalRing", PrimitiveType.Cylinder, new Vector3(0f, 0.1f, 0f), new Vector3(0.52f, 0.035f, 0.52f), accentMaterial);
+            CreatePrimitiveChild(goalTransform, "FlagPole", PrimitiveType.Cylinder, new Vector3(-0.28f, 0.58f, -0.22f), new Vector3(0.04f, 0.55f, 0.04f), GetCreamMaterial());
+            CreatePrimitiveChild(goalTransform, "Flag", PrimitiveType.Cube, new Vector3(-0.08f, 0.86f, -0.22f), new Vector3(0.34f, 0.2f, 0.04f), flagMaterial);
+            CreatePrimitiveChild(goalTransform, "SparkleOrb", PrimitiveType.Sphere, new Vector3(0.25f, 0.42f, 0.22f), new Vector3(0.2f, 0.2f, 0.2f), accentMaterial);
+
+            AddDecorationAnimation(goal, goalTransform, true, 0.035f, 2.4f, new Vector3(0f, 35f, 0f), true, 0.035f, 3.1f);
         }
 
         private void GenerateCandyParkDecorations(BattleMapType mapType, Transform decorationRoot)
