@@ -74,6 +74,9 @@ namespace BubbleTown.Managers
         [SerializeField, Min(1)] private int singlePlayerSoftWallTarget = GameConstants.DefaultSinglePlayerSoftWallTarget;
         [SerializeField, Min(0)] private int activeSinglePlayerSoftWallTarget;
         [SerializeField, Min(0)] private int singlePlayerSoftWallsCleared;
+        [SerializeField] private Vector2Int singlePlayerGoalGrid = new Vector2Int(1, 1);
+        [SerializeField, Min(0)] private int singlePlayerStartGoalDistance;
+        [SerializeField, Min(0)] private int singlePlayerCurrentGoalDistance;
         [SerializeField] private bool singlePlayerObjectiveComplete;
 
         [Header("Runtime References")]
@@ -110,9 +113,16 @@ namespace BubbleTown.Managers
         public bool IsSinglePlayerObjectiveEnabled => currentGameMode == GameMode.SinglePlayer && enableSinglePlayerSoftWallObjective;
         public int SinglePlayerSoftWallTarget => Mathf.Max(0, activeSinglePlayerSoftWallTarget);
         public int SinglePlayerSoftWallsCleared => singlePlayerSoftWallsCleared;
+        public Vector2Int SinglePlayerGoalGrid => singlePlayerGoalGrid;
+        public int SinglePlayerGoalDistance => Mathf.Max(0, singlePlayerCurrentGoalDistance);
+        public float SinglePlayerRouteProgress => singlePlayerStartGoalDistance > 0
+            ? 1f - Mathf.Clamp01((float)singlePlayerCurrentGoalDistance / singlePlayerStartGoalDistance)
+            : singlePlayerObjectiveComplete ? 1f : 0f;
         public bool IsSinglePlayerObjectiveComplete => IsSinglePlayerObjectiveEnabled && singlePlayerObjectiveComplete;
-        public string SinglePlayerObjectiveLabel => "Clear Soft Walls";
-        public string SinglePlayerObjectiveProgressLabel => $"{singlePlayerSoftWallsCleared}/{SinglePlayerSoftWallTarget}";
+        public string SinglePlayerObjectiveLabel => "Reach Exit";
+        public string SinglePlayerObjectiveProgressLabel => singlePlayerObjectiveComplete
+            ? "EXIT REACHED"
+            : $"{SinglePlayerGoalDistance} tiles";
 
         private void Awake()
         {
@@ -385,19 +395,16 @@ namespace BubbleTown.Managers
             activeSinglePlayerSoftWallTarget = availableSoftWalls > 0
                 ? Mathf.Clamp(singlePlayerSoftWallTarget, 1, availableSoftWalls)
                 : 0;
-
-            if (activeSinglePlayerSoftWallTarget <= 0)
-            {
-                singlePlayerObjectiveComplete = true;
-                return;
-            }
+            singlePlayerGoalGrid = activeMapManager.GetSinglePlayerGoalGrid();
+            singlePlayerStartGoalDistance = CalculateGridDistance(activeMapManager.GetPlayer1SpawnGrid(), singlePlayerGoalGrid);
+            singlePlayerCurrentGoalDistance = singlePlayerStartGoalDistance;
 
             subscribedSinglePlayerObjectiveMapManager = activeMapManager;
             subscribedSinglePlayerObjectiveMapManager.SoftWallDestroyed += HandleSinglePlayerSoftWallDestroyed;
 
             if (logBattleSetup)
             {
-                Debug.Log($"[GameManager] SinglePlayer objective prepared. Clear {activeSinglePlayerSoftWallTarget} soft walls.");
+                Debug.Log($"[GameManager] SinglePlayer route objective prepared. Goal: {singlePlayerGoalGrid}, start distance: {singlePlayerStartGoalDistance}.");
             }
         }
 
@@ -406,6 +413,9 @@ namespace BubbleTown.Managers
             UnsubscribeSinglePlayerObjectiveMap();
             activeSinglePlayerSoftWallTarget = 0;
             singlePlayerSoftWallsCleared = 0;
+            singlePlayerGoalGrid = new Vector2Int(1, 1);
+            singlePlayerStartGoalDistance = 0;
+            singlePlayerCurrentGoalDistance = 0;
             singlePlayerObjectiveComplete = false;
         }
 
@@ -417,13 +427,32 @@ namespace BubbleTown.Managers
             }
 
             singlePlayerSoftWallsCleared = Mathf.Min(SinglePlayerSoftWallTarget, singlePlayerSoftWallsCleared + 1);
-            singlePlayerObjectiveComplete = SinglePlayerSoftWallTarget > 0 &&
-                                            singlePlayerSoftWallsCleared >= SinglePlayerSoftWallTarget;
+            RefreshSinglePlayerRouteObjective();
 
             if (logBattleSetup)
             {
                 Debug.Log($"[GameManager] SinglePlayer objective progress: {SinglePlayerObjectiveProgressLabel} at {gridPosition}");
             }
+        }
+
+        public void RefreshSinglePlayerRouteObjective()
+        {
+            if (!IsSinglePlayerObjectiveEnabled || singlePlayerObjectiveComplete || activeMapManager == null || player1 == null)
+            {
+                return;
+            }
+
+            singlePlayerCurrentGoalDistance = CalculateGridDistance(player1.CurrentGridPosition, singlePlayerGoalGrid);
+            if (activeMapManager.IsSinglePlayerGoal(player1.CurrentGridPosition))
+            {
+                singlePlayerObjectiveComplete = true;
+                singlePlayerCurrentGoalDistance = 0;
+            }
+        }
+
+        private int CalculateGridDistance(Vector2Int from, Vector2Int to)
+        {
+            return Mathf.Abs(from.x - to.x) + Mathf.Abs(from.y - to.y);
         }
 
         private void UnsubscribeSinglePlayerObjectiveMap()
