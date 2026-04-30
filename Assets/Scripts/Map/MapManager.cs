@@ -40,6 +40,7 @@ namespace BubbleTown.Map
         private Vector2Int player1SpawnGrid = new Vector2Int(1, 1);
         private Vector2Int player2SpawnGrid = new Vector2Int(1, 1);
         private Vector2Int aiSpawnGrid = new Vector2Int(1, 1);
+        private Vector2Int singlePlayerGoalGrid = new Vector2Int(1, 1);
         private readonly Dictionary<Vector2Int, GameObject> softWallObjects = new Dictionary<Vector2Int, GameObject>();
 
         private void Awake()
@@ -97,6 +98,7 @@ namespace BubbleTown.Map
             ReserveSpawnArea(player1SpawnGrid);
             ReserveSpawnArea(player2SpawnGrid);
             ReserveSpawnArea(aiSpawnGrid);
+            ApplySinglePlayerRouteObjectiveRules();
         }
 
         private void ApplySelectedMapLayout()
@@ -207,6 +209,7 @@ namespace BubbleTown.Map
             player1SpawnGrid = bottomLeft;
             player2SpawnGrid = topRight;
             aiSpawnGrid = topLeft;
+            singlePlayerGoalGrid = topRight;
 
             switch (mode)
             {
@@ -235,6 +238,51 @@ namespace BubbleTown.Map
             ClearBlockingAt(center + Vector2Int.left);
             ClearBlockingAt(center + Vector2Int.up);
             ClearBlockingAt(center + Vector2Int.down);
+        }
+
+        private void ApplySinglePlayerRouteObjectiveRules()
+        {
+            singlePlayerGoalGrid = new Vector2Int(mapWidth - 2, mapHeight - 2);
+            if (ResolveCurrentGameMode() != GameMode.SinglePlayer)
+            {
+                return;
+            }
+
+            ClearBlockingAt(singlePlayerGoalGrid);
+
+            Vector2Int leftGate = singlePlayerGoalGrid + Vector2Int.left;
+            Vector2Int lowerGate = singlePlayerGoalGrid + Vector2Int.down;
+            Vector2Int leftApproach = leftGate + Vector2Int.left;
+            Vector2Int lowerApproach = lowerGate + Vector2Int.down;
+
+            ClearBlockingAt(leftApproach);
+            ClearBlockingAt(lowerApproach);
+            SetSoftWallGate(leftGate);
+            SetSoftWallGate(lowerGate);
+        }
+
+        private GameMode ResolveCurrentGameMode()
+        {
+            return GameManager.Instance != null
+                ? GameManager.Instance.CurrentGameMode
+                : GameMode.SinglePlayer;
+        }
+
+        private void SetSoftWallGate(Vector2Int gridPos)
+        {
+            if (IsBorderCell(gridPos))
+            {
+                return;
+            }
+
+            GridCell cell = GetCell(gridPos);
+            if (cell == null)
+            {
+                return;
+            }
+
+            cell.IsHardWall = false;
+            cell.IsSoftWall = true;
         }
 
         private void ClearBlockingAt(Vector2Int gridPos)
@@ -463,6 +511,12 @@ namespace BubbleTown.Map
         public Vector2Int GetPlayer1SpawnGrid() => player1SpawnGrid;
         public Vector2Int GetPlayer2SpawnGrid() => player2SpawnGrid;
         public Vector2Int GetAISpawnGrid() => aiSpawnGrid;
+        public Vector2Int GetSinglePlayerGoalGrid() => singlePlayerGoalGrid;
+
+        public bool IsSinglePlayerGoal(Vector2Int gridPos)
+        {
+            return gridPos == singlePlayerGoalGrid;
+        }
 
         public int CountSoftWalls()
         {

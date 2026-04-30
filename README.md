@@ -14,7 +14,7 @@ It is built through small daily iterations: keep systems modular, keep commits r
 
 ## Modes
 
-- `SinglePlayer`: Player1 clears the solo objective in Battle
+- `SinglePlayer`: Player1 blasts through soft walls and reaches the exit
 - `AIBattle`: Player1 fights a basic grid-aware AI
 - `LocalVS`: Player1 and Player2 share one keyboard, with a basic Best of 3 score flow
 
@@ -27,6 +27,7 @@ It is built through small daily iterations: keep systems modular, keep commits r
 - Bomb countdown, cross-shaped explosions, hard-wall blocking, soft-wall destruction, and chain reactions
 - Soft walls can drop items
 - Items currently support bomb count, explosion range, movement speed, shield, and temporary invincibility
+- SinglePlayer has a route objective: open a path through soft walls, then step onto the exit marker
 - Characters can be defeated by explosions, with basic protection/shield rules
 - Battle opening flow uses `READY -> GO!` with short spawn protection
 - Basic AI can move, detect danger, place bombs, and escape after bombing
@@ -42,6 +43,7 @@ It is built through small daily iterations: keep systems modular, keep commits r
 - Battle scene uses chibi characters, bubble bomb visuals, bubble explosion cells, floating items, and edge decorations
 - Battle HUD shows mode, map, timer, round state, player stats, objective/score, pickups, and result prompts
 - Battle HUD removes developer-only controls and uses player-facing prompts
+- Battle HUD includes an `Item Guide` popup with animated item icons and short power-up descriptions
 - Result screen shows outcome, mode, map, winner, score placeholder, reward placeholder, animated stars, Retry, and Main Menu
 - Camera shake, pickup toasts, button hover/click animation, and result pop feedback are connected as lightweight game-feel polish
 - `AudioManager` supports BGM/SFX hooks; final clips can be added later
@@ -56,7 +58,16 @@ It is built through small daily iterations: keep systems modular, keep commits r
 6. Choose a mode and map.
 7. Click `START SELECTED MAP`.
 8. Watch the `READY -> GO!` opening flow.
-9. Play Battle, then verify Result / Retry / Main Menu.
+9. In Battle, click `Item Guide` and confirm all item cards are readable.
+10. Play Battle, then verify Result / Retry / Main Menu.
+
+SinglePlayer quick test:
+
+1. Choose `SinglePlayer`.
+2. Enter Battle and look for the exit marker near the far side of the map.
+3. Use bombs to break soft walls and open a path.
+4. Walk onto the exit marker.
+5. Confirm the battle finishes with `Objective Clear`.
 
 LocalVS quick test:
 
@@ -132,10 +143,10 @@ Docs/
 
 ## Key Systems
 
-- `GameManager`: mode/map/session state, battle setup, solo objective, LocalVS scoring
+- `GameManager`: mode/map/session state, battle setup, SinglePlayer route objective, LocalVS scoring
 - `SceneFlowManager`: scene transitions
-- `MapManager`: grid data, occupancy, wall/item/bomb state
-- `MapGenerator`: runtime map visuals and theme decoration generation
+- `MapManager`: grid data, occupancy, wall/item/bomb state, spawn/exit rules
+- `MapGenerator`: runtime map visuals, theme decoration generation, and exit marker visuals
 - `CharacterBase`: shared movement, stats, bombs, life state, spawn protection, item effects
 - `PlayerController`: keyboard input for Player1/Player2
 - `AIController`: AI movement, danger checks, bomb behavior, escape behavior
