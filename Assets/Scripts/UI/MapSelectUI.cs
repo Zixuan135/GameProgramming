@@ -11,6 +11,7 @@ namespace BubbleTown.UI
     {
         private BattleMapType selectedMapType = BattleMapType.Default;
         private bool hasInitializedSelection;
+        private Vector2 mapScrollPosition;
 
         private readonly Color defaultAccent = new Color(0.1f, 0.72f, 1f, 1f);
         private readonly Color openFieldAccent = new Color(0.45f, 0.9f, 0.34f, 1f);
@@ -21,35 +22,49 @@ namespace BubbleTown.UI
             InitializeSelectionIfNeeded();
             SimpleUIFactory.DrawCandyBackground();
 
-            Rect panel = SimpleUIFactory.CenteredRect(930f, 650f);
+            Rect panel = SimpleUIFactory.CenteredRect(930f, 540f);
             SimpleUIFactory.BeginPanel(panel);
-            SimpleUIFactory.LabelPill("PICK YOUR PLAYGROUND");
-            SimpleUIFactory.Title("Select Map");
-            SimpleUIFactory.Body("Choose a toy-board arena, preview the flavor, then start the battle when ready.");
+            SimpleUIFactory.CompactLabelPill("PICK YOUR PLAYGROUND");
+            SimpleUIFactory.CompactTitle("Select Map");
+            SimpleUIFactory.MapSelectDecorations(panel.width, panel.height);
 
-            if (Screen.width >= 850f)
+            if (Screen.width >= 720f)
             {
                 DrawMapCardsHorizontal();
             }
             else
             {
+                float scrollHeight = Mathf.Clamp(Screen.height - 330f, 180f, 260f);
+                mapScrollPosition = GUILayout.BeginScrollView(mapScrollPosition, GUILayout.Height(scrollHeight));
                 DrawMapCardsVertical();
+                GUILayout.EndScrollView();
             }
 
-            SimpleUIFactory.SmallBody("Selected: " + FormatMapName(selectedMapType));
-            SimpleUIFactory.FlexibleSpace();
+            DrawBottomButtons(panel);
 
-            if (SimpleUIFactory.PrimaryButton("START SELECTED MAP"))
+            SimpleUIFactory.EndPanel();
+        }
+
+        private void DrawBottomButtons(Rect panel)
+        {
+            const float buttonHeight = 50f;
+            const float horizontalPadding = 50f;
+            const float buttonGap = 12f;
+
+            float buttonWidth = (panel.width - horizontalPadding * 2f - buttonGap) * 0.5f;
+            float buttonY = panel.height - 78f;
+            Rect startRect = new Rect(horizontalPadding, buttonY, buttonWidth, buttonHeight);
+            Rect backRect = new Rect(horizontalPadding + buttonWidth + buttonGap, buttonY, buttonWidth, buttonHeight);
+
+            if (SimpleUIFactory.FixedPrimaryButton(startRect, "START MAP"))
             {
                 OnClickStartSelectedMap();
             }
 
-            if (SimpleUIFactory.SecondaryButton("BACK"))
+            if (SimpleUIFactory.FixedSecondaryButton(backRect, "BACK"))
             {
                 OnClickBack();
             }
-
-            SimpleUIFactory.EndPanel();
         }
 
         private void InitializeSelectionIfNeeded()
@@ -76,7 +91,7 @@ namespace BubbleTown.UI
             GUILayout.Space(14f);
             DrawMazeMapCard();
             GUILayout.EndHorizontal();
-            GUILayout.Space(12f);
+            GUILayout.Space(8f);
         }
 
         private void DrawMapCardsVertical()
@@ -90,8 +105,8 @@ namespace BubbleTown.UI
         {
             if (SimpleUIFactory.MapCard(
                 "Candy Park",
-                "DEFAULT",
-                "Balanced walls, cozy paths, and sweet hiding spots.",
+                "BALANCED",
+                "Balanced candy paths.",
                 defaultAccent,
                 new Color(0.58f, 0.92f, 0.72f, 1f),
                 new Color(1f, 0.86f, 0.48f, 1f),
@@ -107,8 +122,8 @@ namespace BubbleTown.UI
         {
             if (SimpleUIFactory.MapCard(
                 "Open Field",
-                "FAST",
-                "Wide lanes for fast dodges and big blast chains.",
+                "OPEN",
+                "Wide lanes for dodging.",
                 openFieldAccent,
                 new Color(0.62f, 0.96f, 0.58f, 1f),
                 new Color(0.95f, 0.78f, 0.34f, 1f),
@@ -124,8 +139,8 @@ namespace BubbleTown.UI
         {
             if (SimpleUIFactory.MapCard(
                 "Jelly Maze",
-                "MAZE",
-                "Neon jelly lanes, tight corners, and sneaky traps.",
+                "TWISTY",
+                "Tight jelly corners.",
                 mazeAccent,
                 new Color(0.24f, 0.18f, 0.42f, 1f),
                 new Color(0.48f, 0.36f, 1f, 1f),
