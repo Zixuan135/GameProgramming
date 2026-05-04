@@ -43,8 +43,10 @@ It is built through small daily iterations: keep systems modular, keep commits r
 - Battle scene uses chibi characters, bubble bomb visuals, bubble explosion cells, floating items, and edge decorations
 - Battle HUD shows mode, map, timer, round state, player stats, objective/score, pickups, and result prompts
 - Battle HUD removes developer-only controls and uses player-facing prompts
+- Battle HUD now uses a stacked left-column layout with bottom action buttons, a separate `Item Guide`, and clearer solo/local stat placement
 - Battle HUD includes an `Item Guide` popup with animated item icons and short power-up descriptions
-- Result screen shows outcome, mode, map, winner, score placeholder, reward placeholder, animated stars, Retry, and Main Menu
+- Solo battle camera now clamps its focus inside map bounds so edge spawns keep more of the arena visible on screen
+- Result screen shows outcome, mode, map, winner, score, rating stars, Retry, and Main Menu in a tighter compact layout
 - Camera shake, pickup toasts, button hover/click animation, and result pop feedback are connected as lightweight game-feel polish
 - `AudioManager` supports BGM/SFX hooks; final clips can be added later
 
@@ -58,8 +60,10 @@ It is built through small daily iterations: keep systems modular, keep commits r
 6. Choose a mode and map.
 7. Click `START SELECTED MAP`.
 8. Watch the `READY -> GO!` opening flow.
-9. In Battle, click `Item Guide` and confirm all item cards are readable.
-10. Play Battle, then verify Result / Retry / Main Menu.
+9. In Battle, confirm the left HUD reads top-to-bottom clearly: status, objective, player stats, `Item Guide`, then `Retry / Main Menu`.
+10. In Battle, click `Item Guide` and confirm all item cards are readable.
+11. Move around the map edge and confirm the solo camera still keeps most of the arena in frame.
+12. Play Battle, then verify Result / Retry / Main Menu and the compact score-plus-rating layout.
 
 SinglePlayer quick test:
 
@@ -153,9 +157,9 @@ Docs/
 - `BombController`: bomb countdown, explosion spawn, chain reaction
 - `ExplosionController`: explosion cell lifetime, hit detection, visual pulse
 - `ItemBase` / `ItemSpawner`: item pickup and soft-wall item drops
-- `CameraController`: angled battle camera, shared LocalVS framing, and shake feedback
+- `CameraController`: angled battle camera, map-aware solo framing, shared LocalVS framing, and shake feedback
 - `AudioManager`: BGM/SFX entry point
-- `SimpleUIFactory`, `BattleUI`, `ResultUI`: current IMGUI UI flow and feedback
+- `SimpleUIFactory`, `BattleUI`, `ResultUI`: current IMGUI UI flow, HUD layout, and compact result feedback
 - `ProjectStructureSetup`: editor helper for asset folders and legacy scene visual grouping
 
 ## Documentation

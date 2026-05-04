@@ -224,8 +224,8 @@ MonoBehaviour:
   shareCameraInLocalVS: 1
   frameAIInAIBattle: 0
   targetRefreshInterval: 0.25
-  followOffset: {x: 0, y: 11.5, z: -8.5}
-  lookAtOffset: {x: 0, y: 0.2, z: 0.35}
+  followOffset: {x: 0, y: 10.4, z: -7.6}
+  lookAtOffset: {x: 0, y: 0.2, z: 0.55}
   focusSmoothTime: 0.1
   followSmoothTime: 0.18
   rotationLerpSpeed: 9
@@ -233,9 +233,14 @@ MonoBehaviour:
   sharedZoomOutPerCell: 0.32
   maxSharedZoomOut: 5.5
   zoomSmoothTime: 0.18
+  clampFocusInsideMap: 1
+  soloFocusPaddingCells: {x: 2.25, y: 2.1}
+  sharedFocusPaddingCells: {x: 1.45, y: 1.3}
+  soloFocusBias: {x: 1.8, y: 0, z: 1.55}
+  sharedFocusBias: {x: 0.55, y: 0, z: 0.75}
   controlledCamera: {fileID: 1002}
-  defaultFieldOfView: 50
-  minFieldOfView: 48
+  defaultFieldOfView: 48
+  minFieldOfView: 46
   sharedFieldOfViewBoost: 0.65
   maxFieldOfView: 62
   lensSmoothTime: 0.18
