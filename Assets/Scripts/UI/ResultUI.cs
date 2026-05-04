@@ -33,6 +33,8 @@ namespace BubbleTown.UI
         private GUIStyle cardTitleStyle;
         private GUIStyle cardValueStyle;
         private GUIStyle resultIconStyle;
+        private GUIStyle screenTitleStyle;
+        private GUIStyle pillTextStyle;
         private GUIStyle resultTitleStyle;
         private GUIStyle resultBodyStyle;
         private GUIStyle scoreStyle;
@@ -60,7 +62,6 @@ namespace BubbleTown.UI
             public string OutcomeLabel;
             public string ScoreLabel;
             public string MatchScoreLabel;
-            public string RewardLabel;
             public string IconText;
             public string MoodText;
             public int StarCount;
@@ -81,31 +82,13 @@ namespace BubbleTown.UI
 
             ResultViewModel viewModel = BuildResultViewModel();
             PlayResultAudioOnce(viewModel);
-            Rect panel = SimpleUIFactory.CenteredRect(840f, 660f);
+            Rect panel = SimpleUIFactory.CenteredRect(800f, 500f);
 
             Matrix4x4 previousMatrix = GUI.matrix;
             float entranceScale = ResolvePanelEntranceScale();
             GUIUtility.ScaleAroundPivot(new Vector2(entranceScale, entranceScale), panel.center);
-            SimpleUIFactory.BeginPanel(panel);
-
-            SimpleUIFactory.LabelPill(viewModel.HasResult ? "ROUND COMPLETE" : "RESULT WAITING");
-            SimpleUIFactory.Title(viewModel.Title);
-            DrawHeroResultCard(viewModel);
-            DrawSummaryCards(viewModel);
-            DrawRewardPanel(viewModel);
-
-            SimpleUIFactory.FlexibleSpace();
-            if (SimpleUIFactory.PrimaryButton("RETRY"))
-            {
-                OnClickRematch();
-            }
-
-            if (SimpleUIFactory.SecondaryButton("MAIN MENU"))
-            {
-                OnClickBackToMenu();
-            }
-
-            SimpleUIFactory.EndPanel();
+            DrawPanel(panel, new Color(1f, 0.96f, 0.72f, 0.96f), new Color(0.2f, 0.58f, 0.82f, 1f), 24, 4);
+            DrawResultContent(panel, viewModel);
             GUI.matrix = previousMatrix;
         }
 
@@ -156,7 +139,6 @@ namespace BubbleTown.UI
                 OutcomeLabel = FormatOutcome(outcome),
                 ScoreLabel = score.ToString("0000"),
                 MatchScoreLabel = FormatMatchScore(gameManager, mode),
-                RewardLabel = hasResult ? "Candy Coins +" + Mathf.Max(0, score / 10) : "Candy Coins +0",
                 IconText = FormatIconText(outcome),
                 MoodText = FormatMoodText(outcome),
                 StarCount = starCount,
@@ -351,42 +333,65 @@ namespace BubbleTown.UI
             }
         }
 
-        private void DrawHeroResultCard(ResultViewModel viewModel)
+        private void DrawResultContent(Rect panel, ResultViewModel viewModel)
         {
-            Rect rect = GUILayoutUtility.GetRect(520f, 130f, GUILayout.ExpandWidth(true));
-            Rect cardRect = new Rect(rect.x + rect.width * 0.06f, rect.y, rect.width * 0.88f, rect.height);
+            float margin = Mathf.Clamp(panel.width * 0.055f, 28f, 44f);
+            float contentWidth = panel.width - margin * 2f;
+            float y = panel.y + 18f;
+
+            Rect pillRect = new Rect(panel.center.x - 200f, y, 400f, 30f);
+            DrawPanel(pillRect, new Color(0.23f, 0.77f, 0.95f, 1f), new Color(1f, 1f, 1f, 0.75f), 17, 2);
+            DrawLockedLabel(pillRect, viewModel.HasResult ? "ROUND COMPLETE" : "RESULT WAITING", pillTextStyle);
+
+            y += 40f;
+            DrawLockedLabel(new Rect(panel.x + margin, y, contentWidth, 50f), viewModel.Title, screenTitleStyle);
+
+            y += 58f;
+            DrawHeroResultCard(new Rect(panel.x + margin + 46f, y, contentWidth - 92f, 92f), viewModel);
+
+            y += 106f;
+            DrawSummaryCards(new Rect(panel.x + margin, y, contentWidth, 62f), viewModel);
+
+            float buttonY = panel.y + panel.height - 62f;
+            float scoreY = Mathf.Min(y + 76f, buttonY - 88f);
+            DrawScorePanel(new Rect(panel.x + margin + 64f, scoreY, contentWidth - 128f, 76f), viewModel);
+            DrawActionButtons(new Rect(panel.x + margin + 104f, buttonY, contentWidth - 208f, 46f));
+        }
+
+        private void DrawHeroResultCard(Rect cardRect, ResultViewModel viewModel)
+        {
             DrawPanel(cardRect, new Color(1f, 0.98f, 0.82f, 0.98f), viewModel.AccentColor, 24, 5);
 
-            Rect iconCircle = new Rect(cardRect.x + 26f, cardRect.y + 24f, 82f, 82f);
+            Rect iconCircle = new Rect(cardRect.x + 22f, cardRect.y + 16f, 60f, 60f);
             Matrix4x4 previousMatrix = GUI.matrix;
             float iconPulse = viewModel.HasResult ? 1f + Mathf.Sin(Time.unscaledTime * 7f) * 0.035f : 1f;
             GUIUtility.ScaleAroundPivot(new Vector2(iconPulse, iconPulse), iconCircle.center);
             GUI.DrawTexture(iconCircle, GetCircleTexture(viewModel.AccentColor));
-            GUI.Label(iconCircle, viewModel.IconText, resultIconStyle);
+            DrawLockedLabel(iconCircle, viewModel.IconText, resultIconStyle);
             GUI.matrix = previousMatrix;
 
-            GUI.Label(new Rect(cardRect.x + 128f, cardRect.y + 24f, cardRect.width - 154f, 38f), viewModel.OutcomeLabel, resultTitleStyle);
-            GUI.Label(new Rect(cardRect.x + 128f, cardRect.y + 62f, cardRect.width - 154f, 28f), viewModel.MoodText, resultBodyStyle);
-            GUI.Label(new Rect(cardRect.x + 128f, cardRect.y + 90f, cardRect.width - 154f, 28f), viewModel.Detail, resultBodyStyle);
-            GUILayout.Space(12f);
+            DrawLockedLabel(new Rect(cardRect.x + 102f, cardRect.y + 12f, cardRect.width - 126f, 30f), viewModel.OutcomeLabel, resultTitleStyle);
+            DrawLockedLabel(new Rect(cardRect.x + 102f, cardRect.y + 43f, cardRect.width - 126f, 20f), viewModel.MoodText, resultBodyStyle);
+            DrawLockedLabel(new Rect(cardRect.x + 102f, cardRect.y + 63f, cardRect.width - 126f, 22f), viewModel.Detail, resultBodyStyle);
         }
 
-        private void DrawSummaryCards(ResultViewModel viewModel)
+        private void DrawSummaryCards(Rect rowRect, ResultViewModel viewModel)
         {
-            GUILayout.BeginHorizontal();
-            DrawInfoCard("MODE", viewModel.ModeName, new Color(0.12f, 0.72f, 1f, 1f));
-            GUILayout.Space(12f);
-            DrawInfoCard("MAP", viewModel.MapName, new Color(0.48f, 0.9f, 0.34f, 1f));
-            GUILayout.Space(12f);
-            DrawInfoCard("WINNER", viewModel.Winner, viewModel.AccentColor);
+            int cardCount = string.IsNullOrEmpty(viewModel.MatchScoreLabel) ? 3 : 4;
+            float gap = 12f;
+            float cardWidth = (rowRect.width - gap * (cardCount - 1)) / cardCount;
+            int index = 0;
+
+            DrawInfoCard(new Rect(rowRect.x + index * (cardWidth + gap), rowRect.y, cardWidth, rowRect.height), "MODE", viewModel.ModeName, new Color(0.12f, 0.72f, 1f, 1f));
+            index++;
+            DrawInfoCard(new Rect(rowRect.x + index * (cardWidth + gap), rowRect.y, cardWidth, rowRect.height), "MAP", viewModel.MapName, new Color(0.48f, 0.9f, 0.34f, 1f));
+            index++;
+            DrawInfoCard(new Rect(rowRect.x + index * (cardWidth + gap), rowRect.y, cardWidth, rowRect.height), "WINNER", viewModel.Winner, viewModel.AccentColor);
+            index++;
             if (!string.IsNullOrEmpty(viewModel.MatchScoreLabel))
             {
-                GUILayout.Space(12f);
-                DrawInfoCard("VS SCORE", viewModel.MatchScoreLabel, new Color(0.52f, 0.9f, 0.35f, 1f));
+                DrawInfoCard(new Rect(rowRect.x + index * (cardWidth + gap), rowRect.y, cardWidth, rowRect.height), "VS SCORE", viewModel.MatchScoreLabel, new Color(0.52f, 0.9f, 0.35f, 1f));
             }
-
-            GUILayout.EndHorizontal();
-            GUILayout.Space(14f);
         }
 
         private string FormatMatchScore(GameManager gameManager, GameMode mode)
@@ -399,31 +404,44 @@ namespace BubbleTown.UI
             return gameManager.LocalVsScoreLabel;
         }
 
-        private void DrawInfoCard(string label, string value, Color accentColor)
+        private void DrawInfoCard(Rect rect, string label, string value, Color accentColor)
         {
-            Rect rect = GUILayoutUtility.GetRect(160f, 82f, GUILayout.ExpandWidth(true));
             DrawPanel(rect, new Color(1f, 0.95f, 0.72f, 0.97f), accentColor, 18, 3);
-            GUI.Label(new Rect(rect.x + 12f, rect.y + 12f, rect.width - 24f, 24f), label, cardTitleStyle);
-            GUI.Label(new Rect(rect.x + 12f, rect.y + 40f, rect.width - 24f, 30f), value, cardValueStyle);
+            DrawLockedLabel(new Rect(rect.x + 10f, rect.y + 7f, rect.width - 20f, 18f), label, cardTitleStyle);
+            DrawLockedLabel(new Rect(rect.x + 10f, rect.y + 29f, rect.width - 20f, 24f), value, cardValueStyle);
         }
 
-        private void DrawRewardPanel(ResultViewModel viewModel)
+        private void DrawScorePanel(Rect rewardRect, ResultViewModel viewModel)
         {
-            Rect rect = GUILayoutUtility.GetRect(560f, 126f, GUILayout.ExpandWidth(true));
-            Rect rewardRect = new Rect(rect.x + rect.width * 0.08f, rect.y, rect.width * 0.84f, rect.height);
             DrawPanel(rewardRect, new Color(1f, 0.98f, 0.86f, 0.98f), new Color(1f, 0.68f, 0.22f, 1f), 22, 4);
 
-            GUI.Label(new Rect(rewardRect.x + 22f, rewardRect.y + 16f, 170f, 28f), "SCORE", cardTitleStyle);
-            GUI.Label(new Rect(rewardRect.x + 22f, rewardRect.y + 44f, 170f, 54f), viewModel.ScoreLabel, scoreStyle);
+            DrawLockedLabel(new Rect(rewardRect.x + 22f, rewardRect.y + 8f, 150f, 20f), "SCORE", cardTitleStyle);
+            DrawLockedLabel(new Rect(rewardRect.x + 22f, rewardRect.y + 30f, 150f, 38f), viewModel.ScoreLabel, scoreStyle);
 
-            GUI.Label(new Rect(rewardRect.x + 218f, rewardRect.y + 16f, rewardRect.width - 240f, 26f), viewModel.RewardLabel, cardValueStyle);
-            DrawStarSlots(new Rect(rewardRect.x + 220f, rewardRect.y + 52f, rewardRect.width - 250f, 50f), viewModel.StarCount, viewModel.AccentColor);
-            GUILayout.Space(12f);
+            DrawLockedLabel(new Rect(rewardRect.x + 192f, rewardRect.y + 9f, rewardRect.width - 214f, 20f), "RATING", cardTitleStyle);
+            DrawStarSlots(new Rect(rewardRect.x + 196f, rewardRect.y + 35f, rewardRect.width - 222f, 34f), viewModel.StarCount, viewModel.AccentColor);
+        }
+
+        private void DrawActionButtons(Rect slot)
+        {
+            float buttonWidth = Mathf.Min(250f, (slot.width - 18f) * 0.5f);
+            Rect retryRect = new Rect(slot.center.x - buttonWidth - 9f, slot.y, buttonWidth, slot.height);
+            Rect menuRect = new Rect(slot.center.x + 9f, slot.y, buttonWidth, slot.height);
+
+            if (SimpleUIFactory.FixedPrimaryButton(retryRect, "RETRY"))
+            {
+                OnClickRematch();
+            }
+
+            if (SimpleUIFactory.FixedSecondaryButton(menuRect, "MAIN MENU"))
+            {
+                OnClickBackToMenu();
+            }
         }
 
         private void DrawStarSlots(Rect rect, int starCount, Color activeColor)
         {
-            float slotSize = 46f;
+            float slotSize = Mathf.Min(40f, rect.height - 4f);
             float gap = 10f;
             float startX = rect.x + (rect.width - slotSize * MaxStars - gap * (MaxStars - 1)) * 0.5f;
             for (int i = 0; i < MaxStars; i++)
@@ -441,9 +459,38 @@ namespace BubbleTown.UI
                 }
 
                 DrawPanel(slotRect, fill, Color.white, 18, 2);
-                GUI.Label(slotRect, isActive ? "*" : "-", starStyle);
+                DrawLockedLabel(slotRect, isActive ? "*" : "-", starStyle);
                 GUI.matrix = previousMatrix;
             }
+        }
+
+        private void DrawLockedLabel(Rect rect, string text, GUIStyle style)
+        {
+            if (style == null)
+            {
+                GUI.Label(rect, text);
+                return;
+            }
+
+            Color textColor = style.normal.textColor;
+            LockStyleTextColor(style, textColor);
+
+            Color previousContentColor = GUI.contentColor;
+            GUI.contentColor = Color.white;
+            GUI.Label(rect, text, style);
+            GUI.contentColor = previousContentColor;
+        }
+
+        private void LockStyleTextColor(GUIStyle style, Color textColor)
+        {
+            style.normal.textColor = textColor;
+            style.hover.textColor = textColor;
+            style.active.textColor = textColor;
+            style.focused.textColor = textColor;
+            style.onNormal.textColor = textColor;
+            style.onHover.textColor = textColor;
+            style.onActive.textColor = textColor;
+            style.onFocused.textColor = textColor;
         }
 
         private float ResolvePanelEntranceScale()
@@ -455,7 +502,15 @@ namespace BubbleTown.UI
 
         private void EnsureStyles()
         {
-            if (cardTitleStyle != null)
+            if (cardTitleStyle != null &&
+                cardValueStyle != null &&
+                resultIconStyle != null &&
+                screenTitleStyle != null &&
+                pillTextStyle != null &&
+                resultTitleStyle != null &&
+                resultBodyStyle != null &&
+                scoreStyle != null &&
+                starStyle != null)
             {
                 return;
             }
@@ -483,42 +538,65 @@ namespace BubbleTown.UI
             resultIconStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 34,
+                fontSize = 30,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = Color.white }
             };
+            LockStyleTextColor(resultIconStyle, Color.white);
+
+            screenTitleStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 42,
+                fontStyle = FontStyle.Bold,
+                normal = { textColor = textPrimary }
+            };
+            LockStyleTextColor(screenTitleStyle, textPrimary);
+
+            pillTextStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 13,
+                fontStyle = FontStyle.Bold,
+                normal = { textColor = new Color(1f, 0.97f, 0.78f, 1f) }
+            };
+            LockStyleTextColor(pillTextStyle, new Color(1f, 0.97f, 0.78f, 1f));
 
             resultTitleStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleLeft,
-                fontSize = 30,
+                fontSize = 25,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = textPrimary }
             };
+            LockStyleTextColor(resultTitleStyle, textPrimary);
 
             resultBodyStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleLeft,
-                fontSize = 15,
+                fontSize = 14,
                 wordWrap = true,
                 normal = { textColor = textSecondary }
             };
+            LockStyleTextColor(resultBodyStyle, textSecondary);
 
             scoreStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 38,
+                fontSize = 34,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = textPrimary }
             };
+            LockStyleTextColor(scoreStyle, textPrimary);
 
             starStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 28,
+                fontSize = 24,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = Color.white }
             };
+            LockStyleTextColor(starStyle, Color.white);
         }
 
         private void DrawPanel(Rect rect, Color fill, Color border, int radius, int borderSize)

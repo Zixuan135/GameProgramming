@@ -15,6 +15,15 @@ namespace BubbleTown.UI
     public class BattleUI : MonoBehaviour
     {
         private const int TextureSize = 64;
+        private const float LeftHudX = 14f;
+        private const float LeftHudWidth = 286f;
+        private const float ObjectivePanelBottom = 144f;
+        private const float CharacterAreaTop = ObjectivePanelBottom + 14f;
+        private const float CharacterSectionGap = 14f;
+        private const float BottomHudMargin = 18f;
+        private const float BottomHudGap = 10f;
+        private const float ActionPanelHeight = 46f;
+        private const float ItemGuidePanelHeight = 44f;
 
         [Header("Result Timing")]
         [SerializeField, Min(0f)] private float resultSceneDelay = 0.95f;
@@ -52,7 +61,10 @@ namespace BubbleTown.UI
         private static readonly Dictionary<string, Texture2D> RoundedTextureCache = new Dictionary<string, Texture2D>();
         private GUIStyle hudTextStyle;
         private GUIStyle hudSmallStyle;
-        private GUIStyle hudValueStyle;
+        private GUIStyle hudPillLabelStyle;
+        private GUIStyle hudPillValueStyle;
+        private GUIStyle abilityLabelStyle;
+        private GUIStyle abilityValueStyle;
         private GUIStyle promptTitleStyle;
         private GUIStyle promptBodyStyle;
         private GUIStyle toastStyle;
@@ -443,14 +455,19 @@ namespace BubbleTown.UI
             DrawLocalVsScoreboard(gameManager);
 
             CharacterBase rightCharacter = ResolveRightSideCharacter(gameManager, out string rightLabel, out Color rightColor);
-            float player1PanelY = rightCharacter != null && rightCharacter.gameObject.activeInHierarchy
-                ? Screen.height - 180f
-                : Screen.height - 96f;
-            DrawCharacterPanel(new Rect(14f, player1PanelY, 286f, 78f), "PLAYER 1", gameManager.Player1, player1Color);
+            bool hasRightCharacter = rightCharacter != null && rightCharacter.gameObject.activeInHierarchy;
+            float characterPanelHeight = hasRightCharacter ? 104f : 116f;
+            float characterPanelGap = 10f;
+            float totalCharacterHeight = hasRightCharacter
+                ? characterPanelHeight * 2f + characterPanelGap
+                : characterPanelHeight;
+            float characterAreaHeight = Mathf.Max(totalCharacterHeight, ResolveCharacterAreaBottom() - CharacterAreaTop);
+            float characterPanelY = CharacterAreaTop + Mathf.Max(0f, (characterAreaHeight - totalCharacterHeight) * 0.5f);
+            DrawCharacterPanel(new Rect(LeftHudX, characterPanelY, LeftHudWidth, characterPanelHeight), "PLAYER 1", gameManager.Player1, player1Color);
 
-            if (rightCharacter != null && rightCharacter.gameObject.activeInHierarchy)
+            if (hasRightCharacter)
             {
-                DrawCharacterPanel(new Rect(14f, Screen.height - 96f, 286f, 78f), rightLabel, rightCharacter, rightColor);
+                DrawCharacterPanel(new Rect(LeftHudX, characterPanelY + characterPanelHeight + characterPanelGap, LeftHudWidth, characterPanelHeight), rightLabel, rightCharacter, rightColor);
             }
         }
 
@@ -461,10 +478,10 @@ namespace BubbleTown.UI
 
             float x = topRect.x + 10f;
             float y = topRect.y + 9f;
-            DrawInfoPill(new Rect(x, y, 128f, 25f), "MODE", FormatModeName(gameManager.CurrentGameMode), new Color(0.12f, 0.72f, 1f));
-            DrawInfoPill(new Rect(x + 138f, y, 128f, 25f), "MAP", FormatMapName(gameManager.CurrentMapType), new Color(0.48f, 0.9f, 0.34f));
-            DrawInfoPill(new Rect(x, y + 33f, 128f, 25f), "TIME", FormatTime(battleElapsedSeconds), new Color(1f, 0.58f, 0.18f));
-            DrawInfoPill(new Rect(x + 138f, y + 33f, 128f, 25f), "STATE", FormatRoundState(gameManager), neutralColor);
+            DrawInfoPill(new Rect(x, y, 130f, 25f), "MODE", FormatModeName(gameManager.CurrentGameMode), new Color(0.12f, 0.72f, 1f));
+            DrawInfoPill(new Rect(x + 136f, y, 130f, 25f), "MAP", FormatMapName(gameManager.CurrentMapType), new Color(0.48f, 0.9f, 0.34f));
+            DrawInfoPill(new Rect(x, y + 33f, 130f, 25f), "TIME", FormatTime(battleElapsedSeconds), new Color(1f, 0.58f, 0.18f));
+            DrawInfoPill(new Rect(x + 136f, y + 33f, 130f, 25f), "STATE", FormatRoundState(gameManager), neutralColor);
         }
 
         private void DrawSinglePlayerObjectivePanel(GameManager gameManager)
@@ -523,11 +540,11 @@ namespace BubbleTown.UI
         private void DrawCharacterPanel(Rect rect, string label, CharacterBase character, Color accentColor)
         {
             DrawPanel(rect, new Color(1f, 0.94f, 0.72f, 0.82f), new Color(accentColor.r, accentColor.g, accentColor.b, 0.92f), 16, 2);
-            DrawInfoPill(new Rect(rect.x + 10f, rect.y + 8f, rect.width - 20f, 24f), label, FormatLifeState(character), accentColor);
+            DrawInfoPill(new Rect(rect.x + 10f, rect.y + 8f, rect.width - 20f, 26f), label, FormatLifeState(character), accentColor);
 
             if (character == null || !character.gameObject.activeInHierarchy)
             {
-                GUI.Label(new Rect(rect.x + 14f, rect.y + 40f, rect.width - 28f, 26f), "Not active", hudSmallStyle);
+                DrawLockedLabel(new Rect(rect.x + 14f, rect.y + 48f, rect.width - 28f, 32f), "Not active", hudSmallStyle);
                 return;
             }
 
@@ -543,26 +560,30 @@ namespace BubbleTown.UI
 
         private void DrawAbilityRow(Rect panelRect, int remainingBombs, int maxBombs, int range, float speed, int shieldCharges, Color accentColor)
         {
-            float y = panelRect.y + 40f;
-            float itemWidth = (panelRect.width - 44f) / 4f;
-            DrawAbilityBox(new Rect(panelRect.x + 10f, y, itemWidth, 26f), "B", remainingBombs + "/" + maxBombs, accentColor);
-            DrawAbilityBox(new Rect(panelRect.x + 18f + itemWidth, y, itemWidth, 26f), "R", range.ToString(), new Color(1f, 0.58f, 0.18f));
-            DrawAbilityBox(new Rect(panelRect.x + 26f + itemWidth * 2f, y, itemWidth, 26f), "S", speed.ToString("0.0"), new Color(0.48f, 0.9f, 0.34f));
-            DrawAbilityBox(new Rect(panelRect.x + 34f + itemWidth * 3f, y, itemWidth, 26f), "G", shieldCharges.ToString(), new Color(0.35f, 0.78f, 1f));
+            float y = panelRect.y + 46f;
+            float gap = 7f;
+            float itemWidth = (panelRect.width - 20f - gap * 3f) / 4f;
+            DrawAbilityBox(new Rect(panelRect.x + 10f, y, itemWidth, 44f), "Bombs", remainingBombs + "/" + maxBombs, accentColor);
+            DrawAbilityBox(new Rect(panelRect.x + 10f + (itemWidth + gap), y, itemWidth, 44f), "Range", range.ToString(), new Color(1f, 0.58f, 0.18f));
+            DrawAbilityBox(new Rect(panelRect.x + 10f + (itemWidth + gap) * 2f, y, itemWidth, 44f), "Speed", speed.ToString("0.0"), new Color(0.48f, 0.9f, 0.34f));
+            DrawAbilityBox(new Rect(panelRect.x + 10f + (itemWidth + gap) * 3f, y, itemWidth, 44f), "Guard", shieldCharges.ToString(), new Color(0.35f, 0.78f, 1f));
         }
 
         private void DrawAbilityBox(Rect rect, string label, string value, Color accentColor)
         {
             DrawPanel(rect, new Color(1f, 0.98f, 0.86f, 0.86f), Color.Lerp(accentColor, Color.white, 0.2f), 12, 1);
-            GUI.Label(new Rect(rect.x + 4f, rect.y + 3f, rect.width * 0.34f, rect.height - 6f), label, hudSmallStyle);
-            GUI.Label(new Rect(rect.x + rect.width * 0.35f, rect.y + 3f, rect.width * 0.58f, rect.height - 6f), value, hudSmallStyle);
+            DrawLockedLabel(new Rect(rect.x + 4f, rect.y + 4f, rect.width - 8f, 15f), label, abilityLabelStyle);
+            DrawLockedLabel(new Rect(rect.x + 4f, rect.y + 20f, rect.width - 8f, 20f), value, abilityValueStyle);
         }
 
         private void DrawInfoPill(Rect rect, string label, string value, Color accentColor)
         {
             DrawPanel(rect, accentColor, Color.white, 15, 2);
-            GUI.Label(new Rect(rect.x + 10f, rect.y + 5f, rect.width * 0.36f, rect.height - 10f), label, hudSmallStyle);
-            GUI.Label(new Rect(rect.x + rect.width * 0.38f, rect.y + 5f, rect.width * 0.58f, rect.height - 10f), value, hudTextStyle);
+            float labelWidth = label.Length <= 5
+                ? 36f
+                : Mathf.Min(rect.width * 0.58f, label.Length * 8f + 16f);
+            DrawLockedLabel(new Rect(rect.x + 8f, rect.y + 5f, labelWidth, rect.height - 10f), label, hudPillLabelStyle);
+            DrawLockedLabel(new Rect(rect.x + 10f + labelWidth, rect.y + 4f, rect.width - labelWidth - 16f, rect.height - 8f), value, hudPillValueStyle);
         }
 
         private void DrawOpeningPrompt()
@@ -640,7 +661,8 @@ namespace BubbleTown.UI
 
         private void DrawActionButtons()
         {
-            Rect buttonRect = new Rect(14f, 152f, 286f, 46f);
+            float bob = Mathf.Sin(Time.unscaledTime * 2.1f) * 0.7f;
+            Rect buttonRect = new Rect(LeftHudX, ResolveBottomActionPanelY() + bob, LeftHudWidth, ActionPanelHeight);
             DrawPanel(buttonRect, new Color(1f, 0.96f, 0.72f, 0.84f), new Color(1f, 0.58f, 0.18f, 0.92f), 16, 2);
             GUILayout.BeginArea(new Rect(buttonRect.x + 10f, buttonRect.y + 10f, buttonRect.width - 20f, buttonRect.height - 20f));
             GUILayout.BeginHorizontal();
@@ -661,7 +683,8 @@ namespace BubbleTown.UI
 
         private void DrawItemGuide()
         {
-            Rect buttonPanelRect = new Rect(14f, 206f, 286f, 44f);
+            float bob = Mathf.Sin(Time.unscaledTime * 2.1f + 1.4f) * 0.7f;
+            Rect buttonPanelRect = new Rect(LeftHudX, ResolveBottomItemGuidePanelY() + bob, LeftHudWidth, ItemGuidePanelHeight);
             DrawPanel(buttonPanelRect, new Color(1f, 0.96f, 0.72f, 0.84f), new Color(0.35f, 0.78f, 1f, 0.92f), 16, 2);
 
             Rect buttonRect = new Rect(buttonPanelRect.x + 10f, buttonPanelRect.y + 9f, buttonPanelRect.width - 20f, 26f);
@@ -675,6 +698,21 @@ namespace BubbleTown.UI
             {
                 DrawItemGuidePanel();
             }
+        }
+
+        private float ResolveBottomActionPanelY()
+        {
+            return Screen.height - BottomHudMargin - ActionPanelHeight;
+        }
+
+        private float ResolveBottomItemGuidePanelY()
+        {
+            return ResolveBottomActionPanelY() - BottomHudGap - ItemGuidePanelHeight;
+        }
+
+        private float ResolveCharacterAreaBottom()
+        {
+            return ResolveBottomItemGuidePanelY() - CharacterSectionGap;
         }
 
         private void DrawItemGuidePanel()
@@ -964,7 +1002,7 @@ namespace BubbleTown.UI
             bool isHovering = currentEvent != null && rect.Contains(currentEvent.mousePosition);
             if (!isHovering)
             {
-                return 1f;
+                return 1f + Mathf.Sin(Time.unscaledTime * 2.7f + rect.y * 0.05f) * 0.006f;
             }
 
             bool isPressing = currentEvent.type == EventType.MouseDown || currentEvent.type == EventType.MouseDrag;
@@ -1107,7 +1145,10 @@ namespace BubbleTown.UI
         {
             if (hudTextStyle != null &&
                 hudSmallStyle != null &&
-                hudValueStyle != null &&
+                hudPillLabelStyle != null &&
+                hudPillValueStyle != null &&
+                abilityLabelStyle != null &&
+                abilityValueStyle != null &&
                 promptTitleStyle != null &&
                 promptBodyStyle != null &&
                 toastStyle != null &&
@@ -1141,13 +1182,49 @@ namespace BubbleTown.UI
                 normal = { textColor = textSecondary }
             };
 
-            hudValueStyle = new GUIStyle(GUI.skin.label)
+            hudPillLabelStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 24,
+                fontSize = 10,
                 fontStyle = FontStyle.Bold,
+                wordWrap = false,
+                clipping = TextClipping.Clip,
                 normal = { textColor = textPrimary }
             };
+            LockStyleTextColor(hudPillLabelStyle, textPrimary);
+
+            hudPillValueStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 11,
+                fontStyle = FontStyle.Bold,
+                wordWrap = false,
+                clipping = TextClipping.Clip,
+                normal = { textColor = Color.white }
+            };
+            LockStyleTextColor(hudPillValueStyle, Color.white);
+
+            abilityLabelStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 9,
+                fontStyle = FontStyle.Bold,
+                wordWrap = false,
+                clipping = TextClipping.Clip,
+                normal = { textColor = textSecondary }
+            };
+            LockStyleTextColor(abilityLabelStyle, textSecondary);
+
+            abilityValueStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 13,
+                fontStyle = FontStyle.Bold,
+                wordWrap = false,
+                clipping = TextClipping.Clip,
+                normal = { textColor = textPrimary }
+            };
+            LockStyleTextColor(abilityValueStyle, textPrimary);
 
             promptTitleStyle = new GUIStyle(GUI.skin.label)
             {
