@@ -123,7 +123,7 @@ namespace BubbleTown.UI
             if (SimpleUIFactory.MapCard(
                 "Open Field",
                 "OPEN",
-                "Wide lanes for dodging.",
+                "Wide lanes with wall islands.",
                 openFieldAccent,
                 new Color(0.62f, 0.96f, 0.58f, 1f),
                 new Color(0.95f, 0.78f, 0.34f, 1f),

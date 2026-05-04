@@ -125,6 +125,7 @@ namespace BubbleTown.Map
 
         private void ApplyOpenFieldLayout()
         {
+            ApplyOpenFieldHardWallIslands();
             ApplyPatternedSoftWalls(5, 2);
         }
 
@@ -143,6 +144,37 @@ namespace BubbleTown.Map
                     SetHardWall(new Vector2Int(x, y), true);
                 }
             }
+        }
+
+        private void ApplyOpenFieldHardWallIslands()
+        {
+            if (mapWidth < 5 || mapHeight < 5)
+            {
+                return;
+            }
+
+            int leftX = Mathf.Clamp(Mathf.RoundToInt((mapWidth - 1) * 0.25f), 2, mapWidth - 3);
+            int centerX = Mathf.Clamp((mapWidth - 1) / 2, 2, mapWidth - 3);
+            int rightX = Mathf.Clamp(Mathf.RoundToInt((mapWidth - 1) * 0.75f), 2, mapWidth - 3);
+            int lowerY = Mathf.Clamp(Mathf.RoundToInt((mapHeight - 1) * 0.3f), 2, mapHeight - 3);
+            int centerY = Mathf.Clamp((mapHeight - 1) / 2, 2, mapHeight - 3);
+            int upperY = Mathf.Clamp(Mathf.RoundToInt((mapHeight - 1) * 0.7f), 2, mapHeight - 3);
+
+            SetInteriorHardWall(new Vector2Int(leftX, lowerY));
+            SetInteriorHardWall(new Vector2Int(leftX, upperY));
+            SetInteriorHardWall(new Vector2Int(centerX, centerY));
+            SetInteriorHardWall(new Vector2Int(rightX, lowerY));
+            SetInteriorHardWall(new Vector2Int(rightX, upperY));
+        }
+
+        private void SetInteriorHardWall(Vector2Int gridPosition)
+        {
+            if (IsBorderCell(gridPosition))
+            {
+                return;
+            }
+
+            SetHardWall(gridPosition, true);
         }
 
         private void ApplyPatternedSoftWalls(int interval, int offset)

@@ -15,6 +15,11 @@ namespace BubbleTown.UI
         private bool showGuide;
         private bool showSettings;
 
+        private void Start()
+        {
+            AudioManager.Instance?.PlayMenuBGM();
+        }
+
         private void OnGUI()
         {
             SimpleUIFactory.DrawCandyBackground();
@@ -64,14 +69,7 @@ namespace BubbleTown.UI
 
             if (showSettings)
             {
-                bool shouldClose = SimpleUIFactory.MenuModal(
-                    "Settings",
-                    new[]
-                    {
-                        "Music: On",
-                        "Sound Effects: On",
-                        "Camera: Auto Follow"
-                    });
+                bool shouldClose = SimpleUIFactory.SettingsModal(AudioManager.Instance);
                 if (shouldClose)
                 {
                     OnClosePopup();

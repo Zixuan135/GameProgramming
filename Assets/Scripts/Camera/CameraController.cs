@@ -1,3 +1,4 @@
+using BubbleTown.Core;
 using BubbleTown.Core.Enums;
 using BubbleTown.Managers;
 using BubbleTown.Map;
@@ -182,7 +183,7 @@ namespace BubbleTown.CameraSystem
 
         public void Shake(float duration, float magnitude)
         {
-            if (!enableShake || duration <= 0f || magnitude <= 0f)
+            if (!enableShake || !GameSettings.ScreenShakeEnabled || duration <= 0f || magnitude <= 0f)
             {
                 return;
             }

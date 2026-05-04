@@ -13,6 +13,17 @@ namespace BubbleTown.Managers
         private const string RuntimeObjectName = "AudioManager";
         private const string BgmSourceName = "BGMSource";
         private const string SfxSourceName = "SFXSource";
+        private const string MenuBGMResourcePath = "Audio/BGM/MenuLoop";
+        private const string BattleBGMResourcePath = "Audio/BGM/BattleLoop";
+        private const string ResultBGMResourcePath = "Audio/BGM/ResultLoop";
+        private const string MoveSFXResourcePath = "Audio/SFX/MoveStep";
+        private const string PlaceBombSFXResourcePath = "Audio/SFX/PlaceBomb";
+        private const string ExplosionSFXResourcePath = "Audio/SFX/Explosion";
+        private const string ItemPickupSFXResourcePath = "Audio/SFX/ItemPickup";
+        private const string ButtonClickSFXResourcePath = "Audio/SFX/ButtonClick";
+        private const string CharacterDeathSFXResourcePath = "Audio/SFX/CharacterDeath";
+        private const string VictorySFXResourcePath = "Audio/SFX/Victory";
+        private const string DefeatSFXResourcePath = "Audio/SFX/Defeat";
 
         private static AudioManager instance;
         private static bool isQuitting;
@@ -39,6 +50,7 @@ namespace BubbleTown.Managers
         [Header("Audio Sources")]
         [SerializeField] private AudioSource bgmSource;
         [SerializeField] private AudioSource sfxSource;
+        [SerializeField] private AudioListener fallbackAudioListener;
 
         [Header("BGM Clips")]
         [SerializeField] private AudioClip menuBGM;
@@ -81,7 +93,10 @@ namespace BubbleTown.Managers
 
             Instance = this;
             DontDestroyOnLoad(gameObject);
+            EnsureAudioListener();
             EnsureAudioSources();
+            LoadDefaultAudioClips();
+            LoadSavedSettings();
             ApplyVolumeSettings();
         }
 
@@ -110,24 +125,35 @@ namespace BubbleTown.Managers
 
         public void PlayMenuBGM()
         {
+            LoadDefaultAudioClips();
             PlayBGM(menuBGM);
         }
 
         public void PlayBattleBGM()
         {
+            LoadDefaultAudioClips();
             PlayBGM(battleBGM);
         }
 
         public void PlayResultBGM()
         {
+            LoadDefaultAudioClips();
             PlayBGM(resultBGM != null ? resultBGM : menuBGM);
         }
 
         public void PlayBGM(AudioClip clip, bool restartIfSameClip = false)
         {
             EnsureAudioSources();
-            if (bgmSource == null || clip == null || muteBGM)
+            if (bgmSource == null || clip == null)
             {
+                return;
+            }
+
+            if (muteBGM)
+            {
+                bgmSource.clip = clip;
+                bgmSource.loop = true;
+                bgmSource.Stop();
                 return;
             }
 
@@ -158,41 +184,49 @@ namespace BubbleTown.Managers
 
         public void PlayMoveSFX()
         {
+            LoadDefaultAudioClips();
             PlaySFX(moveSFX, 0.65f);
         }
 
         public void PlayPlaceBombSFX()
         {
+            LoadDefaultAudioClips();
             PlaySFX(placeBombSFX);
         }
 
         public void PlayExplosionSFX()
         {
+            LoadDefaultAudioClips();
             PlaySFX(explosionSFX, 1f);
         }
 
         public void PlayItemPickupSFX()
         {
+            LoadDefaultAudioClips();
             PlaySFX(itemPickupSFX, 0.9f);
         }
 
         public void PlayButtonClickSFX()
         {
+            LoadDefaultAudioClips();
             PlaySFX(buttonClickSFX, 0.75f);
         }
 
         public void PlayCharacterDeathSFX()
         {
+            LoadDefaultAudioClips();
             PlaySFX(characterDeathSFX, 1f);
         }
 
         public void PlayVictorySFX()
         {
+            LoadDefaultAudioClips();
             PlaySFX(victorySFX, 1f);
         }
 
         public void PlayDefeatSFX()
         {
+            LoadDefaultAudioClips();
             PlaySFX(defeatSFX, 1f);
         }
 
@@ -211,31 +245,50 @@ namespace BubbleTown.Managers
         public void SetMasterVolume(float volume)
         {
             masterVolume = Mathf.Clamp01(volume);
+            GameSettings.SetMasterVolume(masterVolume);
             ApplyVolumeSettings();
         }
 
         public void SetBgmVolume(float volume)
         {
             bgmVolume = Mathf.Clamp01(volume);
+            GameSettings.SetBgmVolume(bgmVolume);
             ApplyVolumeSettings();
         }
 
         public void SetSfxVolume(float volume)
         {
             sfxVolume = Mathf.Clamp01(volume);
+            GameSettings.SetSfxVolume(sfxVolume);
             ApplyVolumeSettings();
         }
 
         public void SetBgmMuted(bool isMuted)
         {
             muteBGM = isMuted;
+            GameSettings.SetMuteBGM(muteBGM);
             ApplyVolumeSettings();
+            if (!muteBGM && autoPlaySceneBGM && bgmSource != null && !bgmSource.isPlaying)
+            {
+                PlayBGMForScene(SceneManager.GetActiveScene().name);
+            }
         }
 
         public void SetSfxMuted(bool isMuted)
         {
             muteSFX = isMuted;
+            GameSettings.SetMuteSFX(muteSFX);
             ApplyVolumeSettings();
+        }
+
+        public void ReloadFromGameSettings()
+        {
+            LoadSavedSettings();
+            ApplyVolumeSettings();
+            if (!muteBGM && autoPlaySceneBGM && bgmSource != null && !bgmSource.isPlaying)
+            {
+                PlayBGMForScene(SceneManager.GetActiveScene().name);
+            }
         }
 
         private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -268,6 +321,8 @@ namespace BubbleTown.Managers
 
         private void EnsureAudioSources()
         {
+            EnsureAudioListener();
+
             if (bgmSource == null)
             {
                 bgmSource = CreateChildAudioSource(BgmSourceName, true);
@@ -280,6 +335,27 @@ namespace BubbleTown.Managers
 
             ConfigureAudioSource(bgmSource, true);
             ConfigureAudioSource(sfxSource, false);
+        }
+
+        private void EnsureAudioListener()
+        {
+            if (fallbackAudioListener != null)
+            {
+                return;
+            }
+
+            AudioListener existingListener = FindObjectOfType<AudioListener>();
+            if (existingListener != null)
+            {
+                fallbackAudioListener = existingListener;
+                return;
+            }
+
+            fallbackAudioListener = gameObject.GetComponent<AudioListener>();
+            if (fallbackAudioListener == null)
+            {
+                fallbackAudioListener = gameObject.AddComponent<AudioListener>();
+            }
         }
 
         private AudioSource CreateChildAudioSource(string sourceName, bool loops)
@@ -309,6 +385,36 @@ namespace BubbleTown.Managers
             source.playOnAwake = false;
             source.loop = loops;
             source.spatialBlend = 0f;
+        }
+
+        private void LoadSavedSettings()
+        {
+            GameSettings.Load();
+            masterVolume = GameSettings.MasterVolume;
+            bgmVolume = GameSettings.BgmVolume;
+            sfxVolume = GameSettings.SfxVolume;
+            muteBGM = GameSettings.MuteBGM;
+            muteSFX = GameSettings.MuteSFX;
+        }
+
+        private void LoadDefaultAudioClips()
+        {
+            menuBGM = LoadClipIfMissing(menuBGM, MenuBGMResourcePath);
+            battleBGM = LoadClipIfMissing(battleBGM, BattleBGMResourcePath);
+            resultBGM = LoadClipIfMissing(resultBGM, ResultBGMResourcePath);
+            moveSFX = LoadClipIfMissing(moveSFX, MoveSFXResourcePath);
+            placeBombSFX = LoadClipIfMissing(placeBombSFX, PlaceBombSFXResourcePath);
+            explosionSFX = LoadClipIfMissing(explosionSFX, ExplosionSFXResourcePath);
+            itemPickupSFX = LoadClipIfMissing(itemPickupSFX, ItemPickupSFXResourcePath);
+            buttonClickSFX = LoadClipIfMissing(buttonClickSFX, ButtonClickSFXResourcePath);
+            characterDeathSFX = LoadClipIfMissing(characterDeathSFX, CharacterDeathSFXResourcePath);
+            victorySFX = LoadClipIfMissing(victorySFX, VictorySFXResourcePath);
+            defeatSFX = LoadClipIfMissing(defeatSFX, DefeatSFXResourcePath);
+        }
+
+        private AudioClip LoadClipIfMissing(AudioClip currentClip, string resourcePath)
+        {
+            return currentClip != null ? currentClip : Resources.Load<AudioClip>(resourcePath);
         }
 
         private void ApplyVolumeSettings()
