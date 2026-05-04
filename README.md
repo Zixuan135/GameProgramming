@@ -1,191 +1,106 @@
 # BubbleTown
 
-BubbleTown is a colorful chibi-style 3D Bomberman-inspired Unity prototype.
-It is built through small daily iterations: keep systems modular, keep commits reviewable, and improve the playable version step by step.
+BubbleTown is a colorful chibi-style 3D grid battle game inspired by classic Bomberman-style party games. Players move tile by tile, place bubble bombs, break soft blocks, collect power-ups, and try to survive the blast-filled arena.
 
-## Current Status
+The project currently uses low-cost placeholder art and procedural Unity primitives, but the goal is to shape it into a playful, readable, candy-colored prototype that can keep improving over time.
 
-- Engine: Unity 2022.3 LTS
-- Language: C#
-- View: 3D angled overhead / light third-person camera
-- Style: cute, colorful, low-cost chibi prototype art
-- Flow: `MainMenu -> ModeSelect -> MapSelect -> Battle -> Result`
-- Branch workflow: develop on `local`, merge stable work into `main`
+## Highlights
 
-## Modes
-
-- `SinglePlayer`: Player1 blasts through soft walls and reaches the exit
-- `AIBattle`: Player1 fights a basic grid-aware AI
-- `LocalVS`: Player1 and Player2 share one keyboard, with a basic Best of 3 score flow
-
-## Core Gameplay
-
+- 3D angled overhead battle view
+- Cute chibi-style placeholder characters and candy-themed arenas
 - Grid-based movement on the XZ plane
-- Player1 movement with `WASD`; bomb with `Space`
-- Player2 movement with arrow keys; bomb with `Enter` or `RightControl`
-- Bomb placement with per-character bomb count limits
-- Bomb countdown, cross-shaped explosions, hard-wall blocking, soft-wall destruction, and chain reactions
-- Soft walls can drop items
-- Items currently support bomb count, explosion range, movement speed, shield, and temporary invincibility
-- SinglePlayer has a route objective: open a path through soft walls, then step onto the exit marker
-- Characters can be defeated by explosions, with basic protection/shield rules
-- Battle opening flow uses `READY -> GO!` with short spawn protection
-- Basic AI can move, detect danger, place bombs, and escape after bombing
+- Bubble bombs with countdowns, cross-shaped explosions, hard-wall blocking, soft-block destruction, and chain reactions
+- Power-ups for bomb count, blast range, movement speed, shield, and temporary invincibility
+- SinglePlayer route objective: blast through soft blocks and reach the exit marker
+- AI Battle mode with a basic grid-aware opponent
+- Local VS mode with shared-keyboard controls and Best of 3 scoring
+- Player-facing menu flow: Main Menu, Mode Select, Map Select, Battle, Result
+- Battle HUD with mode, map, timer, objective, player stats, item guide, retry, and main menu actions
+- Built-in placeholder BGM/SFX with settings for volume, mute, and screen shake
 
-## Presentation
+## Game Modes
 
-- MainMenu now uses a playful candy-castle layout with `Start Game`, `Guide`, `Settings`, and `Quit`
-- Guide uses a compact player-facing popup for controls, bombs, goals, and upgrades
-- ModeSelect uses livelier compact cards with clearer `Back` button spacing
-- Non-interactive menu labels keep stable colors and avoid button-like hover feedback
-- Runtime map themes: `Candy Park` and `Jelly Maze`
-- MapSelect uses themed cards and preview patterns
-- Battle scene uses chibi characters, bubble bomb visuals, bubble explosion cells, floating items, and edge decorations
-- Battle HUD shows mode, map, timer, round state, player stats, objective/score, pickups, and result prompts
-- Battle HUD removes developer-only controls and uses player-facing prompts
-- Battle HUD now uses a stacked left-column layout with bottom action buttons, a separate `Item Guide`, and clearer solo/local stat placement
-- Battle HUD includes an `Item Guide` popup with animated item icons and short power-up descriptions
-- Battle camera uses a HUD-safe gameplay viewport so the arena and edge decorations stay visible beside the left HUD
-- Solo battle camera now frames from the map center with light target influence, keeping the arena readable as the player moves
-- SinglePlayer exit marker is brighter and easier to spot with a beacon, flags, ring, arrows, and small animated accents
-- Result screen shows outcome, mode, map, winner, score, rating stars, Retry, and Main Menu in a compact animated layout
-- Result text now uses safer line heights and overflow clipping rules so letters are not cut off
-- Camera shake, pickup toasts, button hover/click animation, and result pop feedback are connected as lightweight game-feel polish
-- `AudioManager` supports BGM/SFX hooks; final clips can be added later
+### SinglePlayer
+Break soft blocks, open a route through the arena, and reach the highlighted exit marker.
 
-## How To Test
+### AI Battle
+Fight a simple AI opponent that can move around the grid, avoid danger, and place bombs.
 
-1. Open `Assets/Scenes/MainMenu.unity` in Unity.
-2. Press Play.
-3. Check the main menu buttons: `Start Game`, `Guide`, `Settings`, and `Quit`.
-4. Open `Guide` and confirm the compact control cards are readable.
-5. Click `Start Game`.
-6. Choose a mode and map.
-7. Click `START SELECTED MAP`.
-8. Watch the `READY -> GO!` opening flow.
-9. In Battle, confirm the left HUD reads top-to-bottom clearly: status, objective, player stats, `Item Guide`, then `Retry / Main Menu`.
-10. In Battle, click `Item Guide` and confirm all item cards are readable.
-11. Move around the map edge and confirm the solo camera keeps the arena and decorations out from under the left HUD.
-12. Find the exit marker and confirm it is visually clear from the normal battle camera.
-13. Play Battle, then verify Result / Retry / Main Menu and the compact score-plus-rating layout.
-14. On the Result screen, confirm large titles and card text are fully readable with no clipped letter bottoms.
+### Local VS
+Two players share one keyboard and battle for round wins. The first player to reach the Best of 3 target wins the match.
 
-SinglePlayer quick test:
+## Controls
 
-1. Choose `SinglePlayer`.
-2. Enter Battle and look for the exit marker near the far side of the map.
-3. Use bombs to break soft walls and open a path.
-4. Walk onto the exit marker.
-5. Confirm the battle finishes with `Objective Clear`.
+| Player | Move | Place Bomb |
+| --- | --- | --- |
+| Player 1 | `WASD` | `Space` |
+| Player 2 | Arrow Keys | `Enter` or `RightControl` |
 
-LocalVS quick test:
+## Maps
 
-1. Choose `Local VS`.
-2. Defeat either player with bombs.
-3. Confirm the round winner prompt and score update.
-4. Continue until one player reaches 2 points.
-5. Confirm Result shows the final match winner and VS score.
+- `Candy Park`: balanced candy-themed paths and colorful soft blocks
+- `Open Field`: wider lanes with a few hard-wall islands for blast blocking
+- `Jelly Maze`: tighter routes with a more maze-like feel
 
-## Scene Order
+## Power-Ups
 
-Build Settings order:
+- `Bomb Slot`: place one more bomb at a time
+- `Blast Range`: bombs reach farther
+- `Speed Boots`: move faster on the grid
+- `Shield`: block one explosion hit
+- `Invincible`: gain short temporary safety after pickup
 
-1. `MainMenu`
-2. `ModeSelect`
-3. `MapSelect`
-4. `Battle`
-5. `Result`
+## Audio And Settings
+
+BubbleTown includes generated placeholder audio so the prototype has immediate game feel:
+
+- Menu, battle, and result BGM loops
+- Button click, movement, bomb placement, explosion, pickup, defeat, victory, and character death SFX
+- Settings popup with master volume, BGM volume, SFX volume, mute toggles, screen shake toggle, and reset defaults
+
+These sounds are placeholders and can be replaced later with final original or licensed audio.
+
+## How To Run
+
+1. Open the project with Unity 2022.3 LTS.
+2. Open `Assets/Scenes/MainMenu.unity`.
+3. Press Play.
+4. Use `Start Game` to choose a mode and map.
+5. Use `Guide` for controls and `Settings` for audio/game-feel options.
+
+## Current Prototype Status
+
+BubbleTown is currently a playable prototype rather than a finished game. The core loop is in place: choose a mode, enter a map, move on the grid, place bombs, trigger explosions, collect items, finish a round, and return to the menu or retry.
+
+The current visuals are intentionally lightweight. Most assets are placeholder primitives or generated UI shapes, which keeps the project easy to iterate while the gameplay and presentation direction are still evolving.
 
 ## Project Structure
 
 ```text
 Assets/
-  Art/
-  Audio/
-  Editor/
-  Materials/
-    Characters/
-    Gameplay/
-      Bombs/
-      Explosions/
-      Items/
-    Map/
-      CandyPark/
-      JellyMaze/
-      Shared/
-    UI/
-  Prefabs/
-    Characters/
-    Environment/
-      CandyPark/
-      JellyMaze/
-    Gameplay/
-      Bombs/
-      Explosions/
-      Items/
-    Map/
-      CandyPark/
-      JellyMaze/
-      Shared/
-    UI/
-  Scenes/
-  Scripts/
-    AI/
-    Camera/
-    Characters/
-    Core/
-    Gameplay/
-    Items/
-    Managers/
-    Map/
-    UI/
-    Visuals/
-  UI/
+  Audio/                 Placeholder source folders
+  Materials/             Character, gameplay, map, and UI materials
+  Prefabs/               Gameplay, character, map, environment, and UI prefabs
+  Resources/Audio/       Auto-loaded placeholder BGM and SFX
+  Scenes/                MainMenu, ModeSelect, MapSelect, Battle, Result
+  Scripts/               Gameplay, map, UI, camera, AI, managers, visuals
+  UI/                    UI-related assets
 
-Docs/
-  CandyPark_MapTheme.md
-  EnvironmentDecorationGuide.md
-  JellyMaze_MapTheme.md
-  Phase2_ArtDirection.md
-  Phase2_VisualStyleGuide.md
+Docs/                    Art direction, map themes, and visual style notes
 ```
-
-## Key Systems
-
-- `GameManager`: mode/map/session state, battle setup, SinglePlayer route objective, LocalVS scoring
-- `SceneFlowManager`: scene transitions
-- `MapManager`: grid data, occupancy, wall/item/bomb state, spawn/exit rules
-- `MapGenerator`: runtime map visuals, theme decoration generation, and highlighted exit marker visuals
-- `CharacterBase`: shared movement, stats, bombs, life state, spawn protection, item effects
-- `PlayerController`: keyboard input for Player1/Player2
-- `AIController`: AI movement, danger checks, bomb behavior, escape behavior
-- `BombController`: bomb countdown, explosion spawn, chain reaction
-- `ExplosionController`: explosion cell lifetime, hit detection, visual pulse
-- `ItemBase` / `ItemSpawner`: item pickup and soft-wall item drops
-- `CameraController`: angled battle camera, HUD-safe viewport, map-aware solo framing, shared LocalVS framing, and shake feedback
-- `AudioManager`: BGM/SFX entry point
-- `SimpleUIFactory`, `BattleUI`, `ResultUI`: current IMGUI UI flow, HUD layout, and compact result feedback
-- `ProjectStructureSetup`: editor helper for asset folders and legacy scene visual grouping
 
 ## Documentation
 
-- `Docs/Phase2_ArtDirection.md`: current visual direction and asset naming rules
-- `Docs/Phase2_VisualStyleGuide.md`: palette, material, lighting, and readability rules
+- `Docs/Phase2_ArtDirection.md`: visual direction and asset guidelines
+- `Docs/Phase2_VisualStyleGuide.md`: palette, material, lighting, and readability notes
 - `Docs/CandyPark_MapTheme.md`: Candy Park theme reference
 - `Docs/JellyMaze_MapTheme.md`: Jelly Maze theme reference
-- `Docs/EnvironmentDecorationGuide.md`: decoration placement and readability rules
+- `Docs/EnvironmentDecorationGuide.md`: decoration placement and readability notes
 
-## Development Notes
+## Roadmap
 
-- Keep gameplay modular and avoid large manager-only logic.
-- Prefer small commits that are easy to test.
-- Move Unity assets with their `.meta` files to preserve references.
-- Keep gameplay scripts on roots and replaceable art under visual children such as `VisualRoot`.
-- Avoid official copyrighted characters, logos, UI, music, or exact asset recreations.
-
-## Active Next Steps
-
-- Migrate the current IMGUI menus to Canvas or UI Toolkit if the visual direction needs production-ready UI.
-- Convert the best runtime primitive decorations into reusable environment prefabs.
-- Add final BGM/SFX clips and volume controls.
-- Continue AI tuning and presentation polish.
+- Replace placeholder audio with final original or licensed sound assets
+- Replace primitive placeholder art with stronger reusable prefabs
+- Improve AI behavior and game balance
+- Polish menus, HUD, result screen, and feedback animations
+- Continue refining maps so each mode feels distinct and readable

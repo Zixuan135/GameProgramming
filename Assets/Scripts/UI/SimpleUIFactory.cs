@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using BubbleTown.Core;
+using BubbleTown.Managers;
 using UnityEngine;
 
 namespace BubbleTown.UI
@@ -40,6 +42,8 @@ namespace BubbleTown.UI
         private static GUIStyle modalBodyStyle;
         private static GUIStyle guideTitleStyle;
         private static GUIStyle guideTextStyle;
+        private static GUIStyle settingsLabelStyle;
+        private static GUIStyle settingsValueStyle;
         private static GUIStyle invisibleButtonStyle;
 
         private enum MenuDecorationIcon
@@ -360,6 +364,58 @@ namespace BubbleTown.UI
             return shouldClose;
         }
 
+        public static bool SettingsModal(AudioManager audioManager)
+        {
+            EnsureStyles();
+            if (audioManager == null)
+            {
+                audioManager = AudioManager.Instance;
+            }
+
+            GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), GetSolidTexture(new Color(0.02f, 0.09f, 0.14f, 0.42f)));
+
+            Rect rect = CenteredRect(580f, 430f);
+            DrawRoundedRect(new Rect(rect.x + 8f, rect.y + 10f, rect.width, rect.height), PanelShadow, PanelShadow, 24, 0);
+            GUILayout.BeginArea(rect, panelStyle);
+            GUILayout.Space(4f);
+            GUILayout.Label("Settings", modalTitleStyle);
+            GUILayout.Space(6f);
+            GUILayout.Label("Tune the game feel before jumping in.", modalBodyStyle);
+            GUILayout.Space(10f);
+
+            Rect controlsRect = GUILayoutUtility.GetRect(500f, 230f, GUILayout.ExpandWidth(true));
+            DrawSettingsControls(controlsRect, audioManager);
+
+            GUILayout.Space(12f);
+            Rect buttonSlot = GUILayoutUtility.GetRect(320f, 48f, GUILayout.ExpandWidth(true));
+            float buttonWidth = Mathf.Min(210f, (buttonSlot.width - 20f) * 0.5f);
+            Rect resetRect = new Rect(buttonSlot.center.x - buttonWidth - 10f, buttonSlot.y, buttonWidth, buttonSlot.height);
+            Rect closeRect = new Rect(buttonSlot.center.x + 10f, buttonSlot.y, buttonWidth, buttonSlot.height);
+
+            if (CartoonButton(
+                resetRect,
+                "RESET",
+                new Color(1f, 0.58f, 0.28f, 1f),
+                new Color(1f, 0.72f, 0.38f, 1f),
+                new Color(0.88f, 0.42f, 0.18f, 1f),
+                Color.white))
+            {
+                AudioManager.Instance?.PlayButtonClickSFX();
+                GameSettings.ResetToDefaults();
+                audioManager?.ReloadFromGameSettings();
+            }
+
+            bool shouldClose = CartoonButton(
+                closeRect,
+                "CLOSE",
+                new Color(0.09f, 0.72f, 1f, 1f),
+                new Color(0.2f, 0.86f, 1f, 1f),
+                new Color(0.05f, 0.58f, 0.85f, 1f),
+                Color.white);
+            GUILayout.EndArea();
+            return shouldClose;
+        }
+
         public static bool GuideModal()
         {
             EnsureStyles();
@@ -654,6 +710,133 @@ namespace BubbleTown.UI
             DrawRoundedRect(rect, color, Color.white, 16, 2);
             GUI.Label(rect, text, pillStyle);
             GUILayout.Space(6f);
+        }
+
+        private static void DrawSettingsControls(Rect rect, AudioManager audioManager)
+        {
+            float contentWidth = Mathf.Min(rect.width, 500f);
+            Rect contentRect = new Rect(rect.x + (rect.width - contentWidth) * 0.5f, rect.y, contentWidth, rect.height);
+            float rowHeight = 34f;
+            float rowGap = 6f;
+            Color blue = new Color(0.1f, 0.72f, 1f, 1f);
+            Color green = new Color(0.42f, 0.88f, 0.38f, 1f);
+            Color orange = new Color(1f, 0.62f, 0.22f, 1f);
+
+            float masterVolume = audioManager != null ? audioManager.MasterVolume : GameSettings.MasterVolume;
+            float bgmVolume = audioManager != null ? audioManager.BgmVolume : GameSettings.BgmVolume;
+            float sfxVolume = audioManager != null ? audioManager.SfxVolume : GameSettings.SfxVolume;
+            bool muteBGM = audioManager != null ? audioManager.MuteBGM : GameSettings.MuteBGM;
+            bool muteSFX = audioManager != null ? audioManager.MuteSFX : GameSettings.MuteSFX;
+
+            Rect row = new Rect(contentRect.x, contentRect.y, contentRect.width, rowHeight);
+            float newMasterVolume = DrawSettingsSlider(row, "Master Volume", masterVolume, blue);
+            if (!Mathf.Approximately(newMasterVolume, masterVolume))
+            {
+                audioManager?.SetMasterVolume(newMasterVolume);
+            }
+
+            row.y += rowHeight + rowGap;
+            float newBgmVolume = DrawSettingsSlider(row, "BGM Volume", bgmVolume, green);
+            if (!Mathf.Approximately(newBgmVolume, bgmVolume))
+            {
+                audioManager?.SetBgmVolume(newBgmVolume);
+            }
+
+            row.y += rowHeight + rowGap;
+            float newSfxVolume = DrawSettingsSlider(row, "SFX Volume", sfxVolume, orange);
+            if (!Mathf.Approximately(newSfxVolume, sfxVolume))
+            {
+                audioManager?.SetSfxVolume(newSfxVolume);
+            }
+
+            row.y += rowHeight + rowGap + 4f;
+            bool newMuteBGM = DrawSettingsToggle(row, "Mute BGM", muteBGM, green);
+            if (newMuteBGM != muteBGM)
+            {
+                AudioManager.Instance?.PlayButtonClickSFX();
+                audioManager?.SetBgmMuted(newMuteBGM);
+            }
+
+            row.y += rowHeight + rowGap;
+            bool newMuteSFX = DrawSettingsToggle(row, "Mute SFX", muteSFX, orange);
+            if (newMuteSFX != muteSFX)
+            {
+                AudioManager.Instance?.PlayButtonClickSFX();
+                audioManager?.SetSfxMuted(newMuteSFX);
+            }
+
+            row.y += rowHeight + rowGap;
+            bool shakeEnabled = GameSettings.ScreenShakeEnabled;
+            bool newShakeEnabled = DrawSettingsToggle(row, "Screen Shake", shakeEnabled, blue);
+            if (newShakeEnabled != shakeEnabled)
+            {
+                AudioManager.Instance?.PlayButtonClickSFX();
+                GameSettings.SetScreenShakeEnabled(newShakeEnabled);
+            }
+        }
+
+        private static float DrawSettingsSlider(Rect rect, string label, float value, Color accentColor)
+        {
+            float resolvedValue = Mathf.Clamp01(value);
+            DrawSettingsRowBackground(rect, accentColor);
+
+            Rect labelRect = new Rect(rect.x + 18f, rect.y + 5f, 150f, rect.height - 10f);
+            Rect valueRect = new Rect(rect.x + rect.width - 72f, rect.y + 5f, 54f, rect.height - 10f);
+            Rect trackRect = new Rect(labelRect.xMax + 8f, rect.y + rect.height * 0.5f - 6f, rect.width - 258f, 12f);
+
+            GUI.Label(labelRect, label, settingsLabelStyle);
+            GUI.Label(valueRect, $"{Mathf.RoundToInt(resolvedValue * 100f)}%", settingsValueStyle);
+
+            DrawRoundedRect(trackRect, new Color(0.93f, 0.9f, 0.68f, 1f), new Color(1f, 1f, 1f, 0.62f), 6, 1);
+            DrawRoundedRect(new Rect(trackRect.x, trackRect.y, trackRect.width * resolvedValue, trackRect.height), accentColor, Color.clear, 6, 0);
+
+            float knobSize = 24f;
+            Rect knobRect = new Rect(trackRect.x + trackRect.width * resolvedValue - knobSize * 0.5f, trackRect.center.y - knobSize * 0.5f, knobSize, knobSize);
+            DrawBubble(knobRect, Color.Lerp(accentColor, Color.white, 0.18f));
+
+            Event currentEvent = Event.current;
+            Rect hitRect = new Rect(trackRect.x - knobSize * 0.5f, trackRect.y - 10f, trackRect.width + knobSize, trackRect.height + 20f);
+            if (currentEvent != null &&
+                (currentEvent.type == EventType.MouseDown || currentEvent.type == EventType.MouseDrag) &&
+                hitRect.Contains(currentEvent.mousePosition))
+            {
+                resolvedValue = Mathf.Clamp01(Mathf.InverseLerp(trackRect.x, trackRect.xMax, currentEvent.mousePosition.x));
+                currentEvent.Use();
+            }
+
+            return resolvedValue;
+        }
+
+        private static bool DrawSettingsToggle(Rect rect, string label, bool value, Color accentColor)
+        {
+            DrawSettingsRowBackground(rect, accentColor);
+
+            Rect labelRect = new Rect(rect.x + 18f, rect.y + 5f, 220f, rect.height - 10f);
+            Rect toggleRect = new Rect(rect.x + rect.width - 92f, rect.y + 5f, 74f, rect.height - 10f);
+
+            GUI.Label(labelRect, label, settingsLabelStyle);
+
+            Color fill = value ? accentColor : new Color(0.76f, 0.8f, 0.83f, 1f);
+            DrawRoundedRect(toggleRect, fill, Color.white, 15, 2);
+            Rect knobRect = value
+                ? new Rect(toggleRect.xMax - 29f, toggleRect.y + 3f, 24f, 24f)
+                : new Rect(toggleRect.x + 5f, toggleRect.y + 3f, 24f, 24f);
+            DrawBubble(knobRect, Color.white);
+            GUI.Label(toggleRect, value ? "ON" : "OFF", settingsValueStyle);
+
+            if (GUI.Button(toggleRect, GUIContent.none, invisibleButtonStyle))
+            {
+                return !value;
+            }
+
+            return value;
+        }
+
+        private static void DrawSettingsRowBackground(Rect rect, Color accentColor)
+        {
+            DrawRoundedRect(new Rect(rect.x + 3f, rect.y + 4f, rect.width, rect.height), PanelShadow, PanelShadow, 14, 0);
+            DrawRoundedRect(rect, new Color(1f, 0.96f, 0.76f, 0.96f), Color.Lerp(accentColor, Color.white, 0.2f), 14, 2);
+            DrawRoundedRect(new Rect(rect.x + 8f, rect.y + 7f, 5f, rect.height - 14f), accentColor, Color.clear, 4, 0);
         }
 
         private static void DrawGuideCompactGrid(Rect rect)
@@ -1182,6 +1365,24 @@ namespace BubbleTown.UI
                 normal = { textColor = TextSecondary }
             };
             LockTextColor(guideTextStyle, TextSecondary);
+
+            settingsLabelStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                fontSize = 14,
+                fontStyle = FontStyle.Bold,
+                normal = { textColor = TextPrimary }
+            };
+            LockTextColor(settingsLabelStyle, TextPrimary);
+
+            settingsValueStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 13,
+                fontStyle = FontStyle.Bold,
+                normal = { textColor = TextPrimary }
+            };
+            LockTextColor(settingsValueStyle, TextPrimary);
 
             invisibleButtonStyle = new GUIStyle(GUIStyle.none);
         }
