@@ -19,9 +19,13 @@ namespace BubbleTown.CameraSystem
         [SerializeField] private bool frameAIInAIBattle = false;
         [SerializeField, Min(0.05f)] private float targetRefreshInterval = 0.25f;
 
+        [Header("Safe Viewport")]
+        [SerializeField] private bool useHudSafeViewport = true;
+        [SerializeField] private Rect gameplayViewport = new Rect(0.32f, 0.08f, 0.68f, 0.92f);
+
         [Header("View")]
-        [SerializeField] private Vector3 followOffset = new Vector3(0f, 10.4f, -7.6f);
-        [SerializeField] private Vector3 lookAtOffset = new Vector3(0f, 0.2f, 0.55f);
+        [SerializeField] private Vector3 followOffset = new Vector3(0f, 11.25f, -8.35f);
+        [SerializeField] private Vector3 lookAtOffset = new Vector3(0f, -0.25f, 0.35f);
         [SerializeField, Min(0.01f)] private float focusSmoothTime = 0.1f;
         [SerializeField, Min(0.01f)] private float followSmoothTime = 0.18f;
         [SerializeField, Min(0f)] private float rotationLerpSpeed = 9f;
@@ -32,15 +36,17 @@ namespace BubbleTown.CameraSystem
 
         [Header("Framing")]
         [SerializeField] private bool clampFocusInsideMap = true;
-        [SerializeField] private Vector2 soloFocusPaddingCells = new Vector2(2.25f, 2.1f);
-        [SerializeField] private Vector2 sharedFocusPaddingCells = new Vector2(1.45f, 1.3f);
-        [SerializeField] private Vector3 soloFocusBias = new Vector3(1.8f, 0f, 1.55f);
-        [SerializeField] private Vector3 sharedFocusBias = new Vector3(0.55f, 0f, 0.75f);
+        [SerializeField] private Vector2 soloFocusPaddingCells = new Vector2(1.65f, 1.55f);
+        [SerializeField] private Vector2 sharedFocusPaddingCells = new Vector2(1.3f, 1.15f);
+        [SerializeField] private Vector3 soloFocusBias = new Vector3(0f, 0f, 0.25f);
+        [SerializeField] private Vector3 sharedFocusBias = new Vector3(0f, 0f, 0.25f);
+        [SerializeField, Range(0f, 1f)] private float soloTargetInfluence = 0f;
+        [SerializeField, Range(0f, 1f)] private float sharedTargetInfluence = 0f;
 
         [Header("Lens")]
         [SerializeField] private Camera controlledCamera;
-        [SerializeField, Min(1f)] private float defaultFieldOfView = 48f;
-        [SerializeField, Min(1f)] private float minFieldOfView = 46f;
+        [SerializeField, Min(1f)] private float defaultFieldOfView = 52f;
+        [SerializeField, Min(1f)] private float minFieldOfView = 50.5f;
         [SerializeField, Min(0f)] private float sharedFieldOfViewBoost = 0.65f;
         [SerializeField, Min(1f)] private float maxFieldOfView = 62f;
         [SerializeField, Min(0.01f)] private float lensSmoothTime = 0.18f;
@@ -89,6 +95,7 @@ namespace BubbleTown.CameraSystem
 
             if (controlledCamera != null)
             {
+                ApplyCameraViewport();
                 currentFieldOfView = controlledCamera.fieldOfView;
             }
             else
@@ -110,6 +117,7 @@ namespace BubbleTown.CameraSystem
             }
 
             RefreshMapManagerReference();
+            ApplyCameraViewport();
             ApplyLens(defaultFieldOfView, true);
             SnapToTarget();
         }
@@ -298,6 +306,7 @@ namespace BubbleTown.CameraSystem
                 focusPoint = (primaryTarget.position + secondaryTarget.position) * 0.5f;
             }
 
+            focusPoint = BlendFocusTowardMapCenter(focusPoint, useSharedView);
             focusPoint += ResolveFocusBias(useSharedView);
             return ClampFocusPointToMap(focusPoint, useSharedView);
         }
@@ -402,6 +411,24 @@ namespace BubbleTown.CameraSystem
             return focusPoint;
         }
 
+        private Vector3 BlendFocusTowardMapCenter(Vector3 focusPoint, bool useSharedView)
+        {
+            RefreshMapManagerReference();
+            if (cachedMapManager == null)
+            {
+                return focusPoint;
+            }
+
+            float cellSize = Mathf.Max(0.1f, cachedMapManager.CellSize);
+            Vector3 mapCenter = new Vector3(
+                (cachedMapManager.MapWidth - 1) * cellSize * 0.5f,
+                focusPoint.y,
+                (cachedMapManager.MapHeight - 1) * cellSize * 0.5f);
+
+            float targetInfluence = Mathf.Clamp01(useSharedView ? sharedTargetInfluence : soloTargetInfluence);
+            return Vector3.Lerp(mapCenter, focusPoint, targetInfluence);
+        }
+
         private Vector3 ResolveFocusBias(bool useSharedView)
         {
             return useSharedView ? sharedFocusBias : soloFocusBias;
@@ -459,6 +486,25 @@ namespace BubbleTown.CameraSystem
             }
 
             controlledCamera.fieldOfView = currentFieldOfView;
+        }
+
+        private void ApplyCameraViewport()
+        {
+            if (controlledCamera == null)
+            {
+                return;
+            }
+
+            controlledCamera.rect = useHudSafeViewport ? ClampViewport(gameplayViewport) : new Rect(0f, 0f, 1f, 1f);
+        }
+
+        private Rect ClampViewport(Rect viewport)
+        {
+            float x = Mathf.Clamp01(viewport.x);
+            float y = Mathf.Clamp01(viewport.y);
+            float width = Mathf.Clamp(viewport.width, 0.05f, 1f - x);
+            float height = Mathf.Clamp(viewport.height, 0.05f, 1f - y);
+            return new Rect(x, y, width, height);
         }
 
         private Vector3 ResolveShakeOffset()
