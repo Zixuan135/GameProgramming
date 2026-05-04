@@ -88,6 +88,7 @@ namespace BubbleTown.UI
             float entranceScale = ResolvePanelEntranceScale();
             GUIUtility.ScaleAroundPivot(new Vector2(entranceScale, entranceScale), panel.center);
             DrawPanel(panel, new Color(1f, 0.96f, 0.72f, 0.96f), new Color(0.2f, 0.58f, 0.82f, 1f), 24, 4);
+            DrawResultDecorations(panel, viewModel);
             DrawResultContent(panel, viewModel);
             GUI.matrix = previousMatrix;
         }
@@ -337,32 +338,33 @@ namespace BubbleTown.UI
         {
             float margin = Mathf.Clamp(panel.width * 0.055f, 28f, 44f);
             float contentWidth = panel.width - margin * 2f;
-            float y = panel.y + 18f;
+            float y = panel.y + 12f;
 
-            Rect pillRect = new Rect(panel.center.x - 200f, y, 400f, 30f);
+            Rect pillRect = new Rect(panel.center.x - 185f, y, 370f, 30f);
             DrawPanel(pillRect, new Color(0.23f, 0.77f, 0.95f, 1f), new Color(1f, 1f, 1f, 0.75f), 17, 2);
             DrawLockedLabel(pillRect, viewModel.HasResult ? "ROUND COMPLETE" : "RESULT WAITING", pillTextStyle);
 
-            y += 40f;
-            DrawLockedLabel(new Rect(panel.x + margin, y, contentWidth, 50f), viewModel.Title, screenTitleStyle);
+            y += 36f;
+            DrawLockedLabel(new Rect(panel.x + margin, y, contentWidth, 56f), viewModel.Title, screenTitleStyle);
 
-            y += 58f;
-            DrawHeroResultCard(new Rect(panel.x + margin + 46f, y, contentWidth - 92f, 92f), viewModel);
+            y += 64f;
+            DrawHeroResultCard(new Rect(panel.x + margin + 56f, y, contentWidth - 112f, 118f), viewModel);
 
-            y += 106f;
-            DrawSummaryCards(new Rect(panel.x + margin, y, contentWidth, 62f), viewModel);
+            y += 136f;
+            DrawSummaryCards(new Rect(panel.x + margin + 18f, y, contentWidth - 36f, 64f), viewModel);
 
-            float buttonY = panel.y + panel.height - 62f;
-            float scoreY = Mathf.Min(y + 76f, buttonY - 88f);
-            DrawScorePanel(new Rect(panel.x + margin + 64f, scoreY, contentWidth - 128f, 76f), viewModel);
-            DrawActionButtons(new Rect(panel.x + margin + 104f, buttonY, contentWidth - 208f, 46f));
+            y += 80f;
+            DrawScorePanel(new Rect(panel.x + margin + 86f, y, contentWidth - 172f, 72f), viewModel);
+
+            float buttonY = panel.y + panel.height - 58f;
+            DrawActionButtons(new Rect(panel.x + margin + 124f, buttonY, contentWidth - 248f, 42f));
         }
 
         private void DrawHeroResultCard(Rect cardRect, ResultViewModel viewModel)
         {
             DrawPanel(cardRect, new Color(1f, 0.98f, 0.82f, 0.98f), viewModel.AccentColor, 24, 5);
 
-            Rect iconCircle = new Rect(cardRect.x + 22f, cardRect.y + 16f, 60f, 60f);
+            Rect iconCircle = new Rect(cardRect.x + 24f, cardRect.y + 24f, 64f, 64f);
             Matrix4x4 previousMatrix = GUI.matrix;
             float iconPulse = viewModel.HasResult ? 1f + Mathf.Sin(Time.unscaledTime * 7f) * 0.035f : 1f;
             GUIUtility.ScaleAroundPivot(new Vector2(iconPulse, iconPulse), iconCircle.center);
@@ -370,9 +372,11 @@ namespace BubbleTown.UI
             DrawLockedLabel(iconCircle, viewModel.IconText, resultIconStyle);
             GUI.matrix = previousMatrix;
 
-            DrawLockedLabel(new Rect(cardRect.x + 102f, cardRect.y + 12f, cardRect.width - 126f, 30f), viewModel.OutcomeLabel, resultTitleStyle);
-            DrawLockedLabel(new Rect(cardRect.x + 102f, cardRect.y + 43f, cardRect.width - 126f, 20f), viewModel.MoodText, resultBodyStyle);
-            DrawLockedLabel(new Rect(cardRect.x + 102f, cardRect.y + 63f, cardRect.width - 126f, 22f), viewModel.Detail, resultBodyStyle);
+            float textX = cardRect.x + 108f;
+            float textWidth = cardRect.width - 134f;
+            DrawLockedLabel(new Rect(textX, cardRect.y + 12f, textWidth, 36f), viewModel.OutcomeLabel, resultTitleStyle);
+            DrawLockedLabel(new Rect(textX, cardRect.y + 50f, textWidth, 26f), viewModel.MoodText, resultBodyStyle);
+            DrawLockedLabel(new Rect(textX, cardRect.y + 76f, textWidth, 36f), viewModel.Detail, resultBodyStyle);
         }
 
         private void DrawSummaryCards(Rect rowRect, ResultViewModel viewModel)
@@ -407,19 +411,19 @@ namespace BubbleTown.UI
         private void DrawInfoCard(Rect rect, string label, string value, Color accentColor)
         {
             DrawPanel(rect, new Color(1f, 0.95f, 0.72f, 0.97f), accentColor, 18, 3);
-            DrawLockedLabel(new Rect(rect.x + 10f, rect.y + 7f, rect.width - 20f, 18f), label, cardTitleStyle);
-            DrawLockedLabel(new Rect(rect.x + 10f, rect.y + 29f, rect.width - 20f, 24f), value, cardValueStyle);
+            DrawLockedLabel(new Rect(rect.x + 10f, rect.y + 6f, rect.width - 20f, 20f), label, cardTitleStyle);
+            DrawLockedLabel(new Rect(rect.x + 10f, rect.y + 29f, rect.width - 20f, 28f), value, cardValueStyle);
         }
 
         private void DrawScorePanel(Rect rewardRect, ResultViewModel viewModel)
         {
             DrawPanel(rewardRect, new Color(1f, 0.98f, 0.86f, 0.98f), new Color(1f, 0.68f, 0.22f, 1f), 22, 4);
 
-            DrawLockedLabel(new Rect(rewardRect.x + 22f, rewardRect.y + 8f, 150f, 20f), "SCORE", cardTitleStyle);
-            DrawLockedLabel(new Rect(rewardRect.x + 22f, rewardRect.y + 30f, 150f, 38f), viewModel.ScoreLabel, scoreStyle);
+            DrawLockedLabel(new Rect(rewardRect.x + 22f, rewardRect.y + 7f, 150f, 20f), "SCORE", cardTitleStyle);
+            DrawLockedLabel(new Rect(rewardRect.x + 22f, rewardRect.y + 29f, 150f, 38f), viewModel.ScoreLabel, scoreStyle);
 
-            DrawLockedLabel(new Rect(rewardRect.x + 192f, rewardRect.y + 9f, rewardRect.width - 214f, 20f), "RATING", cardTitleStyle);
-            DrawStarSlots(new Rect(rewardRect.x + 196f, rewardRect.y + 35f, rewardRect.width - 222f, 34f), viewModel.StarCount, viewModel.AccentColor);
+            DrawLockedLabel(new Rect(rewardRect.x + 192f, rewardRect.y + 7f, rewardRect.width - 214f, 20f), "RATING", cardTitleStyle);
+            DrawStarSlots(new Rect(rewardRect.x + 196f, rewardRect.y + 33f, rewardRect.width - 222f, 32f), viewModel.StarCount, viewModel.AccentColor);
         }
 
         private void DrawActionButtons(Rect slot)
@@ -441,7 +445,7 @@ namespace BubbleTown.UI
 
         private void DrawStarSlots(Rect rect, int starCount, Color activeColor)
         {
-            float slotSize = Mathf.Min(40f, rect.height - 4f);
+            float slotSize = Mathf.Min(34f, rect.height - 2f);
             float gap = 10f;
             float startX = rect.x + (rect.width - slotSize * MaxStars - gap * (MaxStars - 1)) * 0.5f;
             for (int i = 0; i < MaxStars; i++)
@@ -462,6 +466,43 @@ namespace BubbleTown.UI
                 DrawLockedLabel(slotRect, isActive ? "*" : "-", starStyle);
                 GUI.matrix = previousMatrix;
             }
+        }
+
+        private void DrawResultDecorations(Rect panel, ResultViewModel viewModel)
+        {
+            float t = Time.unscaledTime;
+            Color accent = viewModel.AccentColor;
+            DrawFloatingBubble(new Rect(panel.x + 42f, panel.y + 72f, 46f, 46f), Color.Lerp(accent, Color.white, 0.35f), t, 0f);
+            DrawFloatingBubble(new Rect(panel.x + panel.width - 92f, panel.y + 84f, 34f, 34f), new Color(0.56f, 0.9f, 1f, 0.58f), t, 1.2f);
+            DrawFloatingBubble(new Rect(panel.x + 74f, panel.y + panel.height - 116f, 58f, 58f), new Color(1f, 0.74f, 0.28f, 0.34f), t, 2.1f);
+            DrawFloatingBubble(new Rect(panel.x + panel.width - 126f, panel.y + panel.height - 136f, 52f, 52f), new Color(0.54f, 1f, 0.76f, 0.34f), t, 3.4f);
+            DrawSparkle(new Rect(panel.x + 148f, panel.y + 36f, 18f, 18f), new Color(1f, 0.95f, 0.45f, 0.76f), t, 0.5f);
+            DrawSparkle(new Rect(panel.x + panel.width - 172f, panel.y + 44f, 16f, 16f), new Color(1f, 1f, 1f, 0.76f), t, 1.8f);
+            DrawSparkle(new Rect(panel.x + panel.width - 112f, panel.y + 260f, 14f, 14f), new Color(1f, 0.95f, 0.45f, 0.62f), t, 2.7f);
+        }
+
+        private void DrawFloatingBubble(Rect rect, Color color, float time, float phase)
+        {
+            float bob = Mathf.Sin(time * 1.6f + phase) * 5f;
+            float pulse = 1f + Mathf.Sin(time * 2.2f + phase) * 0.04f;
+            Rect animatedRect = new Rect(rect.x, rect.y + bob, rect.width, rect.height);
+            Matrix4x4 previousMatrix = GUI.matrix;
+            GUIUtility.ScaleAroundPivot(new Vector2(pulse, pulse), animatedRect.center);
+            GUI.DrawTexture(animatedRect, GetCircleTexture(color));
+            GUI.matrix = previousMatrix;
+        }
+
+        private void DrawSparkle(Rect rect, Color color, float time, float phase)
+        {
+            float pulse = 1f + Mathf.Sin(time * 3.4f + phase) * 0.18f;
+            Rect vertical = new Rect(rect.center.x - rect.width * 0.12f, rect.y, rect.width * 0.24f, rect.height);
+            Rect horizontal = new Rect(rect.x, rect.center.y - rect.height * 0.12f, rect.width, rect.height * 0.24f);
+            Matrix4x4 previousMatrix = GUI.matrix;
+            GUIUtility.ScaleAroundPivot(new Vector2(pulse, pulse), rect.center);
+            GUI.DrawTexture(vertical, GetRoundedTexture(color, Color.clear, 4, 0));
+            GUI.DrawTexture(horizontal, GetRoundedTexture(color, Color.clear, 4, 0));
+            GUI.DrawTexture(new Rect(rect.x + rect.width * 0.28f, rect.y + rect.height * 0.28f, rect.width * 0.44f, rect.height * 0.44f), GetCircleTexture(new Color(1f, 1f, 1f, color.a * 0.45f)));
+            GUI.matrix = previousMatrix;
         }
 
         private void DrawLockedLabel(Rect rect, string text, GUIStyle style)
@@ -521,6 +562,7 @@ namespace BubbleTown.UI
             cardTitleStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
+                clipping = TextClipping.Overflow,
                 fontSize = 14,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = textSecondary }
@@ -529,7 +571,8 @@ namespace BubbleTown.UI
             cardValueStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 20,
+                clipping = TextClipping.Overflow,
+                fontSize = 18,
                 fontStyle = FontStyle.Bold,
                 wordWrap = true,
                 normal = { textColor = textPrimary }
@@ -538,6 +581,7 @@ namespace BubbleTown.UI
             resultIconStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
+                clipping = TextClipping.Overflow,
                 fontSize = 30,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = Color.white }
@@ -547,7 +591,8 @@ namespace BubbleTown.UI
             screenTitleStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 42,
+                clipping = TextClipping.Overflow,
+                fontSize = 36,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = textPrimary }
             };
@@ -556,6 +601,7 @@ namespace BubbleTown.UI
             pillTextStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
+                clipping = TextClipping.Overflow,
                 fontSize = 13,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = new Color(1f, 0.97f, 0.78f, 1f) }
@@ -565,7 +611,8 @@ namespace BubbleTown.UI
             resultTitleStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleLeft,
-                fontSize = 25,
+                clipping = TextClipping.Overflow,
+                fontSize = 22,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = textPrimary }
             };
@@ -574,7 +621,8 @@ namespace BubbleTown.UI
             resultBodyStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleLeft,
-                fontSize = 14,
+                clipping = TextClipping.Overflow,
+                fontSize = 13,
                 wordWrap = true,
                 normal = { textColor = textSecondary }
             };
@@ -583,7 +631,8 @@ namespace BubbleTown.UI
             scoreStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 34,
+                clipping = TextClipping.Overflow,
+                fontSize = 31,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = textPrimary }
             };
@@ -592,6 +641,7 @@ namespace BubbleTown.UI
             starStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
+                clipping = TextClipping.Overflow,
                 fontSize = 24,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = Color.white }

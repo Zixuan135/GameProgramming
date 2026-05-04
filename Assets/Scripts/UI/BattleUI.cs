@@ -58,6 +58,12 @@ namespace BubbleTown.UI
         [SerializeField] private Color aiColor = new Color(0.64f, 0.46f, 1f);
         [SerializeField] private Color neutralColor = new Color(1f, 0.82f, 0.32f);
 
+        [Header("World Safe Area")]
+        [SerializeField] private bool drawLeftHudSafeBackground = true;
+        [SerializeField, Range(0f, 0.6f)] private float leftHudSafeWidthNormalized = 0.32f;
+        [SerializeField, Range(0f, 0.2f)] private float gameplayBottomFillNormalized = 0.08f;
+        [SerializeField] private Color hudSafeBackgroundColor = new Color(0.74f, 0.93f, 1f, 1f);
+
         private static readonly Dictionary<string, Texture2D> RoundedTextureCache = new Dictionary<string, Texture2D>();
         private GUIStyle hudTextStyle;
         private GUIStyle hudSmallStyle;
@@ -125,12 +131,34 @@ namespace BubbleTown.UI
         private void OnGUI()
         {
             EnsureStyles();
+            DrawHudSafeBackground();
             DrawBattleHud();
             DrawActionButtons();
             DrawItemGuide();
             DrawPickupToast();
             DrawOpeningPrompt();
             DrawResultPrompt();
+        }
+
+        private void DrawHudSafeBackground()
+        {
+            if (!drawLeftHudSafeBackground || leftHudSafeWidthNormalized <= 0f)
+            {
+                return;
+            }
+
+            Rect safeRect = new Rect(0f, 0f, Screen.width * Mathf.Clamp01(leftHudSafeWidthNormalized), Screen.height);
+            GUI.DrawTexture(safeRect, GetRoundedTexture(hudSafeBackgroundColor, hudSafeBackgroundColor, 1, 0));
+
+            if (gameplayBottomFillNormalized <= 0f)
+            {
+                return;
+            }
+
+            float leftWidth = Screen.width * Mathf.Clamp01(leftHudSafeWidthNormalized);
+            float fillHeight = Screen.height * Mathf.Clamp01(gameplayBottomFillNormalized);
+            Rect gameplayBottomRect = new Rect(leftWidth, Screen.height - fillHeight, Screen.width - leftWidth, fillHeight);
+            GUI.DrawTexture(gameplayBottomRect, GetRoundedTexture(hudSafeBackgroundColor, hudSafeBackgroundColor, 1, 0));
         }
 
         public void OnClickBackToMenu()
