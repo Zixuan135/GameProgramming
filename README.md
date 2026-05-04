@@ -45,8 +45,11 @@ It is built through small daily iterations: keep systems modular, keep commits r
 - Battle HUD removes developer-only controls and uses player-facing prompts
 - Battle HUD now uses a stacked left-column layout with bottom action buttons, a separate `Item Guide`, and clearer solo/local stat placement
 - Battle HUD includes an `Item Guide` popup with animated item icons and short power-up descriptions
-- Solo battle camera now clamps its focus inside map bounds so edge spawns keep more of the arena visible on screen
-- Result screen shows outcome, mode, map, winner, score, rating stars, Retry, and Main Menu in a tighter compact layout
+- Battle camera uses a HUD-safe gameplay viewport so the arena and edge decorations stay visible beside the left HUD
+- Solo battle camera now frames from the map center with light target influence, keeping the arena readable as the player moves
+- SinglePlayer exit marker is brighter and easier to spot with a beacon, flags, ring, arrows, and small animated accents
+- Result screen shows outcome, mode, map, winner, score, rating stars, Retry, and Main Menu in a compact animated layout
+- Result text now uses safer line heights and overflow clipping rules so letters are not cut off
 - Camera shake, pickup toasts, button hover/click animation, and result pop feedback are connected as lightweight game-feel polish
 - `AudioManager` supports BGM/SFX hooks; final clips can be added later
 
@@ -62,8 +65,10 @@ It is built through small daily iterations: keep systems modular, keep commits r
 8. Watch the `READY -> GO!` opening flow.
 9. In Battle, confirm the left HUD reads top-to-bottom clearly: status, objective, player stats, `Item Guide`, then `Retry / Main Menu`.
 10. In Battle, click `Item Guide` and confirm all item cards are readable.
-11. Move around the map edge and confirm the solo camera still keeps most of the arena in frame.
-12. Play Battle, then verify Result / Retry / Main Menu and the compact score-plus-rating layout.
+11. Move around the map edge and confirm the solo camera keeps the arena and decorations out from under the left HUD.
+12. Find the exit marker and confirm it is visually clear from the normal battle camera.
+13. Play Battle, then verify Result / Retry / Main Menu and the compact score-plus-rating layout.
+14. On the Result screen, confirm large titles and card text are fully readable with no clipped letter bottoms.
 
 SinglePlayer quick test:
 
@@ -150,14 +155,14 @@ Docs/
 - `GameManager`: mode/map/session state, battle setup, SinglePlayer route objective, LocalVS scoring
 - `SceneFlowManager`: scene transitions
 - `MapManager`: grid data, occupancy, wall/item/bomb state, spawn/exit rules
-- `MapGenerator`: runtime map visuals, theme decoration generation, and exit marker visuals
+- `MapGenerator`: runtime map visuals, theme decoration generation, and highlighted exit marker visuals
 - `CharacterBase`: shared movement, stats, bombs, life state, spawn protection, item effects
 - `PlayerController`: keyboard input for Player1/Player2
 - `AIController`: AI movement, danger checks, bomb behavior, escape behavior
 - `BombController`: bomb countdown, explosion spawn, chain reaction
 - `ExplosionController`: explosion cell lifetime, hit detection, visual pulse
 - `ItemBase` / `ItemSpawner`: item pickup and soft-wall item drops
-- `CameraController`: angled battle camera, map-aware solo framing, shared LocalVS framing, and shake feedback
+- `CameraController`: angled battle camera, HUD-safe viewport, map-aware solo framing, shared LocalVS framing, and shake feedback
 - `AudioManager`: BGM/SFX entry point
 - `SimpleUIFactory`, `BattleUI`, `ResultUI`: current IMGUI UI flow, HUD layout, and compact result feedback
 - `ProjectStructureSetup`: editor helper for asset folders and legacy scene visual grouping

@@ -40,7 +40,7 @@ namespace BubbleTown.Map
         [SerializeField] private bool generateGroundTiles = true;
         [SerializeField] private bool generateWalls = true;
         [SerializeField] private bool generateDecorations = true;
-        [SerializeField, Min(0f)] private float decorationOuterPadding = 1.35f;
+        [SerializeField, Min(0f)] private float decorationOuterPadding = 0.85f;
 
         private Material grassMaterial;
         private Material candyBlueMaterial;
@@ -218,13 +218,27 @@ namespace BubbleTown.Map
             Material accentMaterial = visualTheme == MapVisualTheme.JellyMaze ? GetJellyGlowMaterial() : GetPropYellowMaterial();
             Material flagMaterial = visualTheme == MapVisualTheme.JellyMaze ? GetJellyPropPinkMaterial() : GetPropPinkMaterial();
 
-            CreatePrimitiveChild(goalTransform, "GoalPad", PrimitiveType.Cylinder, new Vector3(0f, 0.055f, 0f), new Vector3(0.72f, 0.04f, 0.72f), baseMaterial);
-            CreatePrimitiveChild(goalTransform, "GoalRing", PrimitiveType.Cylinder, new Vector3(0f, 0.1f, 0f), new Vector3(0.52f, 0.035f, 0.52f), accentMaterial);
-            CreatePrimitiveChild(goalTransform, "FlagPole", PrimitiveType.Cylinder, new Vector3(-0.28f, 0.58f, -0.22f), new Vector3(0.04f, 0.55f, 0.04f), GetCreamMaterial());
-            CreatePrimitiveChild(goalTransform, "Flag", PrimitiveType.Cube, new Vector3(-0.08f, 0.86f, -0.22f), new Vector3(0.34f, 0.2f, 0.04f), flagMaterial);
-            CreatePrimitiveChild(goalTransform, "SparkleOrb", PrimitiveType.Sphere, new Vector3(0.25f, 0.42f, 0.22f), new Vector3(0.2f, 0.2f, 0.2f), accentMaterial);
+            CreatePrimitiveChild(goalTransform, "GoalPad_Large", PrimitiveType.Cylinder, new Vector3(0f, 0.055f, 0f), new Vector3(0.98f, 0.045f, 0.98f), baseMaterial);
+            CreatePrimitiveChild(goalTransform, "GoalRing_Outer", PrimitiveType.Cylinder, new Vector3(0f, 0.12f, 0f), new Vector3(0.78f, 0.035f, 0.78f), accentMaterial);
+            CreatePrimitiveChild(goalTransform, "GoalRing_Inner", PrimitiveType.Cylinder, new Vector3(0f, 0.165f, 0f), new Vector3(0.48f, 0.028f, 0.48f), GetCreamMaterial());
 
-            AddDecorationAnimation(goal, goalTransform, true, 0.035f, 2.4f, new Vector3(0f, 35f, 0f), true, 0.035f, 3.1f);
+            CreatePrimitiveChild(goalTransform, "ExitBeacon_Pole", PrimitiveType.Cylinder, new Vector3(0f, 0.78f, 0f), new Vector3(0.055f, 0.68f, 0.055f), GetCreamMaterial());
+            CreatePrimitiveChild(goalTransform, "ExitBeacon_Orb", PrimitiveType.Sphere, new Vector3(0f, 1.48f, 0f), new Vector3(0.32f, 0.32f, 0.32f), accentMaterial);
+            CreatePrimitiveChild(goalTransform, "ExitBeacon_Highlight", PrimitiveType.Sphere, new Vector3(-0.11f, 1.58f, -0.11f), new Vector3(0.12f, 0.12f, 0.12f), GetCreamMaterial());
+
+            CreatePrimitiveChild(goalTransform, "FlagPole_Left", PrimitiveType.Cylinder, new Vector3(-0.42f, 0.62f, -0.28f), new Vector3(0.04f, 0.58f, 0.04f), GetCreamMaterial());
+            CreatePrimitiveChild(goalTransform, "Flag_Left", PrimitiveType.Cube, new Vector3(-0.2f, 0.92f, -0.28f), new Vector3(0.38f, 0.22f, 0.04f), flagMaterial);
+            CreatePrimitiveChild(goalTransform, "FlagPole_Right", PrimitiveType.Cylinder, new Vector3(0.42f, 0.62f, 0.28f), new Vector3(0.04f, 0.58f, 0.04f), GetCreamMaterial());
+            CreatePrimitiveChild(goalTransform, "Flag_Right", PrimitiveType.Cube, new Vector3(0.2f, 0.92f, 0.28f), new Vector3(0.38f, 0.22f, 0.04f), flagMaterial);
+
+            GameObject arrowA = CreatePrimitiveChild(goalTransform, "ExitArrow_A", PrimitiveType.Cube, new Vector3(0f, 0.28f, 0.36f), new Vector3(0.52f, 0.055f, 0.16f), accentMaterial);
+            arrowA.transform.localEulerAngles = new Vector3(0f, 45f, 0f);
+            GameObject arrowB = CreatePrimitiveChild(goalTransform, "ExitArrow_B", PrimitiveType.Cube, new Vector3(0f, 0.28f, 0.36f), new Vector3(0.52f, 0.055f, 0.16f), accentMaterial);
+            arrowB.transform.localEulerAngles = new Vector3(0f, -45f, 0f);
+            CreatePrimitiveChild(goalTransform, "SparkleOrb_Left", PrimitiveType.Sphere, new Vector3(-0.34f, 0.5f, 0.24f), new Vector3(0.18f, 0.18f, 0.18f), accentMaterial);
+            CreatePrimitiveChild(goalTransform, "SparkleOrb_Right", PrimitiveType.Sphere, new Vector3(0.34f, 0.46f, -0.24f), new Vector3(0.16f, 0.16f, 0.16f), flagMaterial);
+
+            AddDecorationAnimation(goal, goalTransform, true, 0.05f, 2.4f, new Vector3(0f, 42f, 0f), true, 0.055f, 3.1f);
         }
 
         private void GenerateCandyParkDecorations(BattleMapType mapType, Transform decorationRoot)
@@ -241,21 +255,21 @@ namespace BubbleTown.Map
             CreateFenceLine(decorationRoot, new Vector3(minX, 0f, centerZ), mapHeight, false, "Fence_West");
             CreateFenceLine(decorationRoot, new Vector3(maxX, 0f, centerZ), mapHeight, false, "Fence_East");
 
-            CreateLollipopTree(decorationRoot, new Vector3(minX - 0.85f, 0f, minZ - 0.25f), "LollipopTree_SouthWest", GetThemeAccentColor(mapType, 0));
-            CreateLollipopTree(decorationRoot, new Vector3(maxX + 0.75f, 0f, minZ - 0.15f), "LollipopTree_SouthEast", GetThemeAccentColor(mapType, 1));
-            CreateLollipopTree(decorationRoot, new Vector3(minX - 0.75f, 0f, maxZ + 0.15f), "LollipopTree_NorthWest", GetThemeAccentColor(mapType, 2));
-            CreateBalloonCluster(decorationRoot, new Vector3(maxX + 0.95f, 0f, maxZ + 0.35f), "BalloonCluster_NorthEast");
-            CreateRoundBush(decorationRoot, new Vector3(centerX, 0f, maxZ + 0.45f), "RoundBush_NorthCenter");
-            CreateSignBoard(decorationRoot, new Vector3(centerX, 0f, minZ - 0.55f), "Sign_CandyPark");
+            CreateLollipopTree(decorationRoot, new Vector3(minX + 0.15f, 0f, minZ + 0.2f), "LollipopTree_SouthWest", GetThemeAccentColor(mapType, 0));
+            CreateLollipopTree(decorationRoot, new Vector3(maxX - 0.15f, 0f, minZ + 0.25f), "LollipopTree_SouthEast", GetThemeAccentColor(mapType, 1));
+            CreateLollipopTree(decorationRoot, new Vector3(minX + 0.2f, 0f, maxZ - 0.15f), "LollipopTree_NorthWest", GetThemeAccentColor(mapType, 2));
+            CreateBalloonCluster(decorationRoot, new Vector3(maxX - 0.3f, 0f, maxZ - 0.1f), "BalloonCluster_NorthEast");
+            CreateRoundBush(decorationRoot, new Vector3(centerX, 0f, maxZ - 0.1f), "RoundBush_NorthCenter");
+            CreateSignBoard(decorationRoot, new Vector3(centerX, 0f, minZ + 0.1f), "Sign_CandyPark");
 
-            CreateSmallCandyTree(decorationRoot, new Vector3(minX - 0.95f, 0f, centerZ - cellSize * 1.8f), "SmallTree_WestSouth");
-            CreateSmallCandyTree(decorationRoot, new Vector3(maxX + 0.95f, 0f, centerZ + cellSize * 1.7f), "SmallTree_EastNorth");
-            CreateToyBarrel(decorationRoot, new Vector3(minX - 0.5f, 0f, minZ + cellSize * 2.3f), "ToyBarrel_West");
-            CreateToyBarrel(decorationRoot, new Vector3(maxX + 0.5f, 0f, maxZ - cellSize * 2.2f), "ToyBarrel_East");
-            CreateCandyLamp(decorationRoot, new Vector3(centerX - cellSize * 2.4f, 0f, maxZ + 0.65f), "CandyLamp_NorthWest");
-            CreateCandyLamp(decorationRoot, new Vector3(centerX + cellSize * 2.3f, 0f, minZ - 0.65f), "CandyLamp_SouthEast");
-            CreateBackgroundCloud(decorationRoot, new Vector3(minX - 1.2f, 1.45f, maxZ + 0.85f), "Cloud_Background_NorthWest");
-            CreateBackgroundCloud(decorationRoot, new Vector3(maxX + 1.25f, 1.25f, minZ - 0.85f), "Cloud_Background_SouthEast");
+            CreateSmallCandyTree(decorationRoot, new Vector3(minX + 0.1f, 0f, centerZ - cellSize * 1.8f), "SmallTree_WestSouth");
+            CreateSmallCandyTree(decorationRoot, new Vector3(maxX - 0.1f, 0f, centerZ + cellSize * 1.7f), "SmallTree_EastNorth");
+            CreateToyBarrel(decorationRoot, new Vector3(minX + 0.25f, 0f, minZ + cellSize * 2.3f), "ToyBarrel_West");
+            CreateToyBarrel(decorationRoot, new Vector3(maxX - 0.25f, 0f, maxZ - cellSize * 2.2f), "ToyBarrel_East");
+            CreateCandyLamp(decorationRoot, new Vector3(centerX - cellSize * 2.4f, 0f, maxZ - 0.1f), "CandyLamp_NorthWest");
+            CreateCandyLamp(decorationRoot, new Vector3(centerX + cellSize * 2.3f, 0f, minZ + 0.1f), "CandyLamp_SouthEast");
+            CreateBackgroundCloud(decorationRoot, new Vector3(minX + 0.45f, 1.45f, maxZ - 0.05f), "Cloud_Background_NorthWest");
+            CreateBackgroundCloud(decorationRoot, new Vector3(maxX - 0.45f, 1.25f, minZ + 0.05f), "Cloud_Background_SouthEast");
         }
 
         private void CreateFenceLine(Transform parent, Vector3 center, int lengthCells, bool horizontal, string objectName)
@@ -389,19 +403,19 @@ namespace BubbleTown.Map
             CreateNeonGateLine(decorationRoot, new Vector3(minX, 0f, centerZ), mapHeight, false, "NeonGate_West");
             CreateNeonGateLine(decorationRoot, new Vector3(maxX, 0f, centerZ), mapHeight, false, "NeonGate_East");
 
-            CreateJellyCrystalCluster(decorationRoot, new Vector3(minX - 0.75f, 0f, minZ - 0.3f), "CrystalCluster_SouthWest");
-            CreateJellyCrystalCluster(decorationRoot, new Vector3(maxX + 0.75f, 0f, maxZ + 0.3f), "CrystalCluster_NorthEast");
-            CreateGlowTube(decorationRoot, new Vector3(maxX + 0.55f, 0f, minZ - 0.1f), "GlowTube_SouthEast", true);
-            CreateGlowTube(decorationRoot, new Vector3(minX - 0.55f, 0f, maxZ + 0.1f), "GlowTube_NorthWest", false);
-            CreateSignalBeacon(decorationRoot, new Vector3(centerX, 0f, maxZ + 0.55f), "SignalBeacon_North");
-            CreateSignalBeacon(decorationRoot, new Vector3(centerX, 0f, minZ - 0.55f), "SignalBeacon_South");
-            CreateEnergyBarrel(decorationRoot, new Vector3(minX - 0.62f, 0f, centerZ - cellSize * 1.7f), "EnergyBarrel_WestSouth");
-            CreateEnergyBarrel(decorationRoot, new Vector3(maxX + 0.62f, 0f, centerZ + cellSize * 1.6f), "EnergyBarrel_EastNorth");
-            CreateFloatingGlowOrb(decorationRoot, new Vector3(centerX - cellSize * 2f, 0f, maxZ + 0.72f), "FloatingOrb_NorthWest");
-            CreateFloatingGlowOrb(decorationRoot, new Vector3(centerX + cellSize * 2.1f, 0f, minZ - 0.72f), "FloatingOrb_SouthEast");
-            CreateHoloSign(decorationRoot, new Vector3(centerX, 0f, minZ - 0.85f), "HoloSign_JellyMaze");
-            CreateDataTower(decorationRoot, new Vector3(maxX + 1.1f, 0f, centerZ - cellSize * 0.3f), "DataTower_East");
-            CreateDataTower(decorationRoot, new Vector3(minX - 1.1f, 0f, centerZ + cellSize * 0.35f), "DataTower_West");
+            CreateJellyCrystalCluster(decorationRoot, new Vector3(minX + 0.2f, 0f, minZ + 0.15f), "CrystalCluster_SouthWest");
+            CreateJellyCrystalCluster(decorationRoot, new Vector3(maxX - 0.2f, 0f, maxZ - 0.15f), "CrystalCluster_NorthEast");
+            CreateGlowTube(decorationRoot, new Vector3(maxX - 0.15f, 0f, minZ + 0.15f), "GlowTube_SouthEast", true);
+            CreateGlowTube(decorationRoot, new Vector3(minX + 0.15f, 0f, maxZ - 0.15f), "GlowTube_NorthWest", false);
+            CreateSignalBeacon(decorationRoot, new Vector3(centerX, 0f, maxZ - 0.05f), "SignalBeacon_North");
+            CreateSignalBeacon(decorationRoot, new Vector3(centerX, 0f, minZ + 0.05f), "SignalBeacon_South");
+            CreateEnergyBarrel(decorationRoot, new Vector3(minX + 0.2f, 0f, centerZ - cellSize * 1.7f), "EnergyBarrel_WestSouth");
+            CreateEnergyBarrel(decorationRoot, new Vector3(maxX - 0.2f, 0f, centerZ + cellSize * 1.6f), "EnergyBarrel_EastNorth");
+            CreateFloatingGlowOrb(decorationRoot, new Vector3(centerX - cellSize * 2f, 0f, maxZ - 0.02f), "FloatingOrb_NorthWest");
+            CreateFloatingGlowOrb(decorationRoot, new Vector3(centerX + cellSize * 2.1f, 0f, minZ + 0.02f), "FloatingOrb_SouthEast");
+            CreateHoloSign(decorationRoot, new Vector3(centerX, 0f, minZ + 0.05f), "HoloSign_JellyMaze");
+            CreateDataTower(decorationRoot, new Vector3(maxX - 0.25f, 0f, centerZ - cellSize * 0.3f), "DataTower_East");
+            CreateDataTower(decorationRoot, new Vector3(minX + 0.25f, 0f, centerZ + cellSize * 0.35f), "DataTower_West");
         }
 
         private void CreateNeonGateLine(Transform parent, Vector3 center, int lengthCells, bool horizontal, string objectName)

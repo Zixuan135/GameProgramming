@@ -182,13 +182,13 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0
-    y: 0
-    width: 1
-    height: 1
+    x: 0.32
+    y: 0.08
+    width: 0.68
+    height: 0.92
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 48
+  field of view: 52
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -224,8 +224,15 @@ MonoBehaviour:
   shareCameraInLocalVS: 1
   frameAIInAIBattle: 0
   targetRefreshInterval: 0.25
-  followOffset: {x: 0, y: 10.4, z: -7.6}
-  lookAtOffset: {x: 0, y: 0.2, z: 0.55}
+  useHudSafeViewport: 1
+  gameplayViewport:
+    serializedVersion: 2
+    x: 0.32
+    y: 0.08
+    width: 0.68
+    height: 0.92
+  followOffset: {x: 0, y: 11.25, z: -8.35}
+  lookAtOffset: {x: 0, y: -0.25, z: 0.35}
   focusSmoothTime: 0.1
   followSmoothTime: 0.18
   rotationLerpSpeed: 9
@@ -234,13 +241,15 @@ MonoBehaviour:
   maxSharedZoomOut: 5.5
   zoomSmoothTime: 0.18
   clampFocusInsideMap: 1
-  soloFocusPaddingCells: {x: 2.25, y: 2.1}
-  sharedFocusPaddingCells: {x: 1.45, y: 1.3}
-  soloFocusBias: {x: 1.8, y: 0, z: 1.55}
-  sharedFocusBias: {x: 0.55, y: 0, z: 0.75}
+  soloFocusPaddingCells: {x: 1.65, y: 1.55}
+  sharedFocusPaddingCells: {x: 1.3, y: 1.15}
+  soloFocusBias: {x: 0, y: 0, z: 0.25}
+  sharedFocusBias: {x: 0, y: 0, z: 0.25}
+  soloTargetInfluence: 0
+  sharedTargetInfluence: 0
   controlledCamera: {fileID: 1002}
-  defaultFieldOfView: 48
-  minFieldOfView: 46
+  defaultFieldOfView: 52
+  minFieldOfView: 50.5
   sharedFieldOfViewBoost: 0.65
   maxFieldOfView: 62
   lensSmoothTime: 0.18
@@ -432,7 +441,7 @@ MonoBehaviour:
   generateGroundTiles: 1
   generateWalls: 1
   generateDecorations: 1
-  decorationOuterPadding: 1.35
+  decorationOuterPadding: 0.85
 --- !u!114 &1033
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -687,6 +696,10 @@ MonoBehaviour:
   player2Color: {r: 1, g: 0.45, b: 0.26, a: 1}
   aiColor: {r: 0.64, g: 0.46, b: 1, a: 1}
   neutralColor: {r: 1, g: 0.82, b: 0.32, a: 1}
+  drawLeftHudSafeBackground: 1
+  leftHudSafeWidthNormalized: 0.32
+  gameplayBottomFillNormalized: 0.08
+  hudSafeBackgroundColor: {r: 0.74, g: 0.93, b: 1, a: 1}
 --- !u!1001 &9493359
 PrefabInstance:
   m_ObjectHideFlags: 0
