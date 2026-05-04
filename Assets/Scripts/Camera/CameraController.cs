@@ -1,5 +1,6 @@
 using BubbleTown.Core.Enums;
 using BubbleTown.Managers;
+using BubbleTown.Map;
 using UnityEngine;
 
 namespace BubbleTown.CameraSystem
@@ -19,8 +20,8 @@ namespace BubbleTown.CameraSystem
         [SerializeField, Min(0.05f)] private float targetRefreshInterval = 0.25f;
 
         [Header("View")]
-        [SerializeField] private Vector3 followOffset = new Vector3(0f, 11.5f, -8.5f);
-        [SerializeField] private Vector3 lookAtOffset = new Vector3(0f, 0.2f, 0.35f);
+        [SerializeField] private Vector3 followOffset = new Vector3(0f, 10.4f, -7.6f);
+        [SerializeField] private Vector3 lookAtOffset = new Vector3(0f, 0.2f, 0.55f);
         [SerializeField, Min(0.01f)] private float focusSmoothTime = 0.1f;
         [SerializeField, Min(0.01f)] private float followSmoothTime = 0.18f;
         [SerializeField, Min(0f)] private float rotationLerpSpeed = 9f;
@@ -29,10 +30,17 @@ namespace BubbleTown.CameraSystem
         [SerializeField, Min(0f)] private float maxSharedZoomOut = 5.5f;
         [SerializeField, Min(0.01f)] private float zoomSmoothTime = 0.18f;
 
+        [Header("Framing")]
+        [SerializeField] private bool clampFocusInsideMap = true;
+        [SerializeField] private Vector2 soloFocusPaddingCells = new Vector2(2.25f, 2.1f);
+        [SerializeField] private Vector2 sharedFocusPaddingCells = new Vector2(1.45f, 1.3f);
+        [SerializeField] private Vector3 soloFocusBias = new Vector3(1.8f, 0f, 1.55f);
+        [SerializeField] private Vector3 sharedFocusBias = new Vector3(0.55f, 0f, 0.75f);
+
         [Header("Lens")]
         [SerializeField] private Camera controlledCamera;
-        [SerializeField, Min(1f)] private float defaultFieldOfView = 50f;
-        [SerializeField, Min(1f)] private float minFieldOfView = 48f;
+        [SerializeField, Min(1f)] private float defaultFieldOfView = 48f;
+        [SerializeField, Min(1f)] private float minFieldOfView = 46f;
         [SerializeField, Min(0f)] private float sharedFieldOfViewBoost = 0.65f;
         [SerializeField, Min(1f)] private float maxFieldOfView = 62f;
         [SerializeField, Min(0.01f)] private float lensSmoothTime = 0.18f;
@@ -63,6 +71,7 @@ namespace BubbleTown.CameraSystem
         private float shakeMagnitude;
         private float shakeSeedX;
         private float shakeSeedY;
+        private MapManager cachedMapManager;
 
         public static CameraController ActiveCamera => activeCamera;
         public Transform PrimaryTarget => primaryTarget;
@@ -100,6 +109,7 @@ namespace BubbleTown.CameraSystem
                 FindSceneTargets();
             }
 
+            RefreshMapManagerReference();
             ApplyLens(defaultFieldOfView, true);
             SnapToTarget();
         }
@@ -111,6 +121,7 @@ namespace BubbleTown.CameraSystem
                 TickTargetRefresh();
             }
 
+            RefreshMapManagerReference();
             if (!IsValidTarget(primaryTarget))
             {
                 return;
@@ -203,6 +214,7 @@ namespace BubbleTown.CameraSystem
 
         private void FindSceneTargets()
         {
+            RefreshMapManagerReference();
             GameManager gameManager = GameManager.Instance;
             if (gameManager != null)
             {
@@ -276,12 +288,18 @@ namespace BubbleTown.CameraSystem
 
         private Vector3 ResolveFocusPoint(bool useSharedView)
         {
+            Vector3 focusPoint;
             if (!useSharedView)
             {
-                return primaryTarget.position;
+                focusPoint = primaryTarget.position;
+            }
+            else
+            {
+                focusPoint = (primaryTarget.position + secondaryTarget.position) * 0.5f;
             }
 
-            return (primaryTarget.position + secondaryTarget.position) * 0.5f;
+            focusPoint += ResolveFocusBias(useSharedView);
+            return ClampFocusPointToMap(focusPoint, useSharedView);
         }
 
         private Vector3 ResolveSmoothedFocusPoint(Vector3 targetFocusPoint)
@@ -318,6 +336,75 @@ namespace BubbleTown.CameraSystem
         {
             Vector3 offsetDirection = followOffset.sqrMagnitude > Mathf.Epsilon ? followOffset.normalized : Vector3.back;
             return focusPoint + followOffset + offsetDirection * zoomOut;
+        }
+
+        private void RefreshMapManagerReference()
+        {
+            if (cachedMapManager != null)
+            {
+                return;
+            }
+
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager != null && gameManager.ActiveMapManager != null)
+            {
+                cachedMapManager = gameManager.ActiveMapManager;
+                return;
+            }
+
+            cachedMapManager = FindObjectOfType<MapManager>();
+        }
+
+        private Vector3 ClampFocusPointToMap(Vector3 focusPoint, bool useSharedView)
+        {
+            if (!clampFocusInsideMap)
+            {
+                return focusPoint;
+            }
+
+            RefreshMapManagerReference();
+            if (cachedMapManager == null)
+            {
+                return focusPoint;
+            }
+
+            float cellSize = Mathf.Max(0.1f, cachedMapManager.CellSize);
+            float mapMinX = 0f;
+            float mapMinZ = 0f;
+            float mapMaxX = Mathf.Max(0f, (cachedMapManager.MapWidth - 1) * cellSize);
+            float mapMaxZ = Mathf.Max(0f, (cachedMapManager.MapHeight - 1) * cellSize);
+
+            Vector2 paddingCells = useSharedView ? sharedFocusPaddingCells : soloFocusPaddingCells;
+            float paddingX = Mathf.Max(0f, paddingCells.x) * cellSize;
+            float paddingZ = Mathf.Max(0f, paddingCells.y) * cellSize;
+
+            float minFocusX = mapMinX + paddingX;
+            float maxFocusX = mapMaxX - paddingX;
+            float minFocusZ = mapMinZ + paddingZ;
+            float maxFocusZ = mapMaxZ - paddingZ;
+
+            if (minFocusX > maxFocusX)
+            {
+                float mapCenterX = (mapMinX + mapMaxX) * 0.5f;
+                minFocusX = mapCenterX;
+                maxFocusX = mapCenterX;
+            }
+
+            if (minFocusZ > maxFocusZ)
+            {
+                float mapCenterZ = (mapMinZ + mapMaxZ) * 0.5f;
+                minFocusZ = mapCenterZ;
+                maxFocusZ = mapCenterZ;
+            }
+
+            focusPoint.x = Mathf.Clamp(focusPoint.x, minFocusX, maxFocusX);
+            focusPoint.z = Mathf.Clamp(focusPoint.z, minFocusZ, maxFocusZ);
+            return focusPoint;
+        }
+
+        private Vector3 ResolveFocusBias(bool useSharedView)
+        {
+            return useSharedView ? sharedFocusBias : soloFocusBias;
         }
 
         private void RotateToward(Vector3 lookPoint)
