@@ -30,6 +30,7 @@ namespace BubbleTown.Core
 
         public const string SceneMainMenu = "MainMenu";
         public const string SceneModeSelect = "ModeSelect";
+        public const string SceneCharacterSelect = "CharacterSelect";
         public const string SceneMapSelect = "MapSelect";
         public const string SceneBattle = "Battle";
         public const string SceneResult = "Result";
