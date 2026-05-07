@@ -173,7 +173,7 @@ namespace BubbleTown.UI
         public void OnClickBack()
         {
             AudioManager.Instance?.PlayButtonClickSFX();
-            SceneFlowManager.Instance?.LoadModeSelect();
+            SceneFlowManager.Instance?.LoadCharacterSelect();
         }
 
         private string FormatMapName(BattleMapType mapType)

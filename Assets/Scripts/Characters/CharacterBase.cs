@@ -256,6 +256,38 @@ namespace BubbleTown.Characters
             mapManager?.SetCharacter(currentGridPosition);
         }
 
+        public virtual void ApplyCharacterData(CharacterData characterData)
+        {
+            if (characterData == null)
+            {
+                return;
+            }
+
+            SetMoveSpeed(characterData.MoveSpeed);
+            SetMaxBombCount(characterData.MaxBombCount);
+            SetBombRange(characterData.ExplosionRange);
+        }
+
+        public virtual void ReplaceVisual(GameObject visualPrefab)
+        {
+            if (visualPrefab == null)
+            {
+                return;
+            }
+
+            if (visualRoot != null && visualRoot != transform)
+            {
+                Destroy(visualRoot.gameObject);
+            }
+
+            GameObject visualInstance = Instantiate(visualPrefab, transform);
+            visualInstance.name = visualPrefab.name;
+            visualInstance.transform.localPosition = Vector3.zero;
+            visualInstance.transform.localRotation = Quaternion.identity;
+            visualInstance.transform.localScale = Vector3.one;
+            visualRoot = visualInstance.transform;
+        }
+
         public virtual Vector2Int WorldToGrid(Vector3 worldPosition)
         {
             if (mapManager != null)
