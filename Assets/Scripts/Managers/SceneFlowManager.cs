@@ -6,7 +6,7 @@ namespace BubbleTown.Managers
 {
     /// <summary>
     /// Handles scene transitions for the fixed flow:
-    /// MainMenu -> ModeSelect -> MapSelect -> Battle -> Result.
+    /// MainMenu -> ModeSelect -> CharacterSelect -> MapSelect -> Battle -> Result.
     /// </summary>
     public class SceneFlowManager : MonoBehaviour
     {
@@ -53,6 +53,7 @@ namespace BubbleTown.Managers
 
         public void LoadMainMenu() => LoadScene(GameConstants.SceneMainMenu);
         public void LoadModeSelect() => LoadScene(GameConstants.SceneModeSelect);
+        public void LoadCharacterSelect() => LoadScene(GameConstants.SceneCharacterSelect);
         public void LoadMapSelect() => LoadScene(GameConstants.SceneMapSelect);
         public void LoadBattle()
         {

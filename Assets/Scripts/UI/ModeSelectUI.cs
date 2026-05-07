@@ -116,7 +116,7 @@ namespace BubbleTown.UI
         {
             AudioManager.Instance?.PlayButtonClickSFX();
             GameManager.Instance?.SetGameMode(mode);
-            SceneFlowManager.Instance?.LoadMapSelect();
+            SceneFlowManager.Instance?.LoadCharacterSelect();
         }
 
         public void OnClickBack()

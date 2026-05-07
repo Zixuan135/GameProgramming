@@ -8,13 +8,14 @@ The project currently uses low-cost placeholder art and procedural Unity primiti
 
 - 3D angled overhead battle view
 - Cute chibi-style placeholder characters and candy-themed arenas
+- Original chibi hero selection before entering a map
 - Grid-based movement on the XZ plane
 - Bubble bombs with countdowns, cross-shaped explosions, hard-wall blocking, soft-block destruction, and chain reactions
 - Power-ups for bomb count, blast range, movement speed, shield, and temporary invincibility
 - SinglePlayer route objective: blast through soft blocks and reach the exit marker
 - AI Battle mode with a basic grid-aware opponent
 - Local VS mode with shared-keyboard controls and Best of 3 scoring
-- Player-facing menu flow: Main Menu, Mode Select, Map Select, Battle, Result
+- Player-facing menu flow: Main Menu, Mode Select, Character Select, Map Select, Battle, Result
 - Battle HUD with mode, map, timer, objective, player stats, item guide, retry, and main menu actions
 - Built-in placeholder BGM/SFX with settings for volume, mute, and screen shake
 
@@ -65,7 +66,7 @@ These sounds are placeholders and can be replaced later with final original or l
 1. Open the project with Unity 2022.3 LTS.
 2. Open `Assets/Scenes/MainMenu.unity`.
 3. Press Play.
-4. Use `Start Game` to choose a mode and map.
+4. Use `Start Game` to choose a mode, character, and map.
 5. Use `Guide` for controls and `Settings` for audio/game-feel options.
 
 ## Current Prototype Status
@@ -82,7 +83,7 @@ Assets/
   Materials/             Character, gameplay, map, and UI materials
   Prefabs/               Gameplay, character, map, environment, and UI prefabs
   Resources/Audio/       Auto-loaded placeholder BGM and SFX
-  Scenes/                MainMenu, ModeSelect, MapSelect, Battle, Result
+  Scenes/                MainMenu, ModeSelect, CharacterSelect, MapSelect, Battle, Result
   Scripts/               Gameplay, map, UI, camera, AI, managers, visuals
   UI/                    UI-related assets
 
@@ -100,6 +101,7 @@ Docs/                    Art direction, map themes, and visual style notes
 ## Roadmap
 
 - Replace placeholder audio with final original or licensed sound assets
+- Expand the original character roster with stronger silhouettes and icons
 - Replace primitive placeholder art with stronger reusable prefabs
 - Improve AI behavior and game balance
 - Polish menus, HUD, result screen, and feedback animations

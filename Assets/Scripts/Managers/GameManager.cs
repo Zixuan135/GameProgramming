@@ -79,6 +79,15 @@ namespace BubbleTown.Managers
         [SerializeField, Min(0)] private int singlePlayerCurrentGoalDistance;
         [SerializeField] private bool singlePlayerObjectiveComplete;
 
+        [Header("Character Selection")]
+        [SerializeField] private string selectedPlayer1CharacterId = "bubble_ranger";
+        [SerializeField] private string selectedPlayer2CharacterId = "candy_sprout";
+        [SerializeField] private string selectedAICharacterId = "robo_pop";
+        [SerializeField] private CharacterData selectedPlayer1Character;
+        [SerializeField] private CharacterData selectedPlayer2Character;
+        [SerializeField] private CharacterData selectedAICharacter;
+        [SerializeField] private bool randomizeAICharacterOnBattleStart = true;
+
         [Header("Runtime References")]
         [SerializeField] private MapManager activeMapManager;
         [SerializeField] private PlayerController player1;
@@ -123,6 +132,30 @@ namespace BubbleTown.Managers
         public string SinglePlayerObjectiveProgressLabel => singlePlayerObjectiveComplete
             ? "EXIT REACHED"
             : $"{SinglePlayerGoalDistance} tiles";
+        public CharacterData SelectedPlayer1Character
+        {
+            get
+            {
+                EnsureCharacterSelections();
+                return selectedPlayer1Character;
+            }
+        }
+        public CharacterData SelectedPlayer2Character
+        {
+            get
+            {
+                EnsureCharacterSelections();
+                return selectedPlayer2Character;
+            }
+        }
+        public CharacterData SelectedAICharacter
+        {
+            get
+            {
+                EnsureCharacterSelections();
+                return selectedAICharacter;
+            }
+        }
 
         private void Awake()
         {
@@ -170,6 +203,33 @@ namespace BubbleTown.Managers
         public void SetMapType(BattleMapType mapType)
         {
             currentMapType = mapType;
+        }
+
+        public void SetPlayer1Character(CharacterData characterData)
+        {
+            selectedPlayer1Character = ResolveCharacterOrDefault(characterData, 0);
+            selectedPlayer1CharacterId = selectedPlayer1Character != null ? selectedPlayer1Character.CharacterId : string.Empty;
+            EnsureDifferentLocalVsCharacters();
+        }
+
+        public void SetPlayer2Character(CharacterData characterData)
+        {
+            selectedPlayer2Character = ResolveCharacterOrDefault(characterData, 1);
+            selectedPlayer2CharacterId = selectedPlayer2Character != null ? selectedPlayer2Character.CharacterId : string.Empty;
+            EnsureDifferentLocalVsCharacters();
+        }
+
+        public void SetAICharacter(CharacterData characterData)
+        {
+            selectedAICharacter = ResolveCharacterOrDefault(characterData, 2);
+            selectedAICharacterId = selectedAICharacter != null ? selectedAICharacter.CharacterId : string.Empty;
+        }
+
+        public void RandomizeAICharacter()
+        {
+            EnsureCharacterSelections();
+            CharacterData randomCharacter = CharacterRoster.GetRandomDifferent(selectedPlayer1Character);
+            SetAICharacter(randomCharacter);
         }
 
         public void SetGameState(GameState gameState)
@@ -366,6 +426,7 @@ namespace BubbleTown.Managers
             activeMapManager.InitializeGridData();
             activeMapManager.GenerateMap();
             ConfigureSinglePlayerObjective();
+            EnsureCharacterSelectionsForBattle();
 
             Transform bombSpawnRoot = ResolveBombSpawnRoot();
             BombController bombPrefab = player1.BombPrefab;
@@ -516,6 +577,9 @@ namespace BubbleTown.Managers
                 case GameConstants.SceneModeSelect:
                     currentGameState = GameState.ModeSelect;
                     break;
+                case GameConstants.SceneCharacterSelect:
+                    currentGameState = GameState.CharacterSelect;
+                    break;
                 case GameConstants.SceneMapSelect:
                     currentGameState = GameState.MapSelect;
                     break;
@@ -590,6 +654,7 @@ namespace BubbleTown.Managers
         private void SetupPlayer1(Transform bombSpawnRoot, BombController bombPrefab)
         {
             player1.gameObject.SetActive(true);
+            ApplyCharacterSelection(player1, selectedPlayer1Character, Player1ObjectName);
             player1.ConfigureForBattle(
                 activeMapManager,
                 activeMapManager.GetPlayer1SpawnGrid(),
@@ -611,6 +676,7 @@ namespace BubbleTown.Managers
                 return;
             }
 
+            ApplyCharacterSelection(player2, selectedPlayer2Character, Player2ObjectName);
             player2.ConfigureForBattle(
                 activeMapManager,
                 activeMapManager.GetPlayer2SpawnGrid(),
@@ -637,11 +703,94 @@ namespace BubbleTown.Managers
                 return;
             }
 
+            ApplyCharacterSelection(aiPlayer, selectedAICharacter, AIObjectName);
             aiPlayer.ConfigureForBattle(
                 activeMapManager,
                 activeMapManager.GetAISpawnGrid(),
                 bombSpawnRoot,
                 bombPrefab);
+        }
+
+        private void EnsureCharacterSelectionsForBattle()
+        {
+            EnsureCharacterSelections();
+            if (currentGameMode == GameMode.AIBattle && randomizeAICharacterOnBattleStart)
+            {
+                RandomizeAICharacter();
+            }
+        }
+
+        private void EnsureCharacterSelections()
+        {
+            selectedPlayer1Character = ResolveCharacterByIdOrDefault(
+                selectedPlayer1Character,
+                selectedPlayer1CharacterId,
+                0);
+            selectedPlayer1CharacterId = selectedPlayer1Character != null ? selectedPlayer1Character.CharacterId : string.Empty;
+
+            selectedPlayer2Character = ResolveCharacterByIdOrDefault(
+                selectedPlayer2Character,
+                selectedPlayer2CharacterId,
+                1);
+            selectedPlayer2CharacterId = selectedPlayer2Character != null ? selectedPlayer2Character.CharacterId : string.Empty;
+
+            selectedAICharacter = ResolveCharacterByIdOrDefault(
+                selectedAICharacter,
+                selectedAICharacterId,
+                2);
+            selectedAICharacterId = selectedAICharacter != null ? selectedAICharacter.CharacterId : string.Empty;
+
+            EnsureDifferentLocalVsCharacters();
+        }
+
+        private CharacterData ResolveCharacterOrDefault(CharacterData characterData, int preferredIndex)
+        {
+            return characterData != null ? characterData : CharacterRoster.GetDefaultCharacter(preferredIndex);
+        }
+
+        private CharacterData ResolveCharacterByIdOrDefault(
+            CharacterData currentCharacter,
+            string characterId,
+            int preferredIndex)
+        {
+            if (currentCharacter != null)
+            {
+                return currentCharacter;
+            }
+
+            CharacterData characterFromId = CharacterRoster.FindById(characterId);
+            return characterFromId != null ? characterFromId : CharacterRoster.GetDefaultCharacter(preferredIndex);
+        }
+
+        private void EnsureDifferentLocalVsCharacters()
+        {
+            if (currentGameMode != GameMode.LocalVS ||
+                selectedPlayer1Character == null ||
+                selectedPlayer2Character == null ||
+                selectedPlayer1Character != selectedPlayer2Character)
+            {
+                return;
+            }
+
+            selectedPlayer2Character = CharacterRoster.GetNextDifferent(selectedPlayer1Character);
+            selectedPlayer2CharacterId = selectedPlayer2Character != null ? selectedPlayer2Character.CharacterId : string.Empty;
+        }
+
+        private void ApplyCharacterSelection(CharacterBase character, CharacterData characterData, string roleObjectName)
+        {
+            if (character == null || characterData == null)
+            {
+                return;
+            }
+
+            character.gameObject.name = roleObjectName;
+            character.ReplaceVisual(characterData.Prefab);
+            character.ApplyCharacterData(characterData);
+
+            if (logBattleSetup)
+            {
+                Debug.Log($"[GameManager] Applied character '{characterData.DisplayName}' to {roleObjectName}.");
+            }
         }
 
         private void ApplySpawnProtectionToActiveCharacters(float protectionSeconds)
@@ -670,18 +819,14 @@ namespace BubbleTown.Managers
             }
 
             Transform charactersRoot = ResolveCharactersRoot();
-            GameObject aiObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            GameObject aiObject = new GameObject(AIObjectName);
             aiObject.name = AIObjectName;
             aiObject.transform.SetParent(charactersRoot);
-            aiObject.transform.localScale = new Vector3(0.8f, 0.8f, 0.8f);
+            aiObject.transform.localScale = Vector3.one;
 
-            MeshRenderer renderer = aiObject.GetComponent<MeshRenderer>();
-            if (renderer != null)
-            {
-                Material aiMaterial = new Material(Shader.Find("Standard"));
-                aiMaterial.color = new Color(1f, 0.42f, 0.35f);
-                renderer.sharedMaterial = aiMaterial;
-            }
+            BoxCollider collider = aiObject.AddComponent<BoxCollider>();
+            collider.size = new Vector3(0.72f, 1.1f, 0.72f);
+            collider.center = new Vector3(0f, 0.05f, 0f);
 
             aiPlayer = aiObject.AddComponent<AIController>();
             return aiPlayer;
