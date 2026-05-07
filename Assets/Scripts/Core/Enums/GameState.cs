@@ -13,6 +13,7 @@ namespace BubbleTown.Core.Enums
         BattleRunning = 5,
         BattleFinished = 6,
         Result = 7,
-        Paused = 8
+        Paused = 8,
+        CharacterSelect = 9
     }
 }
