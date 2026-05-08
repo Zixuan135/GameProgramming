@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8f5e0972c9644b5499de2ef9d4bd48de, type: 3}
-  m_Name: CharacterData_RoboPop
+  m_Name: CharacterData_FrogHopper
   m_EditorClassIdentifier: 
-  characterId: robo_pop
-  displayName: Robo Pop
-  prefab: {fileID: 100100000, guid: ce937bc90bf9940d1a37de4b4d925cce, type: 3}
+  characterId: frog_hopper
+  displayName: Frog Hopper
+  prefab: {fileID: 1073613160431382842, guid: 16bb1f2907f047da8830efe2d1026970, type: 3}
   icon: {fileID: 0}
-  themeColor: {r: 1, g: 0.56, b: 0.16, a: 1}
+  themeColor: {r: 0.32, g: 0.84, b: 0.32, a: 1}
   moveSpeed: 4
   maxBombCount: 1
   explosionRange: 2

@@ -129,9 +129,37 @@ namespace BubbleTown.Characters
 
         private static int CompareCharactersByName(CharacterData left, CharacterData right)
         {
+            int leftPriority = GetCharacterPriority(left);
+            int rightPriority = GetCharacterPriority(right);
+            if (leftPriority != rightPriority)
+            {
+                return leftPriority.CompareTo(rightPriority);
+            }
+
             string leftName = left != null ? left.DisplayName : string.Empty;
             string rightName = right != null ? right.DisplayName : string.Empty;
             return string.Compare(leftName, rightName, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static int GetCharacterPriority(CharacterData character)
+        {
+            switch (character != null ? character.CharacterId : string.Empty)
+            {
+                case "bubble_ranger":
+                    return 0;
+                case "bear_blaster":
+                    return 1;
+                case "frog_hopper":
+                    return 2;
+                case "gear_kid":
+                    return 3;
+                case "bunny_pop":
+                    return 4;
+                case "star_mage":
+                    return 5;
+                default:
+                    return 100;
+            }
         }
     }
 }

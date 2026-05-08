@@ -24,10 +24,7 @@ namespace BubbleTown.UI
 
         private GUIStyle titleStyle;
         private GUIStyle titleShadowStyle;
-        private GUIStyle hintStyle;
-        private GUIStyle pillStyle;
         private GUIStyle cardTitleStyle;
-        private GUIStyle cardBodyStyle;
         private GUIStyle slotStyle;
         private GUIStyle smallPillStyle;
         private GUIStyle lockedLabelStyle;
@@ -53,12 +50,12 @@ namespace BubbleTown.UI
 
             Rect panel = SimpleUIFactory.CenteredRect(980f, 600f);
             DrawPanelFrame(panel);
-            DrawHeader(panel, mode);
+            DrawHeader(panel);
 
-            Rect slotRect = new Rect(panel.x + 42f, panel.y + 164f, panel.width - 84f, 54f);
+            Rect slotRect = new Rect(panel.x + 150f, panel.y + 104f, panel.width - 300f, 38f);
             DrawSlotSelector(slotRect, mode);
 
-            Rect rosterRect = new Rect(panel.x + 42f, panel.y + 236f, panel.width - 84f, panel.height - 338f);
+            Rect rosterRect = new Rect(panel.x + 48f, panel.y + 150f, panel.width - 96f, panel.height - 280f);
             DrawRoster(rosterRect, mode);
 
             DrawBottomButtons(panel);
@@ -99,31 +96,11 @@ namespace BubbleTown.UI
             DrawBubble(new Rect(panel.x + panel.width - 180f + Mathf.Sin(t * 0.9f) * 4f, panel.y + panel.height - 138f, 42f, 42f), new Color(0.7f, 1f, 0.5f, 0.2f));
         }
 
-        private void DrawHeader(Rect panel, GameMode mode)
+        private void DrawHeader(Rect panel)
         {
-            Rect pillRect = new Rect(panel.x + panel.width * 0.5f - 250f, panel.y + 28f, 500f, 30f);
-            DrawRoundedRect(pillRect, new Color(0.12f, 0.74f, 1f, 1f), Color.white, 15, 2);
-            GUI.Label(pillRect, "ORIGINAL CHIBI HEROES", pillStyle);
-
-            Rect titleRect = new Rect(panel.x + 70f, panel.y + 64f, panel.width - 140f, 54f);
+            Rect titleRect = new Rect(panel.x + 70f, panel.y + 34f, panel.width - 140f, 56f);
             GUI.Label(new Rect(titleRect.x + 4f, titleRect.y + 4f, titleRect.width, titleRect.height), "Choose Character", titleShadowStyle);
             GUI.Label(titleRect, "Choose Character", titleStyle);
-
-            Rect hintRect = new Rect(panel.x + 110f, panel.y + 124f, panel.width - 220f, 24f);
-            GUI.Label(hintRect, BuildModeHint(mode), hintStyle);
-        }
-
-        private string BuildModeHint(GameMode mode)
-        {
-            switch (mode)
-            {
-                case GameMode.LocalVS:
-                    return "Pick different heroes for Player 1 and Player 2.";
-                case GameMode.AIBattle:
-                    return "Pick your hero. The AI will bring a random rival.";
-                default:
-                    return "Pick the hero look you like before choosing a map.";
-            }
         }
 
         private void DrawSlotSelector(Rect rect, GameMode mode)
@@ -163,14 +140,13 @@ namespace BubbleTown.UI
             Color border = isActive && canSelect
                 ? Color.Lerp(accent, Color.white, 0.24f)
                 : Color.Lerp(accent, Color.white, 0.42f);
-            DrawRoundedRect(new Rect(rect.x + 4f, rect.y + 6f, rect.width, rect.height), new Color(0.05f, 0.22f, 0.32f, 0.26f), Color.clear, 18, 0);
+            DrawRoundedRect(new Rect(rect.x + 4f, rect.y + 5f, rect.width, rect.height), new Color(0.05f, 0.22f, 0.32f, 0.26f), Color.clear, 18, 0);
             DrawRoundedRect(rect, fill, border, 18, isActive && canSelect ? 4 : 2);
-            DrawRoundedRect(new Rect(rect.x + 12f, rect.y + 9f, 9f, rect.height - 18f), accent, Color.clear, 5, 0);
-            GUI.Label(new Rect(rect.x + 34f, rect.y + 7f, rect.width - 52f, 20f), label, slotStyle);
+            DrawRoundedRect(new Rect(rect.x + 12f, rect.y + 8f, 9f, rect.height - 16f), accent, Color.clear, 5, 0);
             GUI.Label(
-                new Rect(rect.x + 34f, rect.y + 29f, rect.width - 52f, 18f),
-                character != null ? character.DisplayName : "Random",
-                cardBodyStyle);
+                new Rect(rect.x + 32f, rect.y + 6f, rect.width - 48f, rect.height - 12f),
+                $"{label}: {(character != null ? character.DisplayName : "Random")}",
+                slotStyle);
 
             if (canSelect && GUI.Button(rect, GUIContent.none, GUIStyle.none))
             {
@@ -237,49 +213,72 @@ namespace BubbleTown.UI
                 ? new Color(1f, 0.98f, 0.76f, 1f)
                 : isHovering ? new Color(1f, 0.96f, 0.78f, 1f) : new Color(1f, 0.92f, 0.66f, 1f);
 
-            Matrix4x4 previousMatrix = GUI.matrix;
-            float scale = isHovering ? 1.012f + Mathf.Sin(Time.unscaledTime * 8f) * 0.003f : 1f;
-            if (!Mathf.Approximately(scale, 1f))
-            {
-                GUIUtility.ScaleAroundPivot(new Vector2(scale, scale), rect.center);
-            }
-
             DrawRoundedRect(new Rect(rect.x + 5f, rect.y + 8f, rect.width, rect.height), new Color(0.05f, 0.22f, 0.32f, 0.3f), Color.clear, 22, 0);
             DrawRoundedRect(rect, fill, Color.Lerp(accent, Color.white, isSelected ? 0.08f : 0.28f), 22, isSelected ? 5 : 3);
-            DrawRoundedRect(new Rect(rect.x + 18f, rect.y + 13f, rect.width - 36f, 8f), new Color(1f, 1f, 1f, 0.34f), Color.clear, 6, 0);
+            DrawRoundedRect(new Rect(rect.x + 18f, rect.y + 12f, rect.width - 36f, 8f), new Color(1f, 1f, 1f, 0.34f), Color.clear, 6, 0);
 
-            float nameHeight = 30f;
-            float nameY = rect.y + rect.height - 42f;
-            float iconTop = rect.y + 24f;
-            float iconBottomLimit = nameY - 18f;
-            float iconSize = Mathf.Clamp(iconBottomLimit - iconTop, 64f, 94f);
-            Rect iconBackRect = new Rect(rect.x + rect.width * 0.5f - iconSize * 0.62f, iconTop - 2f, iconSize * 1.24f, iconSize * 1.02f);
+            Rect contentRect = new Rect(rect.x + 22f, rect.y + 30f, rect.width - 44f, rect.height - 54f);
+            float iconAreaWidth = Mathf.Min(100f, contentRect.width * 0.38f);
+            Rect iconArea = new Rect(contentRect.x, contentRect.y, iconAreaWidth, contentRect.height);
+            float iconHeight = Mathf.Clamp(iconArea.height - 8f, 76f, 92f);
+            float iconWidth = iconHeight * 0.88f;
+            Rect iconRect = new Rect(
+                iconArea.x + (iconArea.width - iconWidth) * 0.5f,
+                iconArea.y + (iconArea.height - iconHeight) * 0.5f,
+                iconWidth,
+                iconHeight);
+            Rect iconBackRect = new Rect(iconRect.x - 9f, iconRect.y - 7f, iconRect.width + 18f, iconRect.height + 14f);
             DrawBubble(iconBackRect, new Color(accent.r, accent.g, accent.b, 0.16f));
-            Rect iconRect = new Rect(rect.x + rect.width * 0.5f - iconSize * 0.5f, iconTop, iconSize, iconSize * 0.92f);
             DrawCharacterIcon(iconRect, character);
 
-            Rect namePillRect = new Rect(rect.x + 24f, nameY, rect.width - 48f, nameHeight);
+            Rect nameArea = new Rect(iconArea.xMax + 16f, contentRect.y, contentRect.xMax - iconArea.xMax - 16f, contentRect.height);
+            const float nameHeight = 70f;
+            Rect namePillRect = new Rect(
+                nameArea.x,
+                nameArea.y + (nameArea.height - nameHeight) * 0.5f,
+                nameArea.width,
+                nameHeight);
             DrawRoundedRect(namePillRect, new Color(1f, 0.98f, 0.84f, 0.92f), Color.Lerp(accent, Color.white, 0.28f), 18, 2);
-            GUI.Label(namePillRect, character.DisplayName, cardTitleStyle);
+            GUI.Label(namePillRect, BuildTwoLineName(character.DisplayName), cardTitleStyle);
 
             if (isSelected)
             {
-                DrawRoundedRect(new Rect(rect.x + rect.width - 76f, rect.y + 16f, 58f, 23f), accent, Color.white, 12, 2);
-                GUI.Label(new Rect(rect.x + rect.width - 76f, rect.y + 16f, 58f, 23f), "READY", smallPillStyle);
+                Rect readyRect = new Rect(rect.x + 24f, rect.y + 9f, 58f, 22f);
+                DrawRoundedRect(readyRect, accent, Color.white, 12, 2);
+                GUI.Label(readyRect, "READY", smallPillStyle);
             }
             else if (isTaken)
             {
-                DrawRoundedRect(new Rect(rect.x + rect.width - 76f, rect.y + 16f, 58f, 23f), new Color(0.72f, 0.72f, 0.68f, 1f), Color.white, 12, 2);
-                GUI.Label(new Rect(rect.x + rect.width - 76f, rect.y + 16f, 58f, 23f), "PICKED", smallPillStyle);
+                Rect pickedRect = new Rect(rect.x + 24f, rect.y + 9f, 62f, 22f);
+                DrawRoundedRect(pickedRect, new Color(0.72f, 0.72f, 0.68f, 1f), Color.white, 12, 2);
+                GUI.Label(pickedRect, "PICKED", smallPillStyle);
             }
 
             bool clicked = GUI.Button(rect, GUIContent.none, GUIStyle.none);
-            GUI.matrix = previousMatrix;
 
             if (clicked)
             {
                 HandleCharacterClicked(character, isTaken);
             }
+        }
+
+        private string BuildTwoLineName(string displayName)
+        {
+            if (string.IsNullOrWhiteSpace(displayName))
+            {
+                return "Unknown\nHero";
+            }
+
+            string[] words = displayName.Trim().Split(' ');
+            if (words.Length <= 1)
+            {
+                return displayName;
+            }
+
+            int splitIndex = Mathf.CeilToInt(words.Length * 0.5f);
+            string firstLine = string.Join(" ", words, 0, splitIndex);
+            string secondLine = string.Join(" ", words, splitIndex, words.Length - splitIndex);
+            return $"{firstLine}\n{secondLine}";
         }
 
         private void HandleCharacterClicked(CharacterData character, bool isTakenByOtherPlayer)
@@ -309,12 +308,12 @@ namespace BubbleTown.UI
 
         private void DrawBottomButtons(Rect panel)
         {
-            const float buttonHeight = 52f;
+            const float buttonHeight = 50f;
             const float horizontalPadding = 56f;
             const float buttonGap = 16f;
 
             float buttonWidth = (panel.width - horizontalPadding * 2f - buttonGap) * 0.5f;
-            float buttonY = panel.y + panel.height - 78f;
+            float buttonY = panel.y + panel.height - 70f;
             Rect backRect = new Rect(panel.x + horizontalPadding, buttonY, buttonWidth, buttonHeight);
             Rect continueRect = new Rect(panel.x + horizontalPadding + buttonWidth + buttonGap, buttonY, buttonWidth, buttonHeight);
 
@@ -350,12 +349,20 @@ namespace BubbleTown.UI
             Color accent = character.ThemeColor;
             Color skin = new Color(1f, 0.86f, 0.62f, 1f);
             Color outline = Color.Lerp(accent, new Color(0.07f, 0.18f, 0.24f, 1f), 0.36f);
+            Color lightAccent = Color.Lerp(accent, Color.white, 0.32f);
+            Color darkAccent = Color.Lerp(accent, new Color(0.07f, 0.18f, 0.24f, 1f), 0.42f);
 
+            DrawCharacterAccessory(rect, character, accent, lightAccent, darkAccent, bob);
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.34f, rect.y + rect.height * 0.66f + bob, rect.width * 0.34f, rect.height * 0.29f), outline, Color.clear, Mathf.RoundToInt(rect.height * 0.09f), 0);
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.37f, rect.y + rect.height * 0.62f + bob, rect.width * 0.28f, rect.height * 0.33f), accent, Color.clear, Mathf.RoundToInt(rect.height * 0.09f), 0);
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.2f, rect.y + rect.height * 0.17f + bob, rect.width * 0.6f, rect.height * 0.59f), outline, Color.clear, Mathf.RoundToInt(rect.height * 0.18f), 0);
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.24f, rect.y + rect.height * 0.12f + bob, rect.width * 0.52f, rect.height * 0.58f), skin, Color.clear, Mathf.RoundToInt(rect.height * 0.18f), 0);
-            DrawRoundedRect(new Rect(rect.x + rect.width * 0.18f, rect.y + rect.height * 0.06f + bob, rect.width * 0.66f, rect.height * 0.18f), accent, Color.clear, Mathf.RoundToInt(rect.height * 0.09f), 0);
+
+            if (!IsCharacter(character, "frog_hopper"))
+            {
+                DrawRoundedRect(new Rect(rect.x + rect.width * 0.18f, rect.y + rect.height * 0.06f + bob, rect.width * 0.66f, rect.height * 0.18f), accent, Color.clear, Mathf.RoundToInt(rect.height * 0.09f), 0);
+            }
+
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.33f, rect.y + rect.height * 0.38f + bob, rect.width * 0.08f, rect.height * 0.1f), Color.white, Color.clear, 3, 0);
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.59f, rect.y + rect.height * 0.38f + bob, rect.width * 0.08f, rect.height * 0.1f), Color.white, Color.clear, 3, 0);
             DrawRect(new Rect(rect.x + rect.width * 0.36f, rect.y + rect.height * 0.42f + bob, rect.width * 0.035f, rect.height * 0.035f), new Color(0.06f, 0.18f, 0.24f, 1f));
@@ -363,6 +370,62 @@ namespace BubbleTown.UI
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.45f, rect.y + rect.height * 0.58f + bob, rect.width * 0.12f, rect.height * 0.035f), new Color(0.22f, 0.38f, 0.44f, 1f), Color.clear, 2, 0);
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.06f, rect.y + rect.height * 0.72f + bob, rect.width * 0.22f, rect.height * 0.14f), accent, Color.clear, Mathf.RoundToInt(rect.height * 0.07f), 0);
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.72f, rect.y + rect.height * 0.72f + bob, rect.width * 0.22f, rect.height * 0.14f), accent, Color.clear, Mathf.RoundToInt(rect.height * 0.07f), 0);
+        }
+
+        private void DrawCharacterAccessory(Rect rect, CharacterData character, Color accent, Color lightAccent, Color darkAccent, float bob)
+        {
+            if (IsCharacter(character, "bear_blaster"))
+            {
+                DrawBubble(new Rect(rect.x + rect.width * 0.18f, rect.y + rect.height * 0.02f + bob, rect.width * 0.22f, rect.height * 0.22f), accent);
+                DrawBubble(new Rect(rect.x + rect.width * 0.6f, rect.y + rect.height * 0.02f + bob, rect.width * 0.22f, rect.height * 0.22f), accent);
+                DrawBubble(new Rect(rect.x + rect.width * 0.24f, rect.y + rect.height * 0.08f + bob, rect.width * 0.1f, rect.height * 0.1f), lightAccent);
+                DrawBubble(new Rect(rect.x + rect.width * 0.66f, rect.y + rect.height * 0.08f + bob, rect.width * 0.1f, rect.height * 0.1f), lightAccent);
+                return;
+            }
+
+            if (IsCharacter(character, "frog_hopper"))
+            {
+                DrawBubble(new Rect(rect.x + rect.width * 0.22f, rect.y + rect.height * 0.02f + bob, rect.width * 0.2f, rect.height * 0.2f), lightAccent);
+                DrawBubble(new Rect(rect.x + rect.width * 0.58f, rect.y + rect.height * 0.02f + bob, rect.width * 0.2f, rect.height * 0.2f), lightAccent);
+                DrawRoundedRect(new Rect(rect.x + rect.width * 0.29f, rect.y + rect.height * 0.08f + bob, rect.width * 0.06f, rect.height * 0.06f), darkAccent, Color.clear, 2, 0);
+                DrawRoundedRect(new Rect(rect.x + rect.width * 0.65f, rect.y + rect.height * 0.08f + bob, rect.width * 0.06f, rect.height * 0.06f), darkAccent, Color.clear, 2, 0);
+                DrawRoundedRect(new Rect(rect.x + rect.width * 0.18f, rect.y + rect.height * 0.12f + bob, rect.width * 0.66f, rect.height * 0.16f), accent, Color.clear, Mathf.RoundToInt(rect.height * 0.08f), 0);
+                return;
+            }
+
+            if (IsCharacter(character, "gear_kid"))
+            {
+                DrawRoundedRect(new Rect(rect.x + rect.width * 0.17f, rect.y + rect.height * 0.05f + bob, rect.width * 0.66f, rect.height * 0.18f), accent, Color.clear, Mathf.RoundToInt(rect.height * 0.08f), 0);
+                DrawRoundedRect(new Rect(rect.x + rect.width * 0.24f, rect.y + rect.height * 0.01f + bob, rect.width * 0.52f, rect.height * 0.18f), lightAccent, Color.clear, Mathf.RoundToInt(rect.height * 0.08f), 0);
+                DrawRoundedRect(new Rect(rect.x + rect.width * 0.32f, rect.y + rect.height * 0.29f + bob, rect.width * 0.36f, rect.height * 0.1f), new Color(0.7f, 0.9f, 1f, 0.9f), darkAccent, 6, 1);
+                return;
+            }
+
+            if (IsCharacter(character, "bunny_pop"))
+            {
+                DrawRoundedRect(new Rect(rect.x + rect.width * 0.27f, rect.y - rect.height * 0.02f + bob, rect.width * 0.13f, rect.height * 0.42f), accent, Color.clear, Mathf.RoundToInt(rect.width * 0.06f), 0);
+                DrawRoundedRect(new Rect(rect.x + rect.width * 0.6f, rect.y - rect.height * 0.02f + bob, rect.width * 0.13f, rect.height * 0.42f), accent, Color.clear, Mathf.RoundToInt(rect.width * 0.06f), 0);
+                DrawRoundedRect(new Rect(rect.x + rect.width * 0.3f, rect.y + rect.height * 0.04f + bob, rect.width * 0.06f, rect.height * 0.28f), lightAccent, Color.clear, Mathf.RoundToInt(rect.width * 0.03f), 0);
+                DrawRoundedRect(new Rect(rect.x + rect.width * 0.63f, rect.y + rect.height * 0.04f + bob, rect.width * 0.06f, rect.height * 0.28f), lightAccent, Color.clear, Mathf.RoundToInt(rect.width * 0.03f), 0);
+                return;
+            }
+
+            if (IsCharacter(character, "star_mage"))
+            {
+                DrawRoundedRect(new Rect(rect.x + rect.width * 0.26f, rect.y + rect.height * 0.02f + bob, rect.width * 0.48f, rect.height * 0.1f), darkAccent, Color.clear, 5, 0);
+                DrawRoundedRect(new Rect(rect.x + rect.width * 0.34f, rect.y - rect.height * 0.02f + bob, rect.width * 0.32f, rect.height * 0.14f), accent, Color.clear, 5, 0);
+                DrawRoundedRect(new Rect(rect.x + rect.width * 0.42f, rect.y - rect.height * 0.12f + bob, rect.width * 0.16f, rect.height * 0.16f), lightAccent, Color.clear, 4, 0);
+                DrawRect(new Rect(rect.x + rect.width * 0.49f, rect.y + rect.height * 0.01f + bob, rect.width * 0.04f, rect.height * 0.12f), new Color(1f, 0.9f, 0.2f, 1f));
+                DrawRect(new Rect(rect.x + rect.width * 0.45f, rect.y + rect.height * 0.05f + bob, rect.width * 0.12f, rect.height * 0.04f), new Color(1f, 0.9f, 0.2f, 1f));
+                return;
+            }
+
+            DrawBubble(new Rect(rect.x + rect.width * 0.62f, rect.y - rect.height * 0.02f + bob, rect.width * 0.2f, rect.height * 0.2f), lightAccent);
+        }
+
+        private bool IsCharacter(CharacterData character, string characterId)
+        {
+            return character != null && character.CharacterId == characterId;
         }
 
         private void DrawBubble(Rect rect, Color color)
@@ -489,39 +552,14 @@ namespace BubbleTown.UI
             titleShadowStyle = new GUIStyle(titleStyle);
             LockTextColor(titleShadowStyle, new Color(0.05f, 0.18f, 0.24f, 0.28f));
 
-            hintStyle = new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 15,
-                clipping = TextClipping.Clip
-            };
-            LockTextColor(hintStyle, new Color(0.23f, 0.45f, 0.55f, 1f));
-
-            pillStyle = new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 16,
-                fontStyle = FontStyle.Bold,
-                clipping = TextClipping.Clip
-            };
-            LockTextColor(pillStyle, Color.white);
-
             cardTitleStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
-                fontSize = 20,
+                fontSize = 18,
                 fontStyle = FontStyle.Bold,
                 clipping = TextClipping.Clip
             };
             LockTextColor(cardTitleStyle, new Color(0.11f, 0.28f, 0.42f, 1f));
-
-            cardBodyStyle = new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.MiddleLeft,
-                fontSize = 15,
-                clipping = TextClipping.Clip
-            };
-            LockTextColor(cardBodyStyle, new Color(0.23f, 0.45f, 0.55f, 1f));
 
             slotStyle = new GUIStyle(GUI.skin.label)
             {
