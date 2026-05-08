@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8f5e0972c9644b5499de2ef9d4bd48de, type: 3}
-  m_Name: CharacterData_BubbleRanger
+  m_Name: CharacterData_BearBlaster
   m_EditorClassIdentifier: 
-  characterId: bubble_ranger
-  displayName: Bubble Ranger
-  prefab: {fileID: 507304451565874496, guid: 43360b64b3c141d59d02350e0d1bd42a, type: 3}
+  characterId: bear_blaster
+  displayName: Bear Blaster
+  prefab: {fileID: 1105944333329705440, guid: 18d3e15fc39840f9975343d5e9ef2338, type: 3}
   icon: {fileID: 0}
-  themeColor: {r: 0.09, g: 0.72, b: 1, a: 1}
+  themeColor: {r: 1, g: 0.28, b: 0.22, a: 1}
   moveSpeed: 4
   maxBombCount: 1
   explosionRange: 2

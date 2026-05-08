@@ -7,7 +7,7 @@ The project currently uses low-cost placeholder art and procedural Unity primiti
 ## Highlights
 
 - 3D angled overhead battle view
-- Cute chibi-style placeholder characters and candy-themed arenas
+- Six original chibi-style hero looks built from Unity primitive shapes
 - Original chibi hero selection before entering a map
 - Grid-based movement on the XZ plane
 - Bubble bombs with countdowns, cross-shaped explosions, hard-wall blocking, soft-block destruction, and chain reactions
@@ -36,6 +36,19 @@ Two players share one keyboard and battle for round wins. The first player to re
 | --- | --- | --- |
 | Player 1 | `WASD` | `Space` |
 | Player 2 | Arrow Keys | `Enter` or `RightControl` |
+
+## Characters
+
+Players can choose from six original chibi heroes before selecting a map. The current roster focuses on visual variety while keeping gameplay stats balanced across all characters:
+
+- `Bubble Ranger`: blue bubble-helmet hero
+- `Bear Blaster`: red bear-suit hero
+- `Frog Hopper`: green frog-hood hero
+- `Gear Kid`: yellow engineer-style hero
+- `Bunny Pop`: pink bunny-ear hero
+- `Star Mage`: purple magic-hat hero
+
+The characters are currently built from Unity primitives as readable placeholder prefabs, making them easy to replace later with polished original models.
 
 ## Maps
 
@@ -83,6 +96,7 @@ Assets/
   Materials/             Character, gameplay, map, and UI materials
   Prefabs/               Gameplay, character, map, environment, and UI prefabs
   Resources/Audio/       Auto-loaded placeholder BGM and SFX
+  Resources/Characters/  CharacterData assets used by character select
   Scenes/                MainMenu, ModeSelect, CharacterSelect, MapSelect, Battle, Result
   Scripts/               Gameplay, map, UI, camera, AI, managers, visuals
   UI/                    UI-related assets
@@ -101,7 +115,7 @@ Docs/                    Art direction, map themes, and visual style notes
 ## Roadmap
 
 - Replace placeholder audio with final original or licensed sound assets
-- Expand the original character roster with stronger silhouettes and icons
+- Polish character silhouettes, animations, and selection icons
 - Replace primitive placeholder art with stronger reusable prefabs
 - Improve AI behavior and game balance
 - Polish menus, HUD, result screen, and feedback animations

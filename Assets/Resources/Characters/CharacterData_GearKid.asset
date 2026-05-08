@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 8f5e0972c9644b5499de2ef9d4bd48de, type: 3}
-  m_Name: CharacterData_CandySprout
+  m_Name: CharacterData_GearKid
   m_EditorClassIdentifier: 
-  characterId: candy_sprout
-  displayName: Candy Sprout
-  prefab: {fileID: 100100000, guid: 5719adb92e9344577a776113bbe900f3, type: 3}
+  characterId: gear_kid
+  displayName: Gear Kid
+  prefab: {fileID: 518283978726253812, guid: 42fedb794f7e4c71aab9b04a7766b6a4, type: 3}
   icon: {fileID: 0}
-  themeColor: {r: 1, g: 0.42, b: 0.32, a: 1}
+  themeColor: {r: 1, g: 0.78, b: 0.16, a: 1}
   moveSpeed: 4
   maxBombCount: 1
   explosionRange: 2

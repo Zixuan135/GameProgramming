@@ -266,6 +266,7 @@ namespace BubbleTown.Characters
             SetMoveSpeed(characterData.MoveSpeed);
             SetMaxBombCount(characterData.MaxBombCount);
             SetBombRange(characterData.ExplosionRange);
+            ApplyVisualTheme(characterData);
         }
 
         public virtual void ReplaceVisual(GameObject visualPrefab)
@@ -280,12 +281,60 @@ namespace BubbleTown.Characters
                 Destroy(visualRoot.gameObject);
             }
 
-            GameObject visualInstance = Instantiate(visualPrefab, transform);
+            UnityEngine.Object instantiatedVisual = Instantiate((UnityEngine.Object)visualPrefab, transform);
+            GameObject visualInstance = instantiatedVisual as GameObject;
+            if (visualInstance == null)
+            {
+                Debug.LogWarning($"[CharacterBase] Could not instantiate visual prefab '{visualPrefab.name}' as a GameObject.");
+                return;
+            }
+
             visualInstance.name = visualPrefab.name;
             visualInstance.transform.localPosition = Vector3.zero;
             visualInstance.transform.localRotation = Quaternion.identity;
             visualInstance.transform.localScale = Vector3.one;
             visualRoot = visualInstance.transform;
+        }
+
+        private void ApplyVisualTheme(CharacterData characterData)
+        {
+            if (characterData == null || visualRoot == null)
+            {
+                return;
+            }
+
+            Renderer[] renderers = visualRoot.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+            {
+                ApplyThemeToRenderer(renderers[i], characterData.ThemeColor);
+            }
+        }
+
+        private void ApplyThemeToRenderer(Renderer targetRenderer, Color themeColor)
+        {
+            if (targetRenderer == null || targetRenderer.sharedMaterial == null)
+            {
+                return;
+            }
+
+            string materialName = targetRenderer.sharedMaterial.name;
+            if (materialName.Contains("Skin") ||
+                materialName.Contains("Face") ||
+                materialName.Contains("Glass") ||
+                materialName.Contains("Fixed") ||
+                materialName.Contains("Star"))
+            {
+                return;
+            }
+
+            Color resolvedColor = materialName.Contains("Accent")
+                ? Color.Lerp(themeColor, Color.white, 0.28f)
+                : themeColor;
+
+            MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+            targetRenderer.GetPropertyBlock(propertyBlock);
+            propertyBlock.SetColor("_Color", resolvedColor);
+            targetRenderer.SetPropertyBlock(propertyBlock);
         }
 
         public virtual Vector2Int WorldToGrid(Vector3 worldPosition)
