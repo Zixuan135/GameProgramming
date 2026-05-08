@@ -81,8 +81,8 @@ namespace BubbleTown.Managers
 
         [Header("Character Selection")]
         [SerializeField] private string selectedPlayer1CharacterId = "bubble_ranger";
-        [SerializeField] private string selectedPlayer2CharacterId = "candy_sprout";
-        [SerializeField] private string selectedAICharacterId = "robo_pop";
+        [SerializeField] private string selectedPlayer2CharacterId = "bear_blaster";
+        [SerializeField] private string selectedAICharacterId = "frog_hopper";
         [SerializeField] private CharacterData selectedPlayer1Character;
         [SerializeField] private CharacterData selectedPlayer2Character;
         [SerializeField] private CharacterData selectedAICharacter;
