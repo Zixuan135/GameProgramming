@@ -182,10 +182,10 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.32
-    y: 0.08
-    width: 0.68
-    height: 0.92
+    x: 0.332
+    y: 0.092
+    width: 0.656
+    height: 0.896
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 52
@@ -222,9 +222,13 @@ MonoBehaviour:
   secondaryTarget: {fileID: 619645842}
   autoFindTargets: 1
   shareCameraInLocalVS: 1
-  frameAIInAIBattle: 0
+  frameAIInAIBattle: 1
   targetRefreshInterval: 0.25
   useHudSafeViewport: 1
+  autoFitViewportToHud: 1
+  leftHudSafeWidthNormalized: 0.32
+  bottomHudSafeHeightNormalized: 0.08
+  viewportPaddingNormalized: 0.012
   gameplayViewport:
     serializedVersion: 2
     x: 0.32

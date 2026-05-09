@@ -17,7 +17,7 @@ The project currently uses low-cost placeholder art and procedural Unity primiti
 - Local VS mode with shared-keyboard controls and Best of 3 scoring
 - Player-facing menu flow: Main Menu, Mode Select, Character Select, Map Select, Battle, Result
 - Battle HUD with mode, map, timer, objective, player stats, item guide, retry, and main menu actions
-- Built-in placeholder BGM/SFX with settings for volume, mute, and screen shake
+- Built-in placeholder BGM/SFX with settings, reset defaults, preview playback, mute, and screen shake
 
 ## Game Modes
 
@@ -70,7 +70,7 @@ BubbleTown includes generated placeholder audio so the prototype has immediate g
 
 - Menu, battle, and result BGM loops
 - Button click, movement, bomb placement, explosion, pickup, defeat, victory, and character death SFX
-- Settings popup with master volume, BGM volume, SFX volume, mute toggles, screen shake toggle, and reset defaults
+- Settings popup with master volume, BGM volume, SFX volume, mute toggles, preview playback buttons, screen shake toggle, and reset defaults
 
 These sounds are placeholders and can be replaced later with final original or licensed audio.
 
@@ -80,13 +80,13 @@ These sounds are placeholders and can be replaced later with final original or l
 2. Open `Assets/Scenes/MainMenu.unity`.
 3. Press Play.
 4. Use `Start Game` to choose a mode, character, and map.
-5. Use `Guide` for controls and `Settings` for audio/game-feel options.
+5. Use `Guide` for controls and `Settings` to check sound, volume, mute, and screen shake.
 
 ## Current Prototype Status
 
 BubbleTown is currently a playable prototype rather than a finished game. The core loop is in place: choose a mode, enter a map, move on the grid, place bombs, trigger explosions, collect items, finish a round, and return to the menu or retry.
 
-The current visuals are intentionally lightweight. Most assets are placeholder primitives or generated UI shapes, which keeps the project easy to iterate while the gameplay and presentation direction are still evolving.
+The current visuals are intentionally lightweight. Most assets are placeholder primitives or generated UI shapes, but the game already has a clear playable loop, character selection, readable battle HUD, and basic sound feedback.
 
 ## Project Structure
 
