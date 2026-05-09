@@ -374,20 +374,36 @@ namespace BubbleTown.UI
 
             GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), GetSolidTexture(new Color(0.02f, 0.09f, 0.14f, 0.42f)));
 
-            Rect rect = CenteredRect(580f, 430f);
+            Rect rect = CenteredRect(610f, 460f);
             DrawRoundedRect(new Rect(rect.x + 8f, rect.y + 10f, rect.width, rect.height), PanelShadow, PanelShadow, 24, 0);
-            GUILayout.BeginArea(rect, panelStyle);
-            GUILayout.Space(4f);
-            GUILayout.Label("Settings", modalTitleStyle);
-            GUILayout.Space(6f);
-            GUILayout.Label("Tune the game feel before jumping in.", modalBodyStyle);
-            GUILayout.Space(10f);
+            DrawRoundedRect(rect, PanelFill, PanelBorder, 24, 4);
 
-            Rect controlsRect = GUILayoutUtility.GetRect(500f, 230f, GUILayout.ExpandWidth(true));
+            GUI.Label(new Rect(rect.x + 40f, rect.y + 18f, rect.width - 80f, 42f), "Settings", modalTitleStyle);
+            GUI.Label(new Rect(rect.x + 60f, rect.y + 58f, rect.width - 120f, 24f), "Tune sound and battle feedback.", modalBodyStyle);
+
+            bool shouldClose = false;
+            Rect topCloseRect = new Rect(rect.x + rect.width - 52f, rect.y + 18f, 34f, 30f);
+            if (CartoonButton(
+                topCloseRect,
+                "X",
+                new Color(1f, 0.45f, 0.32f, 1f),
+                new Color(1f, 0.58f, 0.42f, 1f),
+                new Color(0.82f, 0.28f, 0.18f, 1f),
+                Color.white))
+            {
+                shouldClose = true;
+            }
+
+            Rect statusRect = new Rect(rect.x + 55f, rect.y + 92f, rect.width - 110f, 28f);
+            DrawAudioStatusPill(statusRect, audioManager);
+
+            Rect controlsRect = new Rect(rect.x + 55f, rect.y + 132f, rect.width - 110f, 238f);
             DrawSettingsControls(controlsRect, audioManager);
 
-            GUILayout.Space(12f);
-            Rect buttonSlot = GUILayoutUtility.GetRect(320f, 48f, GUILayout.ExpandWidth(true));
+            Rect previewSlot = new Rect(rect.x + 95f, rect.y + rect.height - 86f, rect.width - 190f, 36f);
+            DrawSettingsPreviewButtons(previewSlot, audioManager);
+
+            Rect buttonSlot = new Rect(rect.x + 105f, rect.y + rect.height - 42f, rect.width - 210f, 36f);
             float buttonWidth = Mathf.Min(210f, (buttonSlot.width - 20f) * 0.5f);
             Rect resetRect = new Rect(buttonSlot.center.x - buttonWidth - 10f, buttonSlot.y, buttonWidth, buttonSlot.height);
             Rect closeRect = new Rect(buttonSlot.center.x + 10f, buttonSlot.y, buttonWidth, buttonSlot.height);
@@ -405,14 +421,17 @@ namespace BubbleTown.UI
                 audioManager?.ReloadFromGameSettings();
             }
 
-            bool shouldClose = CartoonButton(
+            if (CartoonButton(
                 closeRect,
                 "CLOSE",
                 new Color(0.09f, 0.72f, 1f, 1f),
                 new Color(0.2f, 0.86f, 1f, 1f),
                 new Color(0.05f, 0.58f, 0.85f, 1f),
-                Color.white);
-            GUILayout.EndArea();
+                Color.white))
+            {
+                shouldClose = true;
+            }
+
             return shouldClose;
         }
 
@@ -733,6 +752,7 @@ namespace BubbleTown.UI
             if (!Mathf.Approximately(newMasterVolume, masterVolume))
             {
                 audioManager?.SetMasterVolume(newMasterVolume);
+                audioManager?.PlaySettingsPreviewSFX();
             }
 
             row.y += rowHeight + rowGap;
@@ -747,22 +767,26 @@ namespace BubbleTown.UI
             if (!Mathf.Approximately(newSfxVolume, sfxVolume))
             {
                 audioManager?.SetSfxVolume(newSfxVolume);
+                audioManager?.PlaySettingsPreviewSFX();
             }
 
             row.y += rowHeight + rowGap + 4f;
             bool newMuteBGM = DrawSettingsToggle(row, "Mute BGM", muteBGM, green);
             if (newMuteBGM != muteBGM)
             {
-                AudioManager.Instance?.PlayButtonClickSFX();
                 audioManager?.SetBgmMuted(newMuteBGM);
+                AudioManager.Instance?.PlayButtonClickSFX();
             }
 
             row.y += rowHeight + rowGap;
             bool newMuteSFX = DrawSettingsToggle(row, "Mute SFX", muteSFX, orange);
             if (newMuteSFX != muteSFX)
             {
-                AudioManager.Instance?.PlayButtonClickSFX();
                 audioManager?.SetSfxMuted(newMuteSFX);
+                if (!newMuteSFX)
+                {
+                    AudioManager.Instance?.PlayButtonClickSFX();
+                }
             }
 
             row.y += rowHeight + rowGap;
@@ -772,6 +796,59 @@ namespace BubbleTown.UI
             {
                 AudioManager.Instance?.PlayButtonClickSFX();
                 GameSettings.SetScreenShakeEnabled(newShakeEnabled);
+            }
+        }
+
+        private static void DrawAudioStatusPill(Rect rect, AudioManager audioManager)
+        {
+            float width = Mathf.Min(rect.width, 500f);
+            Rect pillRect = new Rect(rect.x + (rect.width - width) * 0.5f, rect.y, width, rect.height);
+            bool audioReady = audioManager != null && audioManager.IsAudioReady;
+            Color accentColor = audioReady
+                ? new Color(0.42f, 0.88f, 0.38f, 1f)
+                : new Color(1f, 0.62f, 0.22f, 1f);
+            string status = audioReady ? "Audio Ready" : "Audio Clips Missing";
+            string volumeText = audioManager != null
+                ? $"BGM {Mathf.RoundToInt(audioManager.BgmVolume * 100f)}%  |  SFX {Mathf.RoundToInt(audioManager.SfxVolume * 100f)}%"
+                : "Audio manager loading";
+
+            DrawRoundedRect(new Rect(pillRect.x + 3f, pillRect.y + 4f, pillRect.width, pillRect.height), PanelShadow, PanelShadow, 14, 0);
+            DrawRoundedRect(pillRect, new Color(1f, 0.96f, 0.76f, 0.96f), Color.Lerp(accentColor, Color.white, 0.2f), 14, 2);
+            DrawRoundedRect(new Rect(pillRect.x + 8f, pillRect.y + 7f, 5f, pillRect.height - 14f), accentColor, Color.clear, 4, 0);
+            GUI.Label(new Rect(pillRect.x + 20f, pillRect.y + 4f, 170f, pillRect.height - 8f), status, settingsLabelStyle);
+            GUI.Label(new Rect(pillRect.x + 190f, pillRect.y + 4f, pillRect.width - 208f, pillRect.height - 8f), volumeText, settingsValueStyle);
+        }
+
+        private static void DrawSettingsPreviewButtons(Rect rect, AudioManager audioManager)
+        {
+            float contentWidth = Mathf.Min(rect.width, 420f);
+            Rect contentRect = new Rect(rect.x + (rect.width - contentWidth) * 0.5f, rect.y, contentWidth, rect.height);
+            float gap = 14f;
+            float buttonWidth = (contentWidth - gap) * 0.5f;
+            Rect sfxRect = new Rect(contentRect.x, contentRect.y, buttonWidth, contentRect.height);
+            Rect bgmRect = new Rect(contentRect.x + buttonWidth + gap, contentRect.y, buttonWidth, contentRect.height);
+
+            if (CartoonButton(
+                sfxRect,
+                "SFX PREVIEW",
+                new Color(1f, 0.62f, 0.22f, 1f),
+                new Color(1f, 0.72f, 0.38f, 1f),
+                new Color(0.88f, 0.42f, 0.18f, 1f),
+                Color.white))
+            {
+                audioManager?.PlaySettingsPreviewSFX();
+            }
+
+            if (CartoonButton(
+                bgmRect,
+                "MUSIC PREVIEW",
+                new Color(0.42f, 0.88f, 0.38f, 1f),
+                new Color(0.55f, 0.96f, 0.46f, 1f),
+                new Color(0.3f, 0.68f, 0.24f, 1f),
+                Color.white))
+            {
+                AudioManager.Instance?.PlayButtonClickSFX();
+                audioManager?.PlayCurrentSceneBGMPreview();
             }
         }
 
