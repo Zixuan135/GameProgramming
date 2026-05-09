@@ -24,9 +24,11 @@ namespace BubbleTown.Managers
         private const string CharacterDeathSFXResourcePath = "Audio/SFX/CharacterDeath";
         private const string VictorySFXResourcePath = "Audio/SFX/Victory";
         private const string DefeatSFXResourcePath = "Audio/SFX/Defeat";
+        private const float SettingsPreviewCooldown = 0.12f;
 
         private static AudioManager instance;
         private static bool isQuitting;
+        private float nextSettingsPreviewTime;
 
         public static AudioManager Instance
         {
@@ -82,6 +84,23 @@ namespace BubbleTown.Managers
         public float SfxVolume => sfxVolume;
         public bool MuteBGM => muteBGM;
         public bool MuteSFX => muteSFX;
+        public bool HasLoadedBGM => menuBGM != null && battleBGM != null && resultBGM != null;
+        public bool HasLoadedSFX => moveSFX != null &&
+                                    placeBombSFX != null &&
+                                    explosionSFX != null &&
+                                    itemPickupSFX != null &&
+                                    buttonClickSFX != null &&
+                                    characterDeathSFX != null &&
+                                    victorySFX != null &&
+                                    defeatSFX != null;
+        public bool IsAudioReady
+        {
+            get
+            {
+                LoadDefaultAudioClips();
+                return HasLoadedBGM && HasLoadedSFX;
+            }
+        }
 
         private void Awake()
         {
@@ -139,6 +158,12 @@ namespace BubbleTown.Managers
         {
             LoadDefaultAudioClips();
             PlayBGM(resultBGM != null ? resultBGM : menuBGM);
+        }
+
+        public void PlayCurrentSceneBGMPreview()
+        {
+            LoadDefaultAudioClips();
+            PlayBGMForScene(SceneManager.GetActiveScene().name, true);
         }
 
         public void PlayBGM(AudioClip clip, bool restartIfSameClip = false)
@@ -210,6 +235,18 @@ namespace BubbleTown.Managers
         {
             LoadDefaultAudioClips();
             PlaySFX(buttonClickSFX, 0.75f);
+        }
+
+        public void PlaySettingsPreviewSFX()
+        {
+            if (Time.unscaledTime < nextSettingsPreviewTime)
+            {
+                return;
+            }
+
+            nextSettingsPreviewTime = Time.unscaledTime + SettingsPreviewCooldown;
+            LoadDefaultAudioClips();
+            PlaySFX(buttonClickSFX != null ? buttonClickSFX : itemPickupSFX, 0.85f);
         }
 
         public void PlayCharacterDeathSFX()
@@ -301,20 +338,24 @@ namespace BubbleTown.Managers
             PlayBGMForScene(scene.name);
         }
 
-        private void PlayBGMForScene(string sceneName)
+        private void PlayBGMForScene(string sceneName, bool restartIfSameClip = false)
         {
             switch (sceneName)
             {
                 case GameConstants.SceneMainMenu:
                 case GameConstants.SceneModeSelect:
                 case GameConstants.SceneMapSelect:
-                    PlayMenuBGM();
+                case GameConstants.SceneCharacterSelect:
+                    LoadDefaultAudioClips();
+                    PlayBGM(menuBGM, restartIfSameClip);
                     break;
                 case GameConstants.SceneBattle:
-                    PlayBattleBGM();
+                    LoadDefaultAudioClips();
+                    PlayBGM(battleBGM, restartIfSameClip);
                     break;
                 case GameConstants.SceneResult:
-                    PlayResultBGM();
+                    LoadDefaultAudioClips();
+                    PlayBGM(resultBGM != null ? resultBGM : menuBGM, restartIfSameClip);
                     break;
             }
         }
