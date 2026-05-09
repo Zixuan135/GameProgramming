@@ -17,11 +17,15 @@ namespace BubbleTown.CameraSystem
         [SerializeField] private Transform secondaryTarget;
         [SerializeField] private bool autoFindTargets = true;
         [SerializeField] private bool shareCameraInLocalVS = true;
-        [SerializeField] private bool frameAIInAIBattle = false;
+        [SerializeField] private bool frameAIInAIBattle = true;
         [SerializeField, Min(0.05f)] private float targetRefreshInterval = 0.25f;
 
         [Header("Safe Viewport")]
         [SerializeField] private bool useHudSafeViewport = true;
+        [SerializeField] private bool autoFitViewportToHud = true;
+        [SerializeField, Range(0f, 0.6f)] private float leftHudSafeWidthNormalized = 0.32f;
+        [SerializeField, Range(0f, 0.2f)] private float bottomHudSafeHeightNormalized = 0.08f;
+        [SerializeField, Range(0f, 0.08f)] private float viewportPaddingNormalized = 0.012f;
         [SerializeField] private Rect gameplayViewport = new Rect(0.32f, 0.08f, 0.68f, 0.92f);
 
         [Header("View")]
@@ -78,6 +82,8 @@ namespace BubbleTown.CameraSystem
         private float shakeMagnitude;
         private float shakeSeedX;
         private float shakeSeedY;
+        private int lastScreenWidth = -1;
+        private int lastScreenHeight = -1;
         private MapManager cachedMapManager;
 
         public static CameraController ActiveCamera => activeCamera;
@@ -130,6 +136,7 @@ namespace BubbleTown.CameraSystem
                 TickTargetRefresh();
             }
 
+            RefreshCameraViewportIfNeeded();
             RefreshMapManagerReference();
             if (!IsValidTarget(primaryTarget))
             {
@@ -496,7 +503,34 @@ namespace BubbleTown.CameraSystem
                 return;
             }
 
-            controlledCamera.rect = useHudSafeViewport ? ClampViewport(gameplayViewport) : new Rect(0f, 0f, 1f, 1f);
+            controlledCamera.rect = useHudSafeViewport ? ResolveGameplayViewport() : new Rect(0f, 0f, 1f, 1f);
+            lastScreenWidth = Screen.width;
+            lastScreenHeight = Screen.height;
+        }
+
+        private void RefreshCameraViewportIfNeeded()
+        {
+            if (controlledCamera == null || (lastScreenWidth == Screen.width && lastScreenHeight == Screen.height))
+            {
+                return;
+            }
+
+            ApplyCameraViewport();
+        }
+
+        private Rect ResolveGameplayViewport()
+        {
+            if (!autoFitViewportToHud)
+            {
+                return ClampViewport(gameplayViewport);
+            }
+
+            float padding = Mathf.Clamp01(viewportPaddingNormalized);
+            float left = Mathf.Clamp01(leftHudSafeWidthNormalized + padding);
+            float bottom = Mathf.Clamp01(bottomHudSafeHeightNormalized + padding);
+            float right = Mathf.Clamp01(1f - padding);
+            float top = Mathf.Clamp01(1f - padding);
+            return ClampViewport(new Rect(left, bottom, Mathf.Max(0.05f, right - left), Mathf.Max(0.05f, top - bottom)));
         }
 
         private Rect ClampViewport(Rect viewport)
