@@ -1,0 +1,56 @@
+Original gameplay:
+This project was originally a simple 2D top-down space shooter prototype. The player controls a ship, shoots enemies, and gains score by destroying them.
+
+What was added:
+1. A complete start flow with a main menu, instructions page, start button, back button, and exit button.
+2. A gameplay HUD showing Score, Hull, Objective Progress, High Score, Timer, and active power-up time.
+3. A clearer assignment objective: destroy 12 enemy drones to win the round.
+4. A real gameplay improvement: Overdrive pickups temporarily increase movement speed and fire rate.
+5. Difficulty scaling: as more enemies are defeated, enemies spawn faster and move faster.
+6. Clear win and lose result panels with Restart and Return To Menu options.
+7. Stronger player feedback: damage flash, player tint changes, score pop-up text, pickup spawn text, and state messages.
+8. Runtime scene bootstrap so the current lightweight project scene becomes playable without rebuilding the whole project structure.
+
+Polish and refinement update:
+1. Improved menu layout with clearer title hierarchy, better spacing, and stronger visual readability.
+2. Improved Instructions page wording so the goal, controls, win condition, and fail condition are short and easy to scan.
+3. Improved HUD layout with cleaner grouping, readable top cards, and a less cluttered objective display.
+4. Added button hover and press feedback so menu navigation feels more responsive.
+5. Tuned player movement, projectile spread, camera behavior, and enemy scaling for a smoother play feel.
+6. Improved result panels so Win and Game Over screens better explain what happened and what the player can do next.
+7. Improved pickup feedback so Overdrive gives score, clear HUD messaging, and visible active duration.
+8. Improved damage feedback so the player gets clearer hit feedback and a clearer failure reason on loss.
+9. Added a lightweight audio manager with button, pickup, power-up, hit, win, and game over sound hooks.
+10. Added menu music / gameplay music support and linked runtime UI buttons to click feedback.
+11. Added background decoration, panel accents, stronger HUD styling, and clearer result screen presentation.
+
+How each addition improves player experience:
+1. Main menu and instructions make the project understandable for a marker without needing code explanation.
+2. HUD makes progress and survival state readable during gameplay.
+3. The objective text gives players a concrete goal instead of open-ended survival.
+4. Overdrive pickups add short-term decision making and a visible reward loop.
+5. Difficulty scaling prevents the game from feeling flat and makes the run more exciting over time.
+6. Win/lose screens complete the player loop and make the game feel finished.
+7. Damage and score feedback make it easier to understand what just happened.
+
+Menu / HUD / Gameplay / Feedback summary:
+- Menu: polished title, cleaner button spacing, clearer mission framing, and responsive button feedback.
+- HUD: improved score, hull, progress, timer, and high score presentation without blocking the action.
+- Gameplay: adjusted player speed, firing feel, camera stability, pickup clarity, and enemy ramp-up pacing.
+- Feedback: improved hit flash, status callouts, pickup messaging, power-up state display, and result explanations.
+- Audio: added button click, pickup, power-up, hit, win, game over, menu music, and gameplay music support.
+
+Tested flows:
+1. Launch scene -> Main Menu appears.
+2. Open Instructions -> Back returns to Main Menu.
+3. Press New Game -> player becomes active and HUD updates.
+4. Destroy enemies -> score and objective progress increase.
+5. Reach 4, 8, and 12 defeats -> Overdrive pickup spawn logic triggers every 4 defeats until victory.
+6. Pick up Overdrive -> temporary faster move speed and faster fire rate.
+7. Take damage -> red flash and status feedback appear.
+8. Reach 12 enemy defeats -> victory panel appears with Restart and Return To Menu.
+9. Lose all health -> game over panel appears with Restart and Return To Menu.
+10. Exit button prints a debug log in the editor path and exits in builds.
+11. Button hover / press state changes appear in menu and result panels.
+12. HUD objective and power-up state remain readable during combat.
+13. Button click sound, hit sound, power-up sound, win sound, and game over sound routes are present through the runtime audio manager.

@@ -1,0 +1,22 @@
+Unity built-in/default assets:
+- Unity built-in/default assets are used where applicable for default UI behavior and runtime-generated UI elements.
+- Unity built-in LegacyRuntime font is used for runtime-generated UI text in this update.
+- Unity UI components are used for runtime-created menu panels, HUD cards, button visuals, and overlay feedback.
+
+Borrowed / external assets:
+- Existing project art/audio/prefabs already present in this repository should be reviewed and credited here by source.
+- Existing external sprites:
+  Fill in source / author:
+- Existing external audio:
+  Fill in source / author:
+- Existing external fonts:
+  Fill in source / author:
+- Existing tutorials or code references:
+  Fill in source / author:
+
+Credit reminder:
+- Borrowed art, audio, fonts, tutorials, and code snippets should be credited in this file before submission.
+
+Update note:
+- No external assets were added in this update.
+- Existing in-project audio files were reused through a runtime audio manager. No new third-party audio assets were added in this update.
