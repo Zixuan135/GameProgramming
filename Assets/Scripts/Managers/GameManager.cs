@@ -48,6 +48,7 @@ namespace BubbleTown.Managers
         [SerializeField] private GameMode currentGameMode = GameMode.SinglePlayer;
         [SerializeField] private BattleMapType currentMapType = BattleMapType.Default;
         [SerializeField] private GameState currentGameState = GameState.None;
+        [SerializeField] private bool isBattlePaused;
 
         [Header("Last Battle Result")]
         [SerializeField] private bool hasBattleResult;
@@ -103,6 +104,7 @@ namespace BubbleTown.Managers
         public GameMode CurrentGameMode => currentGameMode;
         public BattleMapType CurrentMapType => currentMapType;
         public GameState CurrentGameState => currentGameState;
+        public bool IsBattlePaused => isBattlePaused;
         public bool HasBattleResult => hasBattleResult;
         public string LastResultTitle => lastResultTitle;
         public string LastResultDetail => lastResultDetail;
@@ -235,11 +237,23 @@ namespace BubbleTown.Managers
         public void SetGameState(GameState gameState)
         {
             currentGameState = gameState;
+            if (currentGameState != GameState.BattlePreparing && currentGameState != GameState.BattleRunning)
+            {
+                isBattlePaused = false;
+            }
+        }
+
+        public void SetBattlePaused(bool paused)
+        {
+            bool canPause = currentGameState == GameState.BattlePreparing ||
+                            currentGameState == GameState.BattleRunning;
+            isBattlePaused = paused && canPause;
         }
 
         public void BeginBattle()
         {
             ClearBattleResult();
+            isBattlePaused = false;
             currentGameState = GameState.BattlePreparing;
             if (currentGameMode == GameMode.LocalVS)
             {
@@ -271,6 +285,7 @@ namespace BubbleTown.Managers
             currentGameMode = GameMode.SinglePlayer;
             currentMapType = BattleMapType.Default;
             currentGameState = GameState.None;
+            isBattlePaused = false;
             activeMapManager = null;
             player1 = null;
             player2 = null;
@@ -292,6 +307,7 @@ namespace BubbleTown.Managers
             lastResultDetail = string.IsNullOrEmpty(resultDetail) ? "The battle has ended." : resultDetail;
             lastResultWinner = string.IsNullOrEmpty(winnerName) ? "None" : winnerName;
             hasBattleResult = true;
+            isBattlePaused = false;
             currentGameState = GameState.BattleFinished;
 
             if (logBattleSetup)
@@ -308,6 +324,7 @@ namespace BubbleTown.Managers
             }
 
             ApplySpawnProtectionToActiveCharacters(spawnProtectionSeconds);
+            isBattlePaused = false;
             currentGameState = GameState.BattleRunning;
 
             if (logBattleSetup)
@@ -412,6 +429,7 @@ namespace BubbleTown.Managers
                 return;
             }
 
+            isBattlePaused = false;
             currentGameState = GameState.BattlePreparing;
             ClearBattleResult();
             ResolveBattleReferences();
@@ -566,6 +584,7 @@ namespace BubbleTown.Managers
         {
             if (sceneName != GameConstants.SceneBattle)
             {
+                isBattlePaused = false;
                 ResetSinglePlayerObjective();
             }
 

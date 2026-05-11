@@ -16,7 +16,7 @@ The project currently uses low-cost placeholder art and procedural Unity primiti
 - AI Battle mode with a basic grid-aware opponent
 - Local VS mode with shared-keyboard controls and Best of 3 scoring
 - Player-facing menu flow: Main Menu, Mode Select, Character Select, Map Select, Battle, Result
-- Battle HUD with mode, map, timer, objective, player stats, item guide, retry, and main menu actions
+- Battle HUD with mode, map, timer, objective, player stats, item guide, pause, retry, and main menu actions
 - Built-in placeholder BGM/SFX with settings, reset defaults, preview playback, mute, and screen shake
 
 ## Game Modes
@@ -36,6 +36,8 @@ Two players share one keyboard and battle for round wins. The first player to re
 | --- | --- | --- |
 | Player 1 | `WASD` | `Space` |
 | Player 2 | Arrow Keys | `Enter` or `RightControl` |
+
+Pause the battle with `Esc` or `P` to resume, retry, return to the main menu, or adjust settings.
 
 ## Characters
 
@@ -71,6 +73,7 @@ BubbleTown includes generated placeholder audio so the prototype has immediate g
 - Menu, battle, and result BGM loops
 - Button click, movement, bomb placement, explosion, pickup, defeat, victory, and character death SFX
 - Settings popup with master volume, BGM volume, SFX volume, mute toggles, preview playback buttons, screen shake toggle, and reset defaults
+- In-battle pause menu with quick access to sound/settings without leaving the match
 
 These sounds are placeholders and can be replaced later with final original or licensed audio.
 
@@ -80,7 +83,7 @@ These sounds are placeholders and can be replaced later with final original or l
 2. Open `Assets/Scenes/MainMenu.unity`.
 3. Press Play.
 4. Use `Start Game` to choose a mode, character, and map.
-5. Use `Guide` for controls and `Settings` to check sound, volume, mute, and screen shake.
+5. Use `Guide` for controls, `Settings` for audio, and `Esc` or `P` during battle to pause.
 
 ## Current Prototype Status
 

@@ -80,7 +80,8 @@ namespace BubbleTown.Characters
         private bool CanAcceptBattleInput()
         {
             GameManager gameManager = GameManager.Instance;
-            return gameManager == null || gameManager.CurrentGameState == GameState.BattleRunning;
+            return gameManager == null ||
+                   (gameManager.CurrentGameState == GameState.BattleRunning && !gameManager.IsBattlePaused);
         }
 
         private Vector2Int ReadMoveInput()
