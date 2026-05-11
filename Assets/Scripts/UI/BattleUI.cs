@@ -20,10 +20,8 @@ namespace BubbleTown.UI
         private const float ObjectivePanelBottom = 144f;
         private const float CharacterAreaTop = ObjectivePanelBottom + 14f;
         private const float CharacterSectionGap = 14f;
-        private const float BottomHudMargin = 18f;
-        private const float BottomHudGap = 10f;
-        private const float ActionPanelHeight = 46f;
-        private const float ItemGuidePanelHeight = 44f;
+        private const float BottomHudMargin = 26f;
+        private const float BottomControlsPanelHeight = 46f;
         private const float PausePanelWidth = 430f;
         private const float PausePanelHeight = 330f;
 
@@ -68,7 +66,7 @@ namespace BubbleTown.UI
         [Header("World Safe Area")]
         [SerializeField] private bool drawLeftHudSafeBackground = true;
         [SerializeField, Range(0f, 0.6f)] private float leftHudSafeWidthNormalized = 0.32f;
-        [SerializeField, Range(0f, 0.2f)] private float gameplayBottomFillNormalized = 0.08f;
+        [SerializeField, Range(0f, 0.2f)] private float gameplayBottomFillNormalized = 0f;
         [SerializeField] private Color hudSafeBackgroundColor = new Color(0.74f, 0.93f, 1f, 1f);
 
         private static readonly Dictionary<string, Texture2D> RoundedTextureCache = new Dictionary<string, Texture2D>();
@@ -157,7 +155,7 @@ namespace BubbleTown.UI
                 return;
             }
 
-            DrawActionButtons();
+            DrawBottomControls();
 
             if (isPaused)
             {
@@ -165,7 +163,6 @@ namespace BubbleTown.UI
                 return;
             }
 
-            DrawItemGuide();
             DrawPickupToast();
             DrawOpeningPrompt();
             DrawResultPrompt();
@@ -806,41 +803,26 @@ namespace BubbleTown.UI
             GUI.color = previousColor;
         }
 
-        private void DrawActionButtons()
+        private void DrawBottomControls()
         {
-            float bob = Mathf.Sin(Time.unscaledTime * 2.1f) * 0.7f;
-            Rect buttonRect = new Rect(LeftHudX, ResolveBottomActionPanelY() + bob, LeftHudWidth, ActionPanelHeight);
-            DrawPanel(buttonRect, new Color(1f, 0.96f, 0.72f, 0.84f), new Color(1f, 0.58f, 0.18f, 0.92f), 16, 2);
-            float gap = 6f;
-            float contentX = buttonRect.x + 10f;
-            float contentY = buttonRect.y + 10f;
-            float buttonWidth = (buttonRect.width - 20f - gap * 2f) / 3f;
-            float buttonHeight = buttonRect.height - 20f;
+            float bob = Mathf.Sin(Time.unscaledTime * 2.1f + 0.8f) * 0.7f;
+            Rect panelRect = new Rect(LeftHudX, ResolveBottomControlsPanelY() + bob, LeftHudWidth, BottomControlsPanelHeight);
+            DrawPanel(panelRect, new Color(1f, 0.96f, 0.72f, 0.84f), new Color(0.16f, 0.72f, 1f, 0.92f), 16, 2);
 
-            if (AnimatedFixedButton(new Rect(contentX, contentY, buttonWidth, buttonHeight), "Pause"))
+            float gap = 10f;
+            float buttonWidth = (panelRect.width - 20f - gap) * 0.5f;
+            float buttonHeight = 26f;
+            float buttonY = panelRect.y + 10f;
+            Rect pauseRect = new Rect(panelRect.x + 10f, buttonY, buttonWidth, buttonHeight);
+            Rect guideRect = new Rect(pauseRect.xMax + gap, buttonY, buttonWidth, buttonHeight);
+
+            if (AnimatedFixedButton(pauseRect, "Pause"))
             {
                 SetPaused(true);
+                return;
             }
 
-            if (AnimatedFixedButton(new Rect(contentX + buttonWidth + gap, contentY, buttonWidth, buttonHeight), "Retry"))
-            {
-                OnClickRetry();
-            }
-
-            if (AnimatedFixedButton(new Rect(contentX + (buttonWidth + gap) * 2f, contentY, buttonWidth, buttonHeight), "Menu"))
-            {
-                OnClickBackToMenu();
-            }
-        }
-
-        private void DrawItemGuide()
-        {
-            float bob = Mathf.Sin(Time.unscaledTime * 2.1f + 1.4f) * 0.7f;
-            Rect buttonPanelRect = new Rect(LeftHudX, ResolveBottomItemGuidePanelY() + bob, LeftHudWidth, ItemGuidePanelHeight);
-            DrawPanel(buttonPanelRect, new Color(1f, 0.96f, 0.72f, 0.84f), new Color(0.35f, 0.78f, 1f, 0.92f), 16, 2);
-
-            Rect buttonRect = new Rect(buttonPanelRect.x + 10f, buttonPanelRect.y + 9f, buttonPanelRect.width - 20f, 26f);
-            if (AnimatedFixedButton(buttonRect, isItemGuideOpen ? "Hide Guide" : "Item Guide"))
+            if (AnimatedFixedButton(guideRect, isItemGuideOpen ? "Hide Guide" : "Item Guide"))
             {
                 AudioManager.Instance?.PlayButtonClickSFX();
                 isItemGuideOpen = !isItemGuideOpen;
@@ -938,19 +920,14 @@ namespace BubbleTown.UI
                 new Color(0.72f, 0.48f, 1f, 0.3f));
         }
 
-        private float ResolveBottomActionPanelY()
+        private float ResolveBottomControlsPanelY()
         {
-            return Screen.height - BottomHudMargin - ActionPanelHeight;
-        }
-
-        private float ResolveBottomItemGuidePanelY()
-        {
-            return ResolveBottomActionPanelY() - BottomHudGap - ItemGuidePanelHeight;
+            return Screen.height - BottomHudMargin - BottomControlsPanelHeight;
         }
 
         private float ResolveCharacterAreaBottom()
         {
-            return ResolveBottomItemGuidePanelY() - CharacterSectionGap;
+            return ResolveBottomControlsPanelY() - CharacterSectionGap;
         }
 
         private void DrawItemGuidePanel()

@@ -16,7 +16,7 @@ The project currently uses low-cost placeholder art and procedural Unity primiti
 - AI Battle mode with a basic grid-aware opponent
 - Local VS mode with shared-keyboard controls and Best of 3 scoring
 - Player-facing menu flow: Main Menu, Mode Select, Character Select, Map Select, Battle, Result
-- Battle HUD with mode, map, timer, objective, player stats, item guide, pause, retry, and main menu actions
+- Battle HUD with mode, map, timer, objective, player stats, item guide, and a compact pause entry
 - Built-in placeholder BGM/SFX with settings, reset defaults, preview playback, mute, and screen shake
 
 ## Game Modes
@@ -37,7 +37,7 @@ Two players share one keyboard and battle for round wins. The first player to re
 | Player 1 | `WASD` | `Space` |
 | Player 2 | Arrow Keys | `Enter` or `RightControl` |
 
-Pause the battle with `Esc` or `P` to resume, retry, return to the main menu, or adjust settings.
+Pause the battle with the `Pause` button, `Esc`, or `P` to resume, retry, return to the main menu, or adjust settings.
 
 ## Characters
 
@@ -73,7 +73,7 @@ BubbleTown includes generated placeholder audio so the prototype has immediate g
 - Menu, battle, and result BGM loops
 - Button click, movement, bomb placement, explosion, pickup, defeat, victory, and character death SFX
 - Settings popup with master volume, BGM volume, SFX volume, mute toggles, preview playback buttons, screen shake toggle, and reset defaults
-- In-battle pause menu with quick access to sound/settings without leaving the match
+- In-battle pause menu with quick access to resume, sound/settings, retry, and main menu actions
 
 These sounds are placeholders and can be replaced later with final original or licensed audio.
 
