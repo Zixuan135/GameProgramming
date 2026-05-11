@@ -117,7 +117,8 @@ namespace BubbleTown.AI
         private bool CanActDuringBattle()
         {
             GameManager gameManager = GameManager.Instance;
-            return gameManager == null || gameManager.CurrentGameState == GameState.BattleRunning;
+            return gameManager == null ||
+                   (gameManager.CurrentGameState == GameState.BattleRunning && !gameManager.IsBattlePaused);
         }
 
         private void UpdateMovementDecision()

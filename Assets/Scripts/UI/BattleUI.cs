@@ -24,6 +24,8 @@ namespace BubbleTown.UI
         private const float BottomHudGap = 10f;
         private const float ActionPanelHeight = 46f;
         private const float ItemGuidePanelHeight = 44f;
+        private const float PausePanelWidth = 430f;
+        private const float PausePanelHeight = 330f;
 
         [Header("Result Timing")]
         [SerializeField, Min(0f)] private float resultSceneDelay = 0.95f;
@@ -44,6 +46,11 @@ namespace BubbleTown.UI
         [Header("Pickup Toast")]
         [SerializeField, Min(0f)] private float pickupToastSeconds = 1.45f;
         [SerializeField] private Color pickupToastColor = new Color(1f, 0.94f, 0.55f);
+
+        [Header("Pause Menu")]
+        [SerializeField] private bool allowPause = true;
+        [SerializeField] private KeyCode pauseKey = KeyCode.Escape;
+        [SerializeField] private KeyCode alternatePauseKey = KeyCode.P;
 
         [Header("Feedback")]
         [SerializeField] private bool enableHudFeedbackShake = true;
@@ -85,6 +92,9 @@ namespace BubbleTown.UI
         private bool openingFlowStarted;
         private bool roundStartTriggered;
         private bool isItemGuideOpen;
+        private bool isPaused;
+        private bool isPauseSettingsOpen;
+        private float timeScaleBeforePause = 1f;
         private float resultTimer;
         private float localVsNextRoundTimer;
         private float battleElapsedSeconds;
@@ -110,11 +120,18 @@ namespace BubbleTown.UI
 
         private void OnDisable()
         {
+            RestoreTimeScaleIfPaused();
             ItemBase.ItemPickedUp -= HandleItemPickedUp;
         }
 
         private void Update()
         {
+            TickPauseInput();
+            if (isPaused)
+            {
+                return;
+            }
+
             EnsureOpeningFlowStarted();
             TickOpeningPrompt();
             TickBattleTimer();
@@ -133,7 +150,21 @@ namespace BubbleTown.UI
             EnsureStyles();
             DrawHudSafeBackground();
             DrawBattleHud();
+
+            if (isPaused)
+            {
+                DrawPauseMenu();
+                return;
+            }
+
             DrawActionButtons();
+
+            if (isPaused)
+            {
+                DrawPauseMenu();
+                return;
+            }
+
             DrawItemGuide();
             DrawPickupToast();
             DrawOpeningPrompt();
@@ -163,6 +194,7 @@ namespace BubbleTown.UI
 
         public void OnClickBackToMenu()
         {
+            RestoreTimeScaleIfPaused();
             AudioManager.Instance?.PlayButtonClickSFX();
             GameManager.Instance?.ResetSessionData();
             SceneFlowManager.Instance?.LoadMainMenu();
@@ -170,6 +202,7 @@ namespace BubbleTown.UI
 
         public void OnClickRetry()
         {
+            RestoreTimeScaleIfPaused();
             AudioManager.Instance?.PlayButtonClickSFX();
             GameManager gameManager = GameManager.Instance;
             if (gameManager != null)
@@ -192,19 +225,105 @@ namespace BubbleTown.UI
 
         private void ResetBattleHudState()
         {
+            RestoreTimeScaleIfPaused();
             battleElapsedSeconds = 0f;
             openingFlowStarted = false;
             roundStartTriggered = false;
             openingPromptTimer = 0f;
             resultQueued = false;
             localVsNextRoundQueued = false;
+            isPaused = false;
             isItemGuideOpen = false;
+            isPauseSettingsOpen = false;
+            timeScaleBeforePause = 1f;
             resultTimer = 0f;
             localVsNextRoundTimer = 0f;
             resultPromptTitle = string.Empty;
             resultPromptDetail = string.Empty;
             pickupToastText = string.Empty;
             pickupToastTimer = 0f;
+        }
+
+        private void TickPauseInput()
+        {
+            if (!allowPause)
+            {
+                return;
+            }
+
+            bool pausePressed = Input.GetKeyDown(pauseKey) ||
+                                (alternatePauseKey != KeyCode.None && Input.GetKeyDown(alternatePauseKey));
+            if (!pausePressed)
+            {
+                return;
+            }
+
+            if (isPaused && isPauseSettingsOpen)
+            {
+                isPauseSettingsOpen = false;
+                AudioManager.Instance?.PlayButtonClickSFX();
+                return;
+            }
+
+            SetPaused(!isPaused);
+        }
+
+        private bool CanPauseBattle()
+        {
+            if (!allowPause || resultQueued || localVsNextRoundQueued)
+            {
+                return false;
+            }
+
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager == null)
+            {
+                return true;
+            }
+
+            return gameManager.CurrentGameState == GameState.BattlePreparing ||
+                   gameManager.CurrentGameState == GameState.BattleRunning;
+        }
+
+        private void SetPaused(bool paused)
+        {
+            if (paused == isPaused)
+            {
+                return;
+            }
+
+            if (paused)
+            {
+                if (!CanPauseBattle())
+                {
+                    return;
+                }
+
+                timeScaleBeforePause = Time.timeScale > 0f ? Time.timeScale : 1f;
+                Time.timeScale = 0f;
+                isPaused = true;
+                isPauseSettingsOpen = false;
+                isItemGuideOpen = false;
+                GameManager.Instance?.SetBattlePaused(true);
+            }
+            else
+            {
+                RestoreTimeScaleIfPaused();
+            }
+
+            AudioManager.Instance?.PlayButtonClickSFX();
+        }
+
+        private void RestoreTimeScaleIfPaused()
+        {
+            if (isPaused)
+            {
+                Time.timeScale = timeScaleBeforePause > 0f ? timeScaleBeforePause : 1f;
+            }
+
+            isPaused = false;
+            isPauseSettingsOpen = false;
+            GameManager.Instance?.SetBattlePaused(false);
         }
 
         private void EnsureOpeningFlowStarted()
@@ -692,21 +811,26 @@ namespace BubbleTown.UI
             float bob = Mathf.Sin(Time.unscaledTime * 2.1f) * 0.7f;
             Rect buttonRect = new Rect(LeftHudX, ResolveBottomActionPanelY() + bob, LeftHudWidth, ActionPanelHeight);
             DrawPanel(buttonRect, new Color(1f, 0.96f, 0.72f, 0.84f), new Color(1f, 0.58f, 0.18f, 0.92f), 16, 2);
-            GUILayout.BeginArea(new Rect(buttonRect.x + 10f, buttonRect.y + 10f, buttonRect.width - 20f, buttonRect.height - 20f));
-            GUILayout.BeginHorizontal();
+            float gap = 6f;
+            float contentX = buttonRect.x + 10f;
+            float contentY = buttonRect.y + 10f;
+            float buttonWidth = (buttonRect.width - 20f - gap * 2f) / 3f;
+            float buttonHeight = buttonRect.height - 20f;
 
-            if (AnimatedActionButton("Retry"))
+            if (AnimatedFixedButton(new Rect(contentX, contentY, buttonWidth, buttonHeight), "Pause"))
+            {
+                SetPaused(true);
+            }
+
+            if (AnimatedFixedButton(new Rect(contentX + buttonWidth + gap, contentY, buttonWidth, buttonHeight), "Retry"))
             {
                 OnClickRetry();
             }
 
-            if (AnimatedActionButton("Main Menu"))
+            if (AnimatedFixedButton(new Rect(contentX + (buttonWidth + gap) * 2f, contentY, buttonWidth, buttonHeight), "Menu"))
             {
                 OnClickBackToMenu();
             }
-
-            GUILayout.EndHorizontal();
-            GUILayout.EndArea();
         }
 
         private void DrawItemGuide()
@@ -726,6 +850,92 @@ namespace BubbleTown.UI
             {
                 DrawItemGuidePanel();
             }
+        }
+
+        private void DrawPauseMenu()
+        {
+            GUI.DrawTexture(
+                new Rect(0f, 0f, Screen.width, Screen.height),
+                GetRoundedTexture(new Color(0.04f, 0.18f, 0.26f, 0.46f), Color.clear, 1, 0));
+
+            Rect panelRect = new Rect(
+                Screen.width * 0.5f - PausePanelWidth * 0.5f,
+                Screen.height * 0.5f - PausePanelHeight * 0.5f,
+                PausePanelWidth,
+                PausePanelHeight);
+
+            float bob = Mathf.Sin(Time.unscaledTime * 2.2f) * 2.2f;
+            panelRect.y += bob;
+
+            DrawPanel(panelRect, new Color(1f, 0.96f, 0.72f, 0.96f), new Color(0.16f, 0.72f, 1f, 0.98f), 24, 5);
+            DrawPauseDecorations(panelRect);
+            DrawLockedLabel(new Rect(panelRect.x + 30f, panelRect.y + 28f, panelRect.width - 60f, 56f), "PAUSED", promptTitleStyle);
+            DrawLockedLabel(
+                new Rect(panelRect.x + 48f, panelRect.y + 86f, panelRect.width - 96f, 42f),
+                "Take a breath. The arena is frozen until you resume.",
+                promptBodyStyle);
+
+            if (isPauseSettingsOpen)
+            {
+                if (SimpleUIFactory.SettingsModal(AudioManager.Instance))
+                {
+                    isPauseSettingsOpen = false;
+                    AudioManager.Instance?.PlayButtonClickSFX();
+                }
+
+                return;
+            }
+
+            float buttonWidth = 170f;
+            float buttonHeight = 42f;
+            float buttonGapX = 18f;
+            float buttonGapY = 16f;
+            float startX = panelRect.center.x - buttonWidth - buttonGapX * 0.5f;
+            float startY = panelRect.y + 146f;
+
+            if (AnimatedFixedButton(new Rect(startX, startY, buttonWidth, buttonHeight), "RESUME"))
+            {
+                SetPaused(false);
+            }
+
+            if (AnimatedFixedButton(new Rect(startX + buttonWidth + buttonGapX, startY, buttonWidth, buttonHeight), "SETTINGS"))
+            {
+                isPauseSettingsOpen = true;
+                AudioManager.Instance?.PlayButtonClickSFX();
+            }
+
+            if (AnimatedFixedButton(new Rect(startX, startY + buttonHeight + buttonGapY, buttonWidth, buttonHeight), "RETRY"))
+            {
+                OnClickRetry();
+            }
+
+            if (AnimatedFixedButton(new Rect(startX + buttonWidth + buttonGapX, startY + buttonHeight + buttonGapY, buttonWidth, buttonHeight), "MAIN MENU"))
+            {
+                OnClickBackToMenu();
+            }
+
+            DrawLockedLabel(
+                new Rect(panelRect.x + 48f, panelRect.y + panelRect.height - 48f, panelRect.width - 96f, 24f),
+                $"Press {pauseKey} or {alternatePauseKey} to resume.",
+                hudSmallStyle);
+        }
+
+        private void DrawPauseDecorations(Rect panelRect)
+        {
+            float t = Time.unscaledTime;
+            DrawCircle(
+                new Rect(panelRect.x + 36f + Mathf.Sin(t * 1.8f) * 3f, panelRect.y + 34f, 32f, 32f),
+                new Color(0.35f, 0.78f, 1f, 0.35f));
+            DrawCircle(
+                new Rect(panelRect.x + panelRect.width - 72f + Mathf.Sin(t * 1.5f + 1.2f) * 3f, panelRect.y + 42f, 28f, 28f),
+                new Color(1f, 0.62f, 0.16f, 0.34f));
+            DrawSolidRect(
+                new Rect(panelRect.x + 76f, panelRect.y + panelRect.height - 70f + Mathf.Sin(t * 2.1f) * 2f, 28f, 28f),
+                new Color(0.48f, 0.9f, 0.34f, 0.32f),
+                7);
+            DrawCircle(
+                new Rect(panelRect.x + panelRect.width - 112f, panelRect.y + panelRect.height - 76f + Mathf.Cos(t * 1.7f) * 2f, 34f, 34f),
+                new Color(0.72f, 0.48f, 1f, 0.3f));
         }
 
         private float ResolveBottomActionPanelY()
@@ -1103,6 +1313,11 @@ namespace BubbleTown.UI
             if (gameManager == null)
             {
                 return "WAIT";
+            }
+
+            if (gameManager.IsBattlePaused)
+            {
+                return "PAUSE";
             }
 
             if (gameManager.CurrentGameState == GameState.BattlePreparing)
