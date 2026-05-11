@@ -227,8 +227,8 @@ MonoBehaviour:
   useHudSafeViewport: 1
   autoFitViewportToHud: 1
   leftHudSafeWidthNormalized: 0.32
-  bottomHudSafeHeightNormalized: 0.08
-  viewportPaddingNormalized: 0.012
+  bottomHudSafeHeightNormalized: 0
+  viewportPaddingNormalized: 0
   gameplayViewport:
     serializedVersion: 2
     x: 0.32
@@ -702,7 +702,7 @@ MonoBehaviour:
   neutralColor: {r: 1, g: 0.82, b: 0.32, a: 1}
   drawLeftHudSafeBackground: 1
   leftHudSafeWidthNormalized: 0.32
-  gameplayBottomFillNormalized: 0.08
+  gameplayBottomFillNormalized: 0
   hudSafeBackgroundColor: {r: 0.74, g: 0.93, b: 1, a: 1}
 --- !u!1001 &9493359
 PrefabInstance:
