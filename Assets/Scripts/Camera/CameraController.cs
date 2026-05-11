@@ -525,11 +525,12 @@ namespace BubbleTown.CameraSystem
                 return ClampViewport(gameplayViewport);
             }
 
-            float padding = Mathf.Clamp01(viewportPaddingNormalized);
-            float left = Mathf.Clamp01(leftHudSafeWidthNormalized + padding);
-            float bottom = Mathf.Clamp01(bottomHudSafeHeightNormalized + padding);
-            float right = Mathf.Clamp01(1f - padding);
-            float top = Mathf.Clamp01(1f - padding);
+            // Render the full gameplay pane so Unity never exposes black letterbox gaps
+            // around the camera viewport. The HUD itself reserves the left-side safe area.
+            float left = Mathf.Clamp01(leftHudSafeWidthNormalized);
+            float bottom = 0f;
+            float right = 1f;
+            float top = 1f;
             return ClampViewport(new Rect(left, bottom, Mathf.Max(0.05f, right - left), Mathf.Max(0.05f, top - bottom)));
         }
 
