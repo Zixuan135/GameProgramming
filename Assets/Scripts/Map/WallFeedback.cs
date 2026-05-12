@@ -31,22 +31,44 @@ namespace BubbleTown.Map
         private Coroutine feedbackRoutine;
         private bool isDestroying;
 
+        /// <summary>
+        /// Purpose: Initializes this component before the scene starts running.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Awake()
         {
             CacheOriginalTransform();
         }
 
+        /// <summary>
+        /// Purpose: Subscribes or refreshes runtime state when this component becomes active.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnEnable()
         {
             CacheOriginalTransform();
         }
 
+        /// <summary>
+        /// Purpose: Sets visual root.
+        /// Inputs: `root`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="root">Input value used by this method.</param>
         public void SetVisualRoot(Transform root)
         {
             visualRoot = root != null ? root : transform;
             CacheOriginalTransform();
         }
 
+        /// <summary>
+        /// Purpose: Plays hard wall blocked feedback.
+        /// Inputs: `explosionWorldPosition`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="explosionWorldPosition">Input value used by this method.</param>
         public void PlayHardWallBlockedFeedback(Vector3 explosionWorldPosition)
         {
             if (!isActiveAndEnabled || isDestroying)
@@ -63,6 +85,11 @@ namespace BubbleTown.Map
             feedbackRoutine = StartCoroutine(PlayHardWallBlockedRoutine(explosionWorldPosition));
         }
 
+        /// <summary>
+        /// Purpose: Plays soft wall destroyed feedback.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void PlaySoftWallDestroyedFeedback()
         {
             if (!isActiveAndEnabled || isDestroying)
@@ -78,6 +105,13 @@ namespace BubbleTown.Map
             feedbackRoutine = StartCoroutine(PlaySoftWallDestroyedRoutine());
         }
 
+        /// <summary>
+        /// Purpose: Plays hard wall blocked routine.
+        /// Inputs: `explosionWorldPosition`; may also read serialized fields and current runtime state.
+        /// Output: a `IEnumerator` value.
+        /// </summary>
+        /// <param name="explosionWorldPosition">Input value used by this method.</param>
+        /// <returns>a `IEnumerator` value.</returns>
         private IEnumerator PlayHardWallBlockedRoutine(Vector3 explosionWorldPosition)
         {
             CacheOriginalTransform();
@@ -101,6 +135,12 @@ namespace BubbleTown.Map
             feedbackRoutine = null;
         }
 
+        /// <summary>
+        /// Purpose: Plays soft wall destroyed routine.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `IEnumerator` value.
+        /// </summary>
+        /// <returns>a `IEnumerator` value.</returns>
         private IEnumerator PlaySoftWallDestroyedRoutine()
         {
             isDestroying = true;
@@ -128,6 +168,11 @@ namespace BubbleTown.Map
             Destroy(gameObject);
         }
 
+        /// <summary>
+        /// Purpose: Spawns simple shards.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void SpawnSimpleShards()
         {
             if (shardCount <= 0)
@@ -164,6 +209,12 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Resolves shard material from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material ResolveShardMaterial()
         {
             Renderer renderer = GetComponentInChildren<Renderer>();
@@ -175,6 +226,13 @@ namespace BubbleTown.Map
             return renderer.sharedMaterial;
         }
 
+        /// <summary>
+        /// Purpose: Resolves shake direction from the current runtime state.
+        /// Inputs: `explosionWorldPosition`; may also read serialized fields and current runtime state.
+        /// Output: a `Vector3` value.
+        /// </summary>
+        /// <param name="explosionWorldPosition">Input value used by this method.</param>
+        /// <returns>a `Vector3` value.</returns>
         private Vector3 ResolveShakeDirection(Vector3 explosionWorldPosition)
         {
             Vector3 direction = transform.position - explosionWorldPosition;
@@ -189,6 +247,11 @@ namespace BubbleTown.Map
                 : visualRoot.parent.InverseTransformDirection(direction.normalized);
         }
 
+        /// <summary>
+        /// Purpose: Performs disable colliders for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void DisableColliders()
         {
             Collider[] colliders = GetComponentsInChildren<Collider>();
@@ -198,6 +261,11 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Performs cache original transform for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void CacheOriginalTransform()
         {
             if (visualRoot == null)
@@ -209,6 +277,11 @@ namespace BubbleTown.Map
             originalLocalScale = visualRoot.localScale;
         }
 
+        /// <summary>
+        /// Purpose: Performs restore visual transform for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void RestoreVisualTransform()
         {
             if (visualRoot == null)

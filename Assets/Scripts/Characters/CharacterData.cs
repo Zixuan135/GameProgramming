@@ -34,6 +34,11 @@ namespace BubbleTown.Characters
         public int ExplosionRange => Mathf.Max(1, explosionRange);
         public Color ThemeColor => themeColor;
 
+        /// <summary>
+        /// Purpose: Keeps serialized Inspector values safe when edited in the Unity Editor.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnValidate()
         {
             characterId = string.IsNullOrWhiteSpace(characterId)
@@ -49,6 +54,13 @@ namespace BubbleTown.Characters
             explosionRange = Mathf.Max(1, explosionRange);
         }
 
+        /// <summary>
+        /// Purpose: Returns nicify id for the current state.
+        /// Inputs: `id`; may also read serialized fields and current runtime state.
+        /// Output: a `string` value.
+        /// </summary>
+        /// <param name="id">Input value used by this method.</param>
+        /// <returns>a `string` value.</returns>
         private static string NicifyId(string id)
         {
             if (string.IsNullOrWhiteSpace(id))

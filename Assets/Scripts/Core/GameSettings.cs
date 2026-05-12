@@ -83,6 +83,11 @@ namespace BubbleTown.Core
             }
         }
 
+        /// <summary>
+        /// Purpose: Performs load for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public static void Load()
         {
             masterVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(MasterVolumeKey, DefaultMasterVolume));
@@ -94,6 +99,12 @@ namespace BubbleTown.Core
             hasLoaded = true;
         }
 
+        /// <summary>
+        /// Purpose: Sets master volume.
+        /// Inputs: `volume`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="volume">Input value used by this method.</param>
         public static void SetMasterVolume(float volume)
         {
             EnsureLoaded();
@@ -102,6 +113,12 @@ namespace BubbleTown.Core
             PlayerPrefs.Save();
         }
 
+        /// <summary>
+        /// Purpose: Sets bgm volume.
+        /// Inputs: `volume`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="volume">Input value used by this method.</param>
         public static void SetBgmVolume(float volume)
         {
             EnsureLoaded();
@@ -110,6 +127,12 @@ namespace BubbleTown.Core
             PlayerPrefs.Save();
         }
 
+        /// <summary>
+        /// Purpose: Sets sfx volume.
+        /// Inputs: `volume`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="volume">Input value used by this method.</param>
         public static void SetSfxVolume(float volume)
         {
             EnsureLoaded();
@@ -118,6 +141,12 @@ namespace BubbleTown.Core
             PlayerPrefs.Save();
         }
 
+        /// <summary>
+        /// Purpose: Sets mute bgm.
+        /// Inputs: `isMuted`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="isMuted">Input value used by this method.</param>
         public static void SetMuteBGM(bool isMuted)
         {
             EnsureLoaded();
@@ -126,6 +155,12 @@ namespace BubbleTown.Core
             PlayerPrefs.Save();
         }
 
+        /// <summary>
+        /// Purpose: Sets mute sfx.
+        /// Inputs: `isMuted`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="isMuted">Input value used by this method.</param>
         public static void SetMuteSFX(bool isMuted)
         {
             EnsureLoaded();
@@ -134,6 +169,12 @@ namespace BubbleTown.Core
             PlayerPrefs.Save();
         }
 
+        /// <summary>
+        /// Purpose: Sets screen shake enabled.
+        /// Inputs: `isEnabled`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="isEnabled">Input value used by this method.</param>
         public static void SetScreenShakeEnabled(bool isEnabled)
         {
             EnsureLoaded();
@@ -142,6 +183,11 @@ namespace BubbleTown.Core
             PlayerPrefs.Save();
         }
 
+        /// <summary>
+        /// Purpose: Resets to defaults to a safe default state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public static void ResetToDefaults()
         {
             masterVolume = DefaultMasterVolume;
@@ -154,6 +200,11 @@ namespace BubbleTown.Core
             SaveAll();
         }
 
+        /// <summary>
+        /// Purpose: Ensures loaded exists or is initialized before use.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private static void EnsureLoaded()
         {
             if (!hasLoaded)
@@ -162,6 +213,11 @@ namespace BubbleTown.Core
             }
         }
 
+        /// <summary>
+        /// Purpose: Performs save all for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private static void SaveAll()
         {
             PlayerPrefs.SetFloat(MasterVolumeKey, masterVolume);
@@ -173,6 +229,13 @@ namespace BubbleTown.Core
             PlayerPrefs.Save();
         }
 
+        /// <summary>
+        /// Purpose: Returns bool to int for the current state.
+        /// Inputs: `value`; may also read serialized fields and current runtime state.
+        /// Output: a `int` value.
+        /// </summary>
+        /// <param name="value">Input value used by this method.</param>
+        /// <returns>a `int` value.</returns>
         private static int BoolToInt(bool value)
         {
             return value ? 1 : 0;

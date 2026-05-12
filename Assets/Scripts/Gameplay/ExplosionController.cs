@@ -41,6 +41,11 @@ namespace BubbleTown.Gameplay
         public float LifeSeconds => lifeSeconds;
         public bool IsInitialized => initialized;
 
+        /// <summary>
+        /// Purpose: Initializes this component before the scene starts running.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Awake()
         {
             if (visualRoot == null)
@@ -58,11 +63,26 @@ namespace BubbleTown.Gameplay
             visualRoot.localScale = startScale;
         }
 
+        /// <summary>
+        /// Purpose: Performs initialize for this component.
+        /// Inputs: `explosionRange`, `explosionOwner`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="explosionRange">Input value used by this method.</param>
+        /// <param name="explosionOwner">Input value used by this method.</param>
         public void Initialize(int explosionRange, CharacterBase explosionOwner)
         {
             Initialize(explosionRange, explosionOwner, Vector2Int.zero);
         }
 
+        /// <summary>
+        /// Purpose: Performs initialize for this component.
+        /// Inputs: `explosionRange`, `explosionOwner`, `explosionGridPosition`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="explosionRange">Input value used by this method.</param>
+        /// <param name="explosionOwner">Input value used by this method.</param>
+        /// <param name="explosionGridPosition">Input value used by this method.</param>
         public void Initialize(int explosionRange, CharacterBase explosionOwner, Vector2Int explosionGridPosition)
         {
             range = Mathf.Max(1, explosionRange);
@@ -73,12 +93,22 @@ namespace BubbleTown.Gameplay
             Debug.Log($"[ExplosionController] Explosion cell. Grid: {gridPosition}, Range: {range}, Owner: {(owner != null ? owner.name : "None")}");
         }
 
+        /// <summary>
+        /// Purpose: Runs this component's per-frame logic.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Update()
         {
             TickLifetime();
             UpdatePlaceholderVisual();
         }
 
+        /// <summary>
+        /// Purpose: Advances lifetime by one update step.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         protected virtual void TickLifetime()
         {
             elapsedSeconds += Time.deltaTime;
@@ -88,6 +118,11 @@ namespace BubbleTown.Gameplay
             }
         }
 
+        /// <summary>
+        /// Purpose: Updates placeholder visual.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         protected virtual void UpdatePlaceholderVisual()
         {
             if (visualRoot == null)
@@ -105,6 +140,12 @@ namespace BubbleTown.Gameplay
             ApplyPulseEmission(easedPulse);
         }
 
+        /// <summary>
+        /// Purpose: Applies pulse emission to the current object or scene.
+        /// Inputs: `pulse`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="pulse">Input value used by this method.</param>
         private void ApplyPulseEmission(float pulse)
         {
             if (pulsePropertyBlock == null)
@@ -127,16 +168,34 @@ namespace BubbleTown.Gameplay
             }
         }
 
+        /// <summary>
+        /// Purpose: Handles another collider entering this trigger.
+        /// Inputs: `other`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="other">Input value used by this method.</param>
         private void OnTriggerEnter(Collider other)
         {
             HandleTriggerHit(other);
         }
 
+        /// <summary>
+        /// Purpose: Handles the trigger stay event or callback.
+        /// Inputs: `other`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="other">Input value used by this method.</param>
         private void OnTriggerStay(Collider other)
         {
             HandleTriggerHit(other);
         }
 
+        /// <summary>
+        /// Purpose: Handles trigger hit.
+        /// Inputs: `other`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="other">Input value used by this method.</param>
         private void HandleTriggerHit(Collider other)
         {
             CharacterBase character = other.GetComponent<CharacterBase>();

@@ -77,6 +77,14 @@ namespace BubbleTown.AI
             public Vector2Int FirstDirection;
             public int Depth;
 
+            /// <summary>
+            /// Purpose: Stores one node used by AI breadth-first searches.
+            /// Inputs: position is the searched cell, firstDirection is the first step from the AI, and depth is distance from start.
+            /// Output: returns an EscapeSearchNode value used only inside the AI search queue.
+            /// </summary>
+            /// <param name="position">Grid cell represented by this search node.</param>
+            /// <param name="firstDirection">First movement step from the AI's start cell toward this node.</param>
+            /// <param name="depth">Number of grid steps from the AI's start cell.</param>
             public EscapeSearchNode(Vector2Int position, Vector2Int firstDirection, int depth)
             {
                 Position = position;
@@ -85,6 +93,11 @@ namespace BubbleTown.AI
             }
         }
 
+        /// <summary>
+        /// Purpose: Runs this component's per-frame logic.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         protected override void Update()
         {
             base.Update();
@@ -104,6 +117,15 @@ namespace BubbleTown.AI
             UpdateMovementDecision();
         }
 
+        /// <summary>
+        /// Purpose: Configures for battle for the current battle or scene.
+        /// Inputs: `newMapManager`, `spawnGridPosition`, `newBombSpawnRoot`, `newBombPrefab`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="newMapManager">Input value used by this method.</param>
+        /// <param name="spawnGridPosition">Input value used by this method.</param>
+        /// <param name="newBombSpawnRoot">Input value used by this method.</param>
+        /// <param name="newBombPrefab">Input value used by this method.</param>
         public override void ConfigureForBattle(
             MapManager newMapManager,
             Vector2Int spawnGridPosition,
@@ -114,6 +136,12 @@ namespace BubbleTown.AI
             ResetAIState();
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object can act during battle.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <returns>a `bool` value.</returns>
         private bool CanActDuringBattle()
         {
             GameManager gameManager = GameManager.Instance;
@@ -121,6 +149,11 @@ namespace BubbleTown.AI
                    (gameManager.CurrentGameState == GameState.BattleRunning && !gameManager.IsBattlePaused);
         }
 
+        /// <summary>
+        /// Purpose: Updates movement decision.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void UpdateMovementDecision()
         {
             if (IsMoving)
@@ -159,6 +192,11 @@ namespace BubbleTown.AI
             TryMoveRandomDirection();
         }
 
+        /// <summary>
+        /// Purpose: Attempts to move toward safety.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void TryMoveTowardSafety()
         {
             if (TryFindEscapeDirection(IsGridDangerous, escapeSearchDepth, false, Vector2Int.zero, out Vector2Int escapeDirection))
@@ -176,6 +214,12 @@ namespace BubbleTown.AI
             RegisterFailedMove(dangerMoveRetryDelay);
         }
 
+        /// <summary>
+        /// Purpose: Attempts to move strategic direction.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <returns>a `bool` value.</returns>
         private bool TryMoveStrategicDirection()
         {
             if (TryFindPlayerAttackPositionDirection(out Vector2Int playerDirection, out Vector2Int playerTarget))
@@ -201,6 +245,11 @@ namespace BubbleTown.AI
             return false;
         }
 
+        /// <summary>
+        /// Purpose: Attempts to move random direction.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void TryMoveRandomDirection()
         {
             if (UnityEngine.Random.value < idleChance)
@@ -220,6 +269,13 @@ namespace BubbleTown.AI
             TryMoveOrRegisterFailure(nextDirection, moveDecisionInterval);
         }
 
+        /// <summary>
+        /// Purpose: Attempts to move or register failure.
+        /// Inputs: `direction`, `nextDecisionDelay`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="direction">Input value used by this method.</param>
+        /// <param name="nextDecisionDelay">Input value used by this method.</param>
         private void TryMoveOrRegisterFailure(Vector2Int direction, float nextDecisionDelay)
         {
             bool moved = TryMoveGridDirection(direction);
@@ -234,6 +290,14 @@ namespace BubbleTown.AI
             ScheduleNextMoveDecision(nextDecisionDelay);
         }
 
+        /// <summary>
+        /// Purpose: Attempts to pick walkable direction.
+        /// Inputs: `direction`, `avoidDangerousCells`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="direction">Input value used by this method.</param>
+        /// <param name="avoidDangerousCells">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool TryPickWalkableDirection(out Vector2Int direction, bool avoidDangerousCells)
         {
             direction = Vector2Int.zero;
@@ -284,6 +348,13 @@ namespace BubbleTown.AI
             return true;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object should skip immediate reverse.
+        /// Inputs: `candidateDirection`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="candidateDirection">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool ShouldSkipImmediateReverse(Vector2Int candidateDirection)
         {
             if (currentMoveDirection == Vector2Int.zero)
@@ -299,11 +370,24 @@ namespace BubbleTown.AI
             return UnityEngine.Random.value < avoidImmediateReverseChance;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is grid walkable.
+        /// Inputs: `gridPosition`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPosition">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool IsGridWalkable(Vector2Int gridPosition)
         {
             return MapManager != null && MapManager.IsWalkable(gridPosition);
         }
 
+        /// <summary>
+        /// Purpose: Registers failed move in the relevant runtime system.
+        /// Inputs: `retryDelay`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="retryDelay">Input value used by this method.</param>
         private void RegisterFailedMove(float retryDelay)
         {
             failedMoveAttempts++;
@@ -318,11 +402,22 @@ namespace BubbleTown.AI
             ScheduleNextMoveDecision(retryDelay);
         }
 
+        /// <summary>
+        /// Purpose: Performs schedule next move decision for this component.
+        /// Inputs: `delay`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="delay">Input value used by this method.</param>
         private void ScheduleNextMoveDecision(float delay)
         {
             moveDecisionTimer = Mathf.Max(0.01f, delay);
         }
 
+        /// <summary>
+        /// Purpose: Updates bomb decision.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void UpdateBombDecision()
         {
             if (!enableBombPlacement || IsMoving || postBombEscapeTimer > 0f)
@@ -374,11 +469,25 @@ namespace BubbleTown.AI
             }
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object has immediate bomb opportunity.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <returns>a `bool` value.</returns>
         private bool HasImmediateBombOpportunity()
         {
             return HasAdjacentSoftWall(CurrentGridPosition) || IsPlayerInBombLine();
         }
 
+        /// <summary>
+        /// Purpose: Attempts to evaluate bomb placement opportunity.
+        /// Inputs: `placementChance`, `reason`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="placementChance">Input value used by this method.</param>
+        /// <param name="reason">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool TryEvaluateBombPlacementOpportunity(out float placementChance, out string reason)
         {
             placementChance = bombPlacementChance;
@@ -408,6 +517,12 @@ namespace BubbleTown.AI
             return false;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is near soft wall.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <returns>a `bool` value.</returns>
         private bool IsNearSoftWall()
         {
             if (MapManager == null)
@@ -438,6 +553,13 @@ namespace BubbleTown.AI
             return false;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object has adjacent soft wall.
+        /// Inputs: `gridPosition`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPosition">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool HasAdjacentSoftWall(Vector2Int gridPosition)
         {
             if (MapManager == null)
@@ -457,6 +579,12 @@ namespace BubbleTown.AI
             return false;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is player in bomb line.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <returns>a `bool` value.</returns>
         private bool IsPlayerInBombLine()
         {
             PlayerController[] players = FindObjectsOfType<PlayerController>();
@@ -477,6 +605,14 @@ namespace BubbleTown.AI
             return false;
         }
 
+        /// <summary>
+        /// Purpose: Attempts to find player attack position direction.
+        /// Inputs: `direction`, `targetGridPosition`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="direction">Input value used by this method.</param>
+        /// <param name="targetGridPosition">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool TryFindPlayerAttackPositionDirection(out Vector2Int direction, out Vector2Int targetGridPosition)
         {
             direction = Vector2Int.zero;
@@ -507,6 +643,13 @@ namespace BubbleTown.AI
                 out direction);
         }
 
+        /// <summary>
+        /// Purpose: Attempts to find nearest active player.
+        /// Inputs: `nearestPlayer`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="nearestPlayer">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool TryFindNearestActivePlayer(out PlayerController nearestPlayer)
         {
             nearestPlayer = null;
@@ -533,6 +676,14 @@ namespace BubbleTown.AI
             return nearestPlayer != null;
         }
 
+        /// <summary>
+        /// Purpose: Attempts to find soft wall approach direction.
+        /// Inputs: `direction`, `targetGridPosition`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="direction">Input value used by this method.</param>
+        /// <param name="targetGridPosition">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool TryFindSoftWallApproachDirection(out Vector2Int direction, out Vector2Int targetGridPosition)
         {
             direction = Vector2Int.zero;
@@ -557,6 +708,12 @@ namespace BubbleTown.AI
             return found;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object can reach safety after placing bomb.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <returns>a `bool` value.</returns>
         private bool CanReachSafetyAfterPlacingBomb()
         {
             Vector2Int hypotheticalBombGridPosition = CurrentGridPosition;
@@ -568,6 +725,16 @@ namespace BubbleTown.AI
                 out _);
         }
 
+        /// <summary>
+        /// Purpose: Searches nearby walkable cells and returns the first step toward a matching goal cell.
+        /// Inputs: isGoal tests candidate cells, maxDepth limits search cost, and avoidDangerousCells skips threatened cells.
+        /// Output: returns true and sets direction when a path is found; otherwise returns false and sets direction to zero.
+        /// </summary>
+        /// <param name="isGoal">Callback that returns true for an acceptable target grid cell.</param>
+        /// <param name="maxDepth">Maximum number of grid steps the AI may search from its current cell.</param>
+        /// <param name="avoidDangerousCells">When true, cells threatened by bombs or explosions are ignored.</param>
+        /// <param name="direction">First grid step the AI should take toward the found goal.</param>
+        /// <returns>True if a reachable goal was found within maxDepth; otherwise false.</returns>
         private bool TryFindDirectionToGoal(
             Func<Vector2Int, bool> isGoal,
             int maxDepth,
@@ -580,6 +747,7 @@ namespace BubbleTown.AI
                 return false;
             }
 
+            // Breadth-first search keeps the first found path short and stable for grid movement.
             Queue<EscapeSearchNode> openNodes = new Queue<EscapeSearchNode>();
             HashSet<Vector2Int> visitedPositions = new HashSet<Vector2Int>();
             Vector2Int startPosition = CurrentGridPosition;
@@ -621,6 +789,7 @@ namespace BubbleTown.AI
                         continue;
                     }
 
+                    // Store only the first step, because the AI will make a fresh decision after moving.
                     Vector2Int firstDirection = currentNode.Depth == 0 ? stepDirection : currentNode.FirstDirection;
                     openNodes.Enqueue(new EscapeSearchNode(nextPosition, firstDirection, currentNode.Depth + 1));
                     visitedPositions.Add(nextPosition);
@@ -630,6 +799,17 @@ namespace BubbleTown.AI
             return false;
         }
 
+        /// <summary>
+        /// Purpose: Finds a first movement step that leads away from dangerous cells.
+        /// Inputs: isDangerous marks unsafe cells, maxDepth limits search, and blockedBombCell can reserve the newly placed bomb cell.
+        /// Output: returns true and sets direction when a safe path exists; otherwise returns false and sets direction to zero.
+        /// </summary>
+        /// <param name="isDangerous">Callback that returns true when a grid cell is unsafe.</param>
+        /// <param name="maxDepth">Maximum number of grid steps the AI may inspect.</param>
+        /// <param name="hasBlockedBombCell">Whether blockedBombCell should be treated as unwalkable during the search.</param>
+        /// <param name="blockedBombCell">Bomb cell to avoid, usually the AI's current cell after placing a bomb.</param>
+        /// <param name="direction">First grid step toward safety.</param>
+        /// <returns>True if the AI can reach a safe cell within maxDepth; otherwise false.</returns>
         private bool TryFindEscapeDirection(
             Func<Vector2Int, bool> isDangerous,
             int maxDepth,
@@ -643,6 +823,7 @@ namespace BubbleTown.AI
                 return false;
             }
 
+            // The queue explores cells in rings around the AI, so the first safe cell is nearby.
             Queue<EscapeSearchNode> openNodes = new Queue<EscapeSearchNode>();
             HashSet<Vector2Int> visitedPositions = new HashSet<Vector2Int>();
             Vector2Int startPosition = CurrentGridPosition;
@@ -679,6 +860,7 @@ namespace BubbleTown.AI
                         continue;
                     }
 
+                    // Keep the original first step instead of storing the whole path.
                     Vector2Int firstDirection = currentNode.Depth == 0 ? stepDirection : currentNode.FirstDirection;
                     openNodes.Enqueue(new EscapeSearchNode(nextPosition, firstDirection, currentNode.Depth + 1));
                     visitedPositions.Add(nextPosition);
@@ -688,6 +870,16 @@ namespace BubbleTown.AI
             return false;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object can use cell for escape search.
+        /// Inputs: `gridPosition`, `startPosition`, `hasBlockedBombCell`, `blockedBombCell`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPosition">Input value used by this method.</param>
+        /// <param name="startPosition">Input value used by this method.</param>
+        /// <param name="hasBlockedBombCell">Input value used by this method.</param>
+        /// <param name="blockedBombCell">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool CanUseCellForEscapeSearch(
             Vector2Int gridPosition,
             Vector2Int startPosition,
@@ -707,11 +899,25 @@ namespace BubbleTown.AI
             return IsGridWalkable(gridPosition);
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is grid dangerous.
+        /// Inputs: `gridPosition`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPosition">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool IsGridDangerous(Vector2Int gridPosition)
         {
             return IsGridHitByActiveExplosion(gridPosition) || IsGridThreatenedByActiveBomb(gridPosition);
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is grid hit by active explosion.
+        /// Inputs: `gridPosition`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPosition">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool IsGridHitByActiveExplosion(Vector2Int gridPosition)
         {
             ExplosionController[] explosions = FindObjectsOfType<ExplosionController>();
@@ -727,6 +933,13 @@ namespace BubbleTown.AI
             return false;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is grid threatened by active bomb.
+        /// Inputs: `gridPosition`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPosition">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool IsGridThreatenedByActiveBomb(Vector2Int gridPosition)
         {
             BombController[] bombs = FindObjectsOfType<BombController>();
@@ -747,6 +960,15 @@ namespace BubbleTown.AI
             return false;
         }
 
+        /// <summary>
+        /// Purpose: Checks whether a grid cell would be hit by a bomb's cross-shaped blast.
+        /// Inputs: targetGridPosition is the tested cell, bombGridPosition is the bomb cell, and blastRange is the bomb range.
+        /// Output: returns true if the target is on the bomb row/column before a wall blocks propagation.
+        /// </summary>
+        /// <param name="targetGridPosition">Grid cell being tested for danger.</param>
+        /// <param name="bombGridPosition">Grid cell occupied by the bomb.</param>
+        /// <param name="blastRange">Maximum blast distance in grid cells.</param>
+        /// <returns>True if the target cell is inside the bomb's effective blast path; otherwise false.</returns>
         private bool IsGridInBombBlast(Vector2Int targetGridPosition, Vector2Int bombGridPosition, int blastRange)
         {
             if (MapManager == null)
@@ -777,6 +999,7 @@ namespace BubbleTown.AI
                 ? new Vector2Int(0, delta.y > 0 ? 1 : -1)
                 : new Vector2Int(delta.x > 0 ? 1 : -1, 0);
 
+            // Walk from the bomb to the target so walls can block danger exactly like real explosions.
             for (int step = 1; step <= distance; step++)
             {
                 Vector2Int checkGridPosition = bombGridPosition + direction * step;
@@ -800,6 +1023,11 @@ namespace BubbleTown.AI
             return false;
         }
 
+        /// <summary>
+        /// Purpose: Resets aistate to a safe default state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ResetAIState()
         {
             currentMoveDirection = Vector2Int.zero;
@@ -812,6 +1040,11 @@ namespace BubbleTown.AI
             bombTimer = UnityEngine.Random.Range(0f, bombDecisionInterval);
         }
 
+        /// <summary>
+        /// Purpose: Advances post bomb escape timer by one update step.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void TickPostBombEscapeTimer()
         {
             if (postBombEscapeTimer <= 0f)
@@ -822,11 +1055,25 @@ namespace BubbleTown.AI
             postBombEscapeTimer = Mathf.Max(0f, postBombEscapeTimer - Time.deltaTime);
         }
 
+        /// <summary>
+        /// Purpose: Returns manhattan distance for the current state.
+        /// Inputs: `a`, `b`; may also read serialized fields and current runtime state.
+        /// Output: a `int` value.
+        /// </summary>
+        /// <param name="a">Input value used by this method.</param>
+        /// <param name="b">Input value used by this method.</param>
+        /// <returns>a `int` value.</returns>
         private int ManhattanDistance(Vector2Int a, Vector2Int b)
         {
             return Mathf.Abs(a.x - b.x) + Mathf.Abs(a.y - b.y);
         }
 
+        /// <summary>
+        /// Purpose: Performs log decision for this component.
+        /// Inputs: `message`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="message">Input value used by this method.</param>
         private void LogDecision(string message)
         {
             if (!logDecisionDebug)

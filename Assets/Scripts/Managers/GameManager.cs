@@ -159,6 +159,11 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Initializes this component before the scene starts running.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -171,11 +176,21 @@ namespace BubbleTown.Managers
             DontDestroyOnLoad(gameObject);
         }
 
+        /// <summary>
+        /// Purpose: Subscribes or refreshes runtime state when this component becomes active.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnEnable()
         {
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
+        /// <summary>
+        /// Purpose: Initializes this component after Unity enables it in the scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Start()
         {
             if (autoSetupBattleOnSceneLoaded && SceneManager.GetActiveScene().name == GameConstants.SceneBattle)
@@ -184,17 +199,33 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Cleans up subscriptions or runtime state when this component becomes inactive.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnDisable()
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
             UnsubscribeSinglePlayerObjectiveMap();
         }
 
+        /// <summary>
+        /// Purpose: Handles application shutdown cleanup.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnApplicationQuit()
         {
             isQuitting = true;
         }
 
+        /// <summary>
+        /// Purpose: Sets game mode.
+        /// Inputs: `mode`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="mode">Input value used by this method.</param>
         public void SetGameMode(GameMode mode)
         {
             ResetSinglePlayerObjective();
@@ -202,11 +233,23 @@ namespace BubbleTown.Managers
             currentGameMode = mode;
         }
 
+        /// <summary>
+        /// Purpose: Sets map type.
+        /// Inputs: `mapType`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="mapType">Input value used by this method.</param>
         public void SetMapType(BattleMapType mapType)
         {
             currentMapType = mapType;
         }
 
+        /// <summary>
+        /// Purpose: Sets player1 character.
+        /// Inputs: `characterData`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="characterData">Input value used by this method.</param>
         public void SetPlayer1Character(CharacterData characterData)
         {
             selectedPlayer1Character = ResolveCharacterOrDefault(characterData, 0);
@@ -214,6 +257,12 @@ namespace BubbleTown.Managers
             EnsureDifferentLocalVsCharacters();
         }
 
+        /// <summary>
+        /// Purpose: Sets player2 character.
+        /// Inputs: `characterData`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="characterData">Input value used by this method.</param>
         public void SetPlayer2Character(CharacterData characterData)
         {
             selectedPlayer2Character = ResolveCharacterOrDefault(characterData, 1);
@@ -221,12 +270,23 @@ namespace BubbleTown.Managers
             EnsureDifferentLocalVsCharacters();
         }
 
+        /// <summary>
+        /// Purpose: Sets aicharacter.
+        /// Inputs: `characterData`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="characterData">Input value used by this method.</param>
         public void SetAICharacter(CharacterData characterData)
         {
             selectedAICharacter = ResolveCharacterOrDefault(characterData, 2);
             selectedAICharacterId = selectedAICharacter != null ? selectedAICharacter.CharacterId : string.Empty;
         }
 
+        /// <summary>
+        /// Purpose: Performs randomize aicharacter for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void RandomizeAICharacter()
         {
             EnsureCharacterSelections();
@@ -234,6 +294,12 @@ namespace BubbleTown.Managers
             SetAICharacter(randomCharacter);
         }
 
+        /// <summary>
+        /// Purpose: Sets game state.
+        /// Inputs: `gameState`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="gameState">Input value used by this method.</param>
         public void SetGameState(GameState gameState)
         {
             currentGameState = gameState;
@@ -243,6 +309,12 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Stores whether the battle should be paused while keeping non-battle scenes unpaused.
+        /// Inputs: paused is the requested pause state from UI or keyboard shortcuts.
+        /// Output: no return value; updates IsBattlePaused only when the current game state can be paused.
+        /// </summary>
+        /// <param name="paused">True to pause a preparing/running battle; false to resume.</param>
         public void SetBattlePaused(bool paused)
         {
             bool canPause = currentGameState == GameState.BattlePreparing ||
@@ -250,6 +322,11 @@ namespace BubbleTown.Managers
             isBattlePaused = paused && canPause;
         }
 
+        /// <summary>
+        /// Purpose: Begins battle.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void BeginBattle()
         {
             ClearBattleResult();
@@ -274,12 +351,23 @@ namespace BubbleTown.Managers
             SceneManager.LoadScene(GameConstants.SceneBattle);
         }
 
+        /// <summary>
+        /// Purpose: Begins battle.
+        /// Inputs: `mode`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="mode">Input value used by this method.</param>
         public void BeginBattle(GameMode mode)
         {
             SetGameMode(mode);
             BeginBattle();
         }
 
+        /// <summary>
+        /// Purpose: Resets session data to a safe default state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void ResetSessionData()
         {
             currentGameMode = GameMode.SinglePlayer;
@@ -296,6 +384,14 @@ namespace BubbleTown.Managers
             ClearBattleResult();
         }
 
+        /// <summary>
+        /// Purpose: Finishes battle.
+        /// Inputs: `resultTitle`, `resultDetail`, `winnerName`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="resultTitle">Input value used by this method.</param>
+        /// <param name="resultDetail">Input value used by this method.</param>
+        /// <param name="winnerName">Input value used by this method.</param>
         public void FinishBattle(string resultTitle, string resultDetail, string winnerName)
         {
             if (currentGameState == GameState.BattleFinished)
@@ -316,6 +412,12 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Performs start battle round for this component.
+        /// Inputs: `spawnProtectionSeconds`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="spawnProtectionSeconds">Input value used by this method.</param>
         public void StartBattleRound(float spawnProtectionSeconds)
         {
             if (currentGameState == GameState.BattleFinished)
@@ -333,6 +435,11 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Clears battle result.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void ClearBattleResult()
         {
             hasBattleResult = false;
@@ -341,6 +448,11 @@ namespace BubbleTown.Managers
             lastResultWinner = "None";
         }
 
+        /// <summary>
+        /// Purpose: Resets local vs match to a safe default state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void ResetLocalVsMatch()
         {
             localVsPlayer1Score = 0;
@@ -350,6 +462,11 @@ namespace BubbleTown.Managers
             localVsMatchInProgress = false;
         }
 
+        /// <summary>
+        /// Purpose: Ensures local vs match started exists or is initialized before use.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void EnsureLocalVsMatchStarted()
         {
             if (currentGameMode != GameMode.LocalVS || localVsMatchInProgress)
@@ -364,6 +481,13 @@ namespace BubbleTown.Managers
             localVsMatchInProgress = true;
         }
 
+        /// <summary>
+        /// Purpose: Registers local vs round result in the relevant runtime system.
+        /// Inputs: `roundWinner`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="roundWinner">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public bool RegisterLocalVsRoundResult(string roundWinner)
         {
             EnsureLocalVsMatchStarted();
@@ -396,6 +520,12 @@ namespace BubbleTown.Managers
             return matchComplete;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is local vs match complete.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <returns>a `bool` value.</returns>
         public bool IsLocalVsMatchComplete()
         {
             if (!enableLocalVsBestOf3)
@@ -407,6 +537,12 @@ namespace BubbleTown.Managers
             return localVsPlayer1Score >= targetScore || localVsPlayer2Score >= targetScore;
         }
 
+        /// <summary>
+        /// Purpose: Resolves local vs match winner from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `string` value.
+        /// </summary>
+        /// <returns>a `string` value.</returns>
         public string ResolveLocalVsMatchWinner()
         {
             if (localVsPlayer1Score > localVsPlayer2Score)
@@ -422,6 +558,11 @@ namespace BubbleTown.Managers
             return "None";
         }
 
+        /// <summary>
+        /// Purpose: Rebuilds the battle scene for the selected mode, map, and character choices.
+        /// Inputs: no direct parameters; reads current mode, map, selected CharacterData, scene references, and prefabs.
+        /// Output: no return value; configures the map, player slots, AI slot, bomb roots, and battle state.
+        /// </summary>
         public void SetupBattleForCurrentMode()
         {
             if (IsCurrentBattleSetupAlreadyApplied())
@@ -441,6 +582,7 @@ namespace BubbleTown.Managers
             }
 
             activeMapManager.SetMapType(currentMapType);
+            // Rebuild data first, then visuals, so spawned characters use the newest grid rules.
             activeMapManager.InitializeGridData();
             activeMapManager.GenerateMap();
             ConfigureSinglePlayerObjective();
@@ -461,6 +603,11 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Prepares the Solo objective that asks the player to open a route through soft walls to the exit.
+        /// Inputs: no direct parameters; reads the active map, spawn grid, goal grid, and configured soft-wall target.
+        /// Output: no return value; stores objective counters and subscribes to soft-wall destruction events.
+        /// </summary>
         private void ConfigureSinglePlayerObjective()
         {
             ResetSinglePlayerObjective();
@@ -475,6 +622,7 @@ namespace BubbleTown.Managers
                 ? Mathf.Clamp(singlePlayerSoftWallTarget, 1, availableSoftWalls)
                 : 0;
             singlePlayerGoalGrid = activeMapManager.GetSinglePlayerGoalGrid();
+            // Manhattan distance is enough here because movement is four-directional on a grid.
             singlePlayerStartGoalDistance = CalculateGridDistance(activeMapManager.GetPlayer1SpawnGrid(), singlePlayerGoalGrid);
             singlePlayerCurrentGoalDistance = singlePlayerStartGoalDistance;
 
@@ -487,6 +635,11 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Resets single player objective to a safe default state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ResetSinglePlayerObjective()
         {
             UnsubscribeSinglePlayerObjectiveMap();
@@ -498,6 +651,12 @@ namespace BubbleTown.Managers
             singlePlayerObjectiveComplete = false;
         }
 
+        /// <summary>
+        /// Purpose: Handles single player soft wall destroyed.
+        /// Inputs: `gridPosition`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="gridPosition">Input value used by this method.</param>
         private void HandleSinglePlayerSoftWallDestroyed(Vector2Int gridPosition)
         {
             if (!IsSinglePlayerObjectiveEnabled || singlePlayerObjectiveComplete || currentGameState == GameState.BattleFinished)
@@ -514,6 +673,11 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Refreshes single player route objective from the latest runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void RefreshSinglePlayerRouteObjective()
         {
             if (!IsSinglePlayerObjectiveEnabled || singlePlayerObjectiveComplete || activeMapManager == null || player1 == null)
@@ -529,11 +693,24 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Calculates grid distance.
+        /// Inputs: `from`, `to`; may also read serialized fields and current runtime state.
+        /// Output: a `int` value.
+        /// </summary>
+        /// <param name="from">Input value used by this method.</param>
+        /// <param name="to">Input value used by this method.</param>
+        /// <returns>a `int` value.</returns>
         private int CalculateGridDistance(Vector2Int from, Vector2Int to)
         {
             return Mathf.Abs(from.x - to.x) + Mathf.Abs(from.y - to.y);
         }
 
+        /// <summary>
+        /// Purpose: Performs unsubscribe single player objective map for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void UnsubscribeSinglePlayerObjectiveMap()
         {
             if (subscribedSinglePlayerObjectiveMapManager == null)
@@ -545,10 +722,17 @@ namespace BubbleTown.Managers
             subscribedSinglePlayerObjectiveMapManager = null;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is current battle setup already applied.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <returns>a `bool` value.</returns>
         private bool IsCurrentBattleSetupAlreadyApplied()
         {
             bool isBattleSetupState = currentGameState == GameState.BattlePreparing ||
                                       currentGameState == GameState.BattleRunning;
+            // Prevent duplicate setup when Unity reloads or UI requests setup more than once for the same scene.
             return isBattleSetupState &&
                    hasBattleSetupSnapshot &&
                    lastBattleSetupSceneHandle == SceneManager.GetActiveScene().handle &&
@@ -556,6 +740,11 @@ namespace BubbleTown.Managers
                    lastBattleSetupMapType == currentMapType;
         }
 
+        /// <summary>
+        /// Purpose: Performs store battle setup snapshot for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void StoreBattleSetupSnapshot()
         {
             hasBattleSetupSnapshot = true;
@@ -564,6 +753,13 @@ namespace BubbleTown.Managers
             lastBattleSetupMapType = currentMapType;
         }
 
+        /// <summary>
+        /// Purpose: Handles the scene loaded event or callback.
+        /// Inputs: `scene`, `mode`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="scene">Input value used by this method.</param>
+        /// <param name="mode">Input value used by this method.</param>
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             if (!autoSetupBattleOnSceneLoaded)
@@ -580,6 +776,12 @@ namespace BubbleTown.Managers
             UpdateGameStateForScene(scene.name);
         }
 
+        /// <summary>
+        /// Purpose: Updates game state for scene.
+        /// Inputs: `sceneName`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="sceneName">Input value used by this method.</param>
         private void UpdateGameStateForScene(string sceneName)
         {
             if (sceneName != GameConstants.SceneBattle)
@@ -608,6 +810,11 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Resolves battle references from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ResolveBattleReferences()
         {
             activeMapManager = FindObjectOfType<MapManager>();
@@ -616,6 +823,13 @@ namespace BubbleTown.Managers
             aiPlayer = FindAIControllerByName(AIObjectName);
         }
 
+        /// <summary>
+        /// Purpose: Finds player controller by name from scene objects or cached data.
+        /// Inputs: `objectName`; may also read serialized fields and current runtime state.
+        /// Output: a `PlayerController` value.
+        /// </summary>
+        /// <param name="objectName">Input value used by this method.</param>
+        /// <returns>a `PlayerController` value.</returns>
         private PlayerController FindPlayerControllerByName(string objectName)
         {
             PlayerController[] controllers = FindObjectsOfType<PlayerController>(true);
@@ -631,6 +845,13 @@ namespace BubbleTown.Managers
             return null;
         }
 
+        /// <summary>
+        /// Purpose: Finds aicontroller by name from scene objects or cached data.
+        /// Inputs: `objectName`; may also read serialized fields and current runtime state.
+        /// Output: a `AIController` value.
+        /// </summary>
+        /// <param name="objectName">Input value used by this method.</param>
+        /// <returns>a `AIController` value.</returns>
         private AIController FindAIControllerByName(string objectName)
         {
             AIController[] controllers = FindObjectsOfType<AIController>(true);
@@ -646,6 +867,12 @@ namespace BubbleTown.Managers
             return null;
         }
 
+        /// <summary>
+        /// Purpose: Resolves characters root from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Transform` value.
+        /// </summary>
+        /// <returns>a `Transform` value.</returns>
         private Transform ResolveCharactersRoot()
         {
             Transform root = GameObject.Find(CharactersRootName)?.transform;
@@ -658,6 +885,12 @@ namespace BubbleTown.Managers
             return rootObject.transform;
         }
 
+        /// <summary>
+        /// Purpose: Resolves bomb spawn root from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Transform` value.
+        /// </summary>
+        /// <returns>a `Transform` value.</returns>
         private Transform ResolveBombSpawnRoot()
         {
             Transform root = GameObject.Find(BombsRootName)?.transform;
@@ -670,6 +903,13 @@ namespace BubbleTown.Managers
             return rootObject.transform;
         }
 
+        /// <summary>
+        /// Purpose: Sets up player1.
+        /// Inputs: `bombSpawnRoot`, `bombPrefab`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="bombSpawnRoot">Input value used by this method.</param>
+        /// <param name="bombPrefab">Input value used by this method.</param>
         private void SetupPlayer1(Transform bombSpawnRoot, BombController bombPrefab)
         {
             player1.gameObject.SetActive(true);
@@ -681,6 +921,13 @@ namespace BubbleTown.Managers
                 bombPrefab);
         }
 
+        /// <summary>
+        /// Purpose: Sets up player2.
+        /// Inputs: `bombSpawnRoot`, `bombPrefab`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="bombSpawnRoot">Input value used by this method.</param>
+        /// <param name="bombPrefab">Input value used by this method.</param>
         private void SetupPlayer2(Transform bombSpawnRoot, BombController bombPrefab)
         {
             if (player2 == null)
@@ -703,6 +950,13 @@ namespace BubbleTown.Managers
                 bombPrefab);
         }
 
+        /// <summary>
+        /// Purpose: Sets up aiplayer.
+        /// Inputs: `bombSpawnRoot`, `bombPrefab`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="bombSpawnRoot">Input value used by this method.</param>
+        /// <param name="bombPrefab">Input value used by this method.</param>
         private void SetupAIPlayer(Transform bombSpawnRoot, BombController bombPrefab)
         {
             bool shouldUseAI = currentGameMode == GameMode.AIBattle;
@@ -730,6 +984,11 @@ namespace BubbleTown.Managers
                 bombPrefab);
         }
 
+        /// <summary>
+        /// Purpose: Ensures character selections for battle exists or is initialized before use.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void EnsureCharacterSelectionsForBattle()
         {
             EnsureCharacterSelections();
@@ -739,6 +998,11 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Ensures character selections exists or is initialized before use.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void EnsureCharacterSelections()
         {
             selectedPlayer1Character = ResolveCharacterByIdOrDefault(
@@ -762,11 +1026,28 @@ namespace BubbleTown.Managers
             EnsureDifferentLocalVsCharacters();
         }
 
+        /// <summary>
+        /// Purpose: Resolves character or default from the current runtime state.
+        /// Inputs: `characterData`, `preferredIndex`; may also read serialized fields and current runtime state.
+        /// Output: a `CharacterData` value.
+        /// </summary>
+        /// <param name="characterData">Input value used by this method.</param>
+        /// <param name="preferredIndex">Input value used by this method.</param>
+        /// <returns>a `CharacterData` value.</returns>
         private CharacterData ResolveCharacterOrDefault(CharacterData characterData, int preferredIndex)
         {
             return characterData != null ? characterData : CharacterRoster.GetDefaultCharacter(preferredIndex);
         }
 
+        /// <summary>
+        /// Purpose: Resolves character by id or default from the current runtime state.
+        /// Inputs: `currentCharacter`, `characterId`, `preferredIndex`; may also read serialized fields and current runtime state.
+        /// Output: a `CharacterData` value.
+        /// </summary>
+        /// <param name="currentCharacter">Input value used by this method.</param>
+        /// <param name="characterId">Input value used by this method.</param>
+        /// <param name="preferredIndex">Input value used by this method.</param>
+        /// <returns>a `CharacterData` value.</returns>
         private CharacterData ResolveCharacterByIdOrDefault(
             CharacterData currentCharacter,
             string characterId,
@@ -781,6 +1062,11 @@ namespace BubbleTown.Managers
             return characterFromId != null ? characterFromId : CharacterRoster.GetDefaultCharacter(preferredIndex);
         }
 
+        /// <summary>
+        /// Purpose: Ensures different local vs characters exists or is initialized before use.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void EnsureDifferentLocalVsCharacters()
         {
             if (currentGameMode != GameMode.LocalVS ||
@@ -795,6 +1081,14 @@ namespace BubbleTown.Managers
             selectedPlayer2CharacterId = selectedPlayer2Character != null ? selectedPlayer2Character.CharacterId : string.Empty;
         }
 
+        /// <summary>
+        /// Purpose: Applies character selection to the current object or scene.
+        /// Inputs: `character`, `characterData`, `roleObjectName`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="character">Input value used by this method.</param>
+        /// <param name="characterData">Input value used by this method.</param>
+        /// <param name="roleObjectName">Input value used by this method.</param>
         private void ApplyCharacterSelection(CharacterBase character, CharacterData characterData, string roleObjectName)
         {
             if (character == null || characterData == null)
@@ -812,6 +1106,12 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Applies spawn protection to active characters to the current object or scene.
+        /// Inputs: `protectionSeconds`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="protectionSeconds">Input value used by this method.</param>
         private void ApplySpawnProtectionToActiveCharacters(float protectionSeconds)
         {
             float resolvedProtectionSeconds = Mathf.Max(0f, protectionSeconds);
@@ -820,6 +1120,13 @@ namespace BubbleTown.Managers
             ApplySpawnProtection(aiPlayer, resolvedProtectionSeconds);
         }
 
+        /// <summary>
+        /// Purpose: Applies spawn protection to the current object or scene.
+        /// Inputs: `character`, `protectionSeconds`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="character">Input value used by this method.</param>
+        /// <param name="protectionSeconds">Input value used by this method.</param>
         private void ApplySpawnProtection(CharacterBase character, float protectionSeconds)
         {
             if (character == null || !character.gameObject.activeInHierarchy)
@@ -830,6 +1137,12 @@ namespace BubbleTown.Managers
             character.SetInvincible(protectionSeconds);
         }
 
+        /// <summary>
+        /// Purpose: Ensures aiplayer exists or is initialized before use.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `AIController` value.
+        /// </summary>
+        /// <returns>a `AIController` value.</returns>
         private AIController EnsureAIPlayer()
         {
             if (aiPlayer != null || !createAIIfMissing)
