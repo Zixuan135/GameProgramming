@@ -102,6 +102,11 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Initializes this component before the scene starts running.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -119,11 +124,21 @@ namespace BubbleTown.Managers
             ApplyVolumeSettings();
         }
 
+        /// <summary>
+        /// Purpose: Subscribes or refreshes runtime state when this component becomes active.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnEnable()
         {
             SceneManager.sceneLoaded += HandleSceneLoaded;
         }
 
+        /// <summary>
+        /// Purpose: Initializes this component after Unity enables it in the scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Start()
         {
             if (autoPlaySceneBGM)
@@ -132,40 +147,77 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Cleans up subscriptions or runtime state when this component becomes inactive.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnDisable()
         {
             SceneManager.sceneLoaded -= HandleSceneLoaded;
         }
 
+        /// <summary>
+        /// Purpose: Handles application shutdown cleanup.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnApplicationQuit()
         {
             isQuitting = true;
         }
 
+        /// <summary>
+        /// Purpose: Plays menu bgm.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void PlayMenuBGM()
         {
             LoadDefaultAudioClips();
             PlayBGM(menuBGM);
         }
 
+        /// <summary>
+        /// Purpose: Plays battle bgm.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void PlayBattleBGM()
         {
             LoadDefaultAudioClips();
             PlayBGM(battleBGM);
         }
 
+        /// <summary>
+        /// Purpose: Plays result bgm.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void PlayResultBGM()
         {
             LoadDefaultAudioClips();
             PlayBGM(resultBGM != null ? resultBGM : menuBGM);
         }
 
+        /// <summary>
+        /// Purpose: Plays current scene bgmpreview.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void PlayCurrentSceneBGMPreview()
         {
             LoadDefaultAudioClips();
             PlayBGMForScene(SceneManager.GetActiveScene().name, true);
         }
 
+        /// <summary>
+        /// Purpose: Plays bgm.
+        /// Inputs: `clip`, `restartIfSameClip`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="clip">Input value used by this method.</param>
+        /// <param name="restartIfSameClip">Input value used by this method.</param>
         public void PlayBGM(AudioClip clip, bool restartIfSameClip = false)
         {
             EnsureAudioSources();
@@ -193,6 +245,12 @@ namespace BubbleTown.Managers
             bgmSource.Play();
         }
 
+        /// <summary>
+        /// Purpose: Stops bgm.
+        /// Inputs: `clearClip`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="clearClip">Input value used by this method.</param>
         public void StopBGM(bool clearClip = false)
         {
             if (bgmSource == null)
@@ -207,36 +265,66 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Plays move sfx.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void PlayMoveSFX()
         {
             LoadDefaultAudioClips();
             PlaySFX(moveSFX, 0.65f);
         }
 
+        /// <summary>
+        /// Purpose: Plays place bomb sfx.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void PlayPlaceBombSFX()
         {
             LoadDefaultAudioClips();
             PlaySFX(placeBombSFX);
         }
 
+        /// <summary>
+        /// Purpose: Plays explosion sfx.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void PlayExplosionSFX()
         {
             LoadDefaultAudioClips();
             PlaySFX(explosionSFX, 1f);
         }
 
+        /// <summary>
+        /// Purpose: Plays item pickup sfx.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void PlayItemPickupSFX()
         {
             LoadDefaultAudioClips();
             PlaySFX(itemPickupSFX, 0.9f);
         }
 
+        /// <summary>
+        /// Purpose: Plays button click sfx.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void PlayButtonClickSFX()
         {
             LoadDefaultAudioClips();
             PlaySFX(buttonClickSFX, 0.75f);
         }
 
+        /// <summary>
+        /// Purpose: Plays settings preview sfx.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void PlaySettingsPreviewSFX()
         {
             if (Time.unscaledTime < nextSettingsPreviewTime)
@@ -249,24 +337,46 @@ namespace BubbleTown.Managers
             PlaySFX(buttonClickSFX != null ? buttonClickSFX : itemPickupSFX, 0.85f);
         }
 
+        /// <summary>
+        /// Purpose: Plays character death sfx.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void PlayCharacterDeathSFX()
         {
             LoadDefaultAudioClips();
             PlaySFX(characterDeathSFX, 1f);
         }
 
+        /// <summary>
+        /// Purpose: Plays victory sfx.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void PlayVictorySFX()
         {
             LoadDefaultAudioClips();
             PlaySFX(victorySFX, 1f);
         }
 
+        /// <summary>
+        /// Purpose: Plays defeat sfx.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void PlayDefeatSFX()
         {
             LoadDefaultAudioClips();
             PlaySFX(defeatSFX, 1f);
         }
 
+        /// <summary>
+        /// Purpose: Plays sfx.
+        /// Inputs: `clip`, `volumeScale`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="clip">Input value used by this method.</param>
+        /// <param name="volumeScale">Input value used by this method.</param>
         public void PlaySFX(AudioClip clip, float volumeScale = 1f)
         {
             EnsureAudioSources();
@@ -279,6 +389,12 @@ namespace BubbleTown.Managers
             sfxSource.PlayOneShot(clip, resolvedVolume);
         }
 
+        /// <summary>
+        /// Purpose: Sets master volume.
+        /// Inputs: `volume`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="volume">Input value used by this method.</param>
         public void SetMasterVolume(float volume)
         {
             masterVolume = Mathf.Clamp01(volume);
@@ -286,6 +402,12 @@ namespace BubbleTown.Managers
             ApplyVolumeSettings();
         }
 
+        /// <summary>
+        /// Purpose: Sets bgm volume.
+        /// Inputs: `volume`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="volume">Input value used by this method.</param>
         public void SetBgmVolume(float volume)
         {
             bgmVolume = Mathf.Clamp01(volume);
@@ -293,6 +415,12 @@ namespace BubbleTown.Managers
             ApplyVolumeSettings();
         }
 
+        /// <summary>
+        /// Purpose: Sets sfx volume.
+        /// Inputs: `volume`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="volume">Input value used by this method.</param>
         public void SetSfxVolume(float volume)
         {
             sfxVolume = Mathf.Clamp01(volume);
@@ -300,6 +428,12 @@ namespace BubbleTown.Managers
             ApplyVolumeSettings();
         }
 
+        /// <summary>
+        /// Purpose: Sets bgm muted.
+        /// Inputs: `isMuted`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="isMuted">Input value used by this method.</param>
         public void SetBgmMuted(bool isMuted)
         {
             muteBGM = isMuted;
@@ -311,6 +445,12 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Sets sfx muted.
+        /// Inputs: `isMuted`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="isMuted">Input value used by this method.</param>
         public void SetSfxMuted(bool isMuted)
         {
             muteSFX = isMuted;
@@ -318,6 +458,11 @@ namespace BubbleTown.Managers
             ApplyVolumeSettings();
         }
 
+        /// <summary>
+        /// Purpose: Performs reload from game settings for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void ReloadFromGameSettings()
         {
             LoadSavedSettings();
@@ -328,6 +473,13 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Handles scene loaded.
+        /// Inputs: `scene`, `mode`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="scene">Input value used by this method.</param>
+        /// <param name="mode">Input value used by this method.</param>
         private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             if (!autoPlaySceneBGM)
@@ -338,6 +490,13 @@ namespace BubbleTown.Managers
             PlayBGMForScene(scene.name);
         }
 
+        /// <summary>
+        /// Purpose: Plays bgmfor scene.
+        /// Inputs: `sceneName`, `restartIfSameClip`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="sceneName">Input value used by this method.</param>
+        /// <param name="restartIfSameClip">Input value used by this method.</param>
         private void PlayBGMForScene(string sceneName, bool restartIfSameClip = false)
         {
             switch (sceneName)
@@ -360,6 +519,11 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Ensures audio sources exists or is initialized before use.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void EnsureAudioSources()
         {
             EnsureAudioListener();
@@ -378,6 +542,11 @@ namespace BubbleTown.Managers
             ConfigureAudioSource(sfxSource, false);
         }
 
+        /// <summary>
+        /// Purpose: Ensures audio listener exists or is initialized before use.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void EnsureAudioListener()
         {
             if (fallbackAudioListener != null)
@@ -399,6 +568,14 @@ namespace BubbleTown.Managers
             }
         }
 
+        /// <summary>
+        /// Purpose: Creates child audio source.
+        /// Inputs: `sourceName`, `loops`; may also read serialized fields and current runtime state.
+        /// Output: a `AudioSource` value.
+        /// </summary>
+        /// <param name="sourceName">Input value used by this method.</param>
+        /// <param name="loops">Input value used by this method.</param>
+        /// <returns>a `AudioSource` value.</returns>
         private AudioSource CreateChildAudioSource(string sourceName, bool loops)
         {
             Transform existingChild = transform.Find(sourceName);
@@ -416,6 +593,13 @@ namespace BubbleTown.Managers
             return source;
         }
 
+        /// <summary>
+        /// Purpose: Configures audio source for the current battle or scene.
+        /// Inputs: `source`, `loops`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="source">Input value used by this method.</param>
+        /// <param name="loops">Input value used by this method.</param>
         private void ConfigureAudioSource(AudioSource source, bool loops)
         {
             if (source == null)
@@ -428,6 +612,11 @@ namespace BubbleTown.Managers
             source.spatialBlend = 0f;
         }
 
+        /// <summary>
+        /// Purpose: Loads saved settings.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void LoadSavedSettings()
         {
             GameSettings.Load();
@@ -438,6 +627,11 @@ namespace BubbleTown.Managers
             muteSFX = GameSettings.MuteSFX;
         }
 
+        /// <summary>
+        /// Purpose: Loads default audio clips.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void LoadDefaultAudioClips()
         {
             menuBGM = LoadClipIfMissing(menuBGM, MenuBGMResourcePath);
@@ -453,11 +647,24 @@ namespace BubbleTown.Managers
             defeatSFX = LoadClipIfMissing(defeatSFX, DefeatSFXResourcePath);
         }
 
+        /// <summary>
+        /// Purpose: Loads clip if missing.
+        /// Inputs: `currentClip`, `resourcePath`; may also read serialized fields and current runtime state.
+        /// Output: a `AudioClip` value.
+        /// </summary>
+        /// <param name="currentClip">Input value used by this method.</param>
+        /// <param name="resourcePath">Input value used by this method.</param>
+        /// <returns>a `AudioClip` value.</returns>
         private AudioClip LoadClipIfMissing(AudioClip currentClip, string resourcePath)
         {
             return currentClip != null ? currentClip : Resources.Load<AudioClip>(resourcePath);
         }
 
+        /// <summary>
+        /// Purpose: Applies volume settings to the current object or scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ApplyVolumeSettings()
         {
             if (bgmSource != null)

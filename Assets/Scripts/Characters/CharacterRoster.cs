@@ -29,6 +29,13 @@ namespace BubbleTown.Characters
 
         public static bool HasCharacters => Characters.Length > 0;
 
+        /// <summary>
+        /// Purpose: Gets default character.
+        /// Inputs: `preferredIndex`; may also read serialized fields and current runtime state.
+        /// Output: a `CharacterData` value.
+        /// </summary>
+        /// <param name="preferredIndex">Input value used by this method.</param>
+        /// <returns>a `CharacterData` value.</returns>
         public static CharacterData GetDefaultCharacter(int preferredIndex = 0)
         {
             CharacterData[] characters = Characters;
@@ -41,6 +48,13 @@ namespace BubbleTown.Characters
             return characters[safeIndex];
         }
 
+        /// <summary>
+        /// Purpose: Finds by id from scene objects or cached data.
+        /// Inputs: `characterId`; may also read serialized fields and current runtime state.
+        /// Output: a `CharacterData` value.
+        /// </summary>
+        /// <param name="characterId">Input value used by this method.</param>
+        /// <returns>a `CharacterData` value.</returns>
         public static CharacterData FindById(string characterId)
         {
             if (string.IsNullOrWhiteSpace(characterId))
@@ -62,6 +76,13 @@ namespace BubbleTown.Characters
             return null;
         }
 
+        /// <summary>
+        /// Purpose: Gets next different.
+        /// Inputs: `current`; may also read serialized fields and current runtime state.
+        /// Output: a `CharacterData` value.
+        /// </summary>
+        /// <param name="current">Input value used by this method.</param>
+        /// <returns>a `CharacterData` value.</returns>
         public static CharacterData GetNextDifferent(CharacterData current)
         {
             CharacterData[] characters = Characters;
@@ -88,6 +109,13 @@ namespace BubbleTown.Characters
             return characters[0];
         }
 
+        /// <summary>
+        /// Purpose: Gets random different.
+        /// Inputs: `excluded`; may also read serialized fields and current runtime state.
+        /// Output: a `CharacterData` value.
+        /// </summary>
+        /// <param name="excluded">Input value used by this method.</param>
+        /// <returns>a `CharacterData` value.</returns>
         public static CharacterData GetRandomDifferent(CharacterData excluded)
         {
             CharacterData[] characters = Characters;
@@ -122,11 +150,24 @@ namespace BubbleTown.Characters
             return candidates[UnityEngine.Random.Range(0, candidateCount)];
         }
 
+        /// <summary>
+        /// Purpose: Clears cache.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public static void ClearCache()
         {
             cachedCharacters = null;
         }
 
+        /// <summary>
+        /// Purpose: Returns compare characters by name for the current state.
+        /// Inputs: `left`, `right`; may also read serialized fields and current runtime state.
+        /// Output: a `int` value.
+        /// </summary>
+        /// <param name="left">Input value used by this method.</param>
+        /// <param name="right">Input value used by this method.</param>
+        /// <returns>a `int` value.</returns>
         private static int CompareCharactersByName(CharacterData left, CharacterData right)
         {
             int leftPriority = GetCharacterPriority(left);
@@ -141,6 +182,13 @@ namespace BubbleTown.Characters
             return string.Compare(leftName, rightName, StringComparison.OrdinalIgnoreCase);
         }
 
+        /// <summary>
+        /// Purpose: Gets character priority.
+        /// Inputs: `character`; may also read serialized fields and current runtime state.
+        /// Output: a `int` value.
+        /// </summary>
+        /// <param name="character">Input value used by this method.</param>
+        /// <returns>a `int` value.</returns>
         private static int GetCharacterPriority(CharacterData character)
         {
             switch (character != null ? character.CharacterId : string.Empty)

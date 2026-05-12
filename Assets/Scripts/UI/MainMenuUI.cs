@@ -15,11 +15,21 @@ namespace BubbleTown.UI
         private bool showGuide;
         private bool showSettings;
 
+        /// <summary>
+        /// Purpose: Initializes this component after Unity enables it in the scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Start()
         {
             AudioManager.Instance?.PlayMenuBGM();
         }
 
+        /// <summary>
+        /// Purpose: Draws and handles immediate-mode GUI controls for this screen.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnGUI()
         {
             SimpleUIFactory.DrawCandyBackground();
@@ -77,6 +87,11 @@ namespace BubbleTown.UI
             }
         }
 
+        /// <summary>
+        /// Purpose: Handles the start button click.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void OnClickStart()
         {
             AudioManager.Instance?.PlayButtonClickSFX();
@@ -84,6 +99,11 @@ namespace BubbleTown.UI
             SceneFlowManager.Instance?.LoadModeSelect();
         }
 
+        /// <summary>
+        /// Purpose: Handles the guide button click.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void OnClickGuide()
         {
             AudioManager.Instance?.PlayButtonClickSFX();
@@ -91,6 +111,11 @@ namespace BubbleTown.UI
             showSettings = false;
         }
 
+        /// <summary>
+        /// Purpose: Handles the settings button click.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void OnClickSettings()
         {
             AudioManager.Instance?.PlayButtonClickSFX();
@@ -98,6 +123,11 @@ namespace BubbleTown.UI
             showGuide = false;
         }
 
+        /// <summary>
+        /// Purpose: Handles the quit button click.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void OnClickQuit()
         {
             AudioManager.Instance?.PlayButtonClickSFX();
@@ -110,6 +140,11 @@ namespace BubbleTown.UI
 #endif
         }
 
+        /// <summary>
+        /// Purpose: Handles the close popup event or callback.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnClosePopup()
         {
             AudioManager.Instance?.PlayButtonClickSFX();

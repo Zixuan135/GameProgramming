@@ -70,12 +70,22 @@ namespace BubbleTown.Characters
         private bool defeatPuffsSpawned;
         private MaterialPropertyBlock propertyBlock;
 
+        /// <summary>
+        /// Purpose: Initializes this component before the scene starts running.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Awake()
         {
             ResolveReferences();
             CacheBasePose();
         }
 
+        /// <summary>
+        /// Purpose: Subscribes or refreshes runtime state when this component becomes active.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnEnable()
         {
             ResolveReferences();
@@ -84,6 +94,11 @@ namespace BubbleTown.Characters
             defeatPuffsSpawned = false;
         }
 
+        /// <summary>
+        /// Purpose: Cleans up subscriptions or runtime state when this component becomes inactive.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnDisable()
         {
             UnsubscribeFromCharacter();
@@ -91,6 +106,11 @@ namespace BubbleTown.Characters
             ApplyEmission(Color.black);
         }
 
+        /// <summary>
+        /// Purpose: Runs this component's per-frame logic.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Update()
         {
             if (animatedRoot == null)
@@ -102,6 +122,11 @@ namespace BubbleTown.Characters
             ApplyPlaceholderAnimation();
         }
 
+        /// <summary>
+        /// Purpose: Resolves references from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ResolveReferences()
         {
             if (animatedRoot == null)
@@ -126,6 +151,11 @@ namespace BubbleTown.Characters
             }
         }
 
+        /// <summary>
+        /// Purpose: Performs cache base pose for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void CacheBasePose()
         {
             if (hasCachedBasePose || animatedRoot == null)
@@ -139,6 +169,11 @@ namespace BubbleTown.Characters
             hasCachedBasePose = true;
         }
 
+        /// <summary>
+        /// Purpose: Performs subscribe to character for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void SubscribeToCharacter()
         {
             if (character == null || isSubscribed)
@@ -152,6 +187,11 @@ namespace BubbleTown.Characters
             isSubscribed = true;
         }
 
+        /// <summary>
+        /// Purpose: Performs unsubscribe from character for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void UnsubscribeFromCharacter()
         {
             if (character == null || !isSubscribed)
@@ -165,6 +205,11 @@ namespace BubbleTown.Characters
             isSubscribed = false;
         }
 
+        /// <summary>
+        /// Purpose: Updates timers.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void UpdateTimers()
         {
             if (bombActionTimer > 0f)
@@ -183,6 +228,11 @@ namespace BubbleTown.Characters
             }
         }
 
+        /// <summary>
+        /// Purpose: Applies placeholder animation to the current object or scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ApplyPlaceholderAnimation()
         {
             float animationTime = Time.time + timeOffset;
@@ -227,6 +277,15 @@ namespace BubbleTown.Characters
             ApplyPose(targetPosition, targetScale, targetRotation, emissionColor);
         }
 
+        /// <summary>
+        /// Purpose: Applies pose to the current object or scene.
+        /// Inputs: `targetPosition`, `targetScale`, `targetRotation`, `emissionColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="targetPosition">Input value used by this method.</param>
+        /// <param name="targetScale">Input value used by this method.</param>
+        /// <param name="targetRotation">Input value used by this method.</param>
+        /// <param name="emissionColor">Input value used by this method.</param>
         private void ApplyPose(Vector3 targetPosition, Vector3 targetScale, Quaternion targetRotation, Color emissionColor)
         {
             animatedRoot.localPosition = targetPosition;
@@ -235,12 +294,28 @@ namespace BubbleTown.Characters
             ApplyEmission(emissionColor);
         }
 
+        /// <summary>
+        /// Purpose: Applies idle animation to the current object or scene.
+        /// Inputs: `animationTime`, `targetPosition`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="animationTime">Input value used by this method.</param>
+        /// <param name="targetPosition">Input value used by this method.</param>
         private void ApplyIdleAnimation(float animationTime, ref Vector3 targetPosition)
         {
             float bob = Mathf.Sin(animationTime * idleBobSpeed) * idleBobAmplitude;
             targetPosition += Vector3.up * bob;
         }
 
+        /// <summary>
+        /// Purpose: Applies move animation to the current object or scene.
+        /// Inputs: `animationTime`, `targetPosition`, `targetScale`, `targetRotation`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="animationTime">Input value used by this method.</param>
+        /// <param name="targetPosition">Input value used by this method.</param>
+        /// <param name="targetScale">Input value used by this method.</param>
+        /// <param name="targetRotation">Input value used by this method.</param>
         private void ApplyMoveAnimation(
             float animationTime,
             ref Vector3 targetPosition,
@@ -256,6 +331,16 @@ namespace BubbleTown.Characters
             targetRotation *= Quaternion.Euler(0f, 0f, phase * moveSwayDegrees);
         }
 
+        /// <summary>
+        /// Purpose: Applies bomb action to the current object or scene.
+        /// Inputs: `animationTime`, `targetPosition`, `targetScale`, `targetRotation`, `emissionColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="animationTime">Input value used by this method.</param>
+        /// <param name="targetPosition">Input value used by this method.</param>
+        /// <param name="targetScale">Input value used by this method.</param>
+        /// <param name="targetRotation">Input value used by this method.</param>
+        /// <param name="emissionColor">Input value used by this method.</param>
         private void ApplyBombAction(
             float animationTime,
             ref Vector3 targetPosition,
@@ -275,6 +360,16 @@ namespace BubbleTown.Characters
             emissionColor += new Color(0.35f, 0.9f, 1f) * pulse * maxEmissionIntensity;
         }
 
+        /// <summary>
+        /// Purpose: Applies hit feedback to the current object or scene.
+        /// Inputs: `animationTime`, `targetPosition`, `targetScale`, `targetRotation`, `emissionColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="animationTime">Input value used by this method.</param>
+        /// <param name="targetPosition">Input value used by this method.</param>
+        /// <param name="targetScale">Input value used by this method.</param>
+        /// <param name="targetRotation">Input value used by this method.</param>
+        /// <param name="emissionColor">Input value used by this method.</param>
         private void ApplyHitFeedback(
             float animationTime,
             ref Vector3 targetPosition,
@@ -294,6 +389,16 @@ namespace BubbleTown.Characters
             emissionColor += hitFlashColor * fade * maxEmissionIntensity;
         }
 
+        /// <summary>
+        /// Purpose: Applies defeat feedback to the current object or scene.
+        /// Inputs: `animationTime`, `targetPosition`, `targetScale`, `targetRotation`, `emissionColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="animationTime">Input value used by this method.</param>
+        /// <param name="targetPosition">Input value used by this method.</param>
+        /// <param name="targetScale">Input value used by this method.</param>
+        /// <param name="targetRotation">Input value used by this method.</param>
+        /// <param name="emissionColor">Input value used by this method.</param>
         private void ApplyDefeatFeedback(
             float animationTime,
             ref Vector3 targetPosition,
@@ -315,6 +420,12 @@ namespace BubbleTown.Characters
             emissionColor += defeatFlashColor * (0.35f + pop * 0.65f) * maxEmissionIntensity;
         }
 
+        /// <summary>
+        /// Purpose: Applies emission to the current object or scene.
+        /// Inputs: `emissionColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="emissionColor">Input value used by this method.</param>
         private void ApplyEmission(Color emissionColor)
         {
             if (flashRenderers == null || flashRenderers.Length == 0)
@@ -341,6 +452,11 @@ namespace BubbleTown.Characters
             }
         }
 
+        /// <summary>
+        /// Purpose: Performs restore base pose for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void RestoreBasePose()
         {
             if (!hasCachedBasePose || animatedRoot == null)
@@ -353,6 +469,11 @@ namespace BubbleTown.Characters
             animatedRoot.localRotation = baseLocalRotation;
         }
 
+        /// <summary>
+        /// Purpose: Spawns defeat puffs.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void SpawnDefeatPuffs()
         {
             if (!spawnDefeatPuffs || defeatPuffCount <= 0)
@@ -387,6 +508,12 @@ namespace BubbleTown.Characters
             }
         }
 
+        /// <summary>
+        /// Purpose: Resolves puff material from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material ResolvePuffMaterial()
         {
             if (flashRenderers == null || flashRenderers.Length == 0)
@@ -405,6 +532,14 @@ namespace BubbleTown.Characters
             return null;
         }
 
+        /// <summary>
+        /// Purpose: Animates defeat puff over time.
+        /// Inputs: `puff`, `direction`; may also read serialized fields and current runtime state.
+        /// Output: a `IEnumerator` value.
+        /// </summary>
+        /// <param name="puff">Input value used by this method.</param>
+        /// <param name="direction">Input value used by this method.</param>
+        /// <returns>a `IEnumerator` value.</returns>
         private IEnumerator AnimateDefeatPuff(Transform puff, Vector3 direction)
         {
             if (puff == null)
@@ -430,16 +565,34 @@ namespace BubbleTown.Characters
             }
         }
 
+        /// <summary>
+        /// Purpose: Handles bomb placed.
+        /// Inputs: `sourceCharacter`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="sourceCharacter">Input value used by this method.</param>
         private void HandleBombPlaced(CharacterBase sourceCharacter)
         {
             bombActionTimer = bombActionDuration;
         }
 
+        /// <summary>
+        /// Purpose: Handles explosion hit.
+        /// Inputs: `sourceCharacter`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="sourceCharacter">Input value used by this method.</param>
         private void HandleExplosionHit(CharacterBase sourceCharacter)
         {
             hitFeedbackTimer = hitFeedbackDuration;
         }
 
+        /// <summary>
+        /// Purpose: Handles death feedback started.
+        /// Inputs: `sourceCharacter`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="sourceCharacter">Input value used by this method.</param>
         private void HandleDeathFeedbackStarted(CharacterBase sourceCharacter)
         {
             hitFeedbackTimer = 0f;

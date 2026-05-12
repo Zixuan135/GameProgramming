@@ -36,24 +36,44 @@ namespace BubbleTown.Items
         private bool hasCachedBasePose;
         private MaterialPropertyBlock pulsePropertyBlock;
 
+        /// <summary>
+        /// Purpose: Initializes this component before the scene starts running.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Awake()
         {
             ResolveReferences();
             CacheBasePose();
         }
 
+        /// <summary>
+        /// Purpose: Subscribes or refreshes runtime state when this component becomes active.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnEnable()
         {
             ResolveReferences();
             CacheBasePose();
         }
 
+        /// <summary>
+        /// Purpose: Cleans up subscriptions or runtime state when this component becomes inactive.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnDisable()
         {
             RestoreBasePose();
             ApplyPulseEmission(0f);
         }
 
+        /// <summary>
+        /// Purpose: Runs this component's per-frame logic.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Update()
         {
             if (visualRoot == null)
@@ -65,6 +85,11 @@ namespace BubbleTown.Items
             UpdateVisualPose();
         }
 
+        /// <summary>
+        /// Purpose: Resolves references from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ResolveReferences()
         {
             if (visualRoot == null)
@@ -84,6 +109,11 @@ namespace BubbleTown.Items
             }
         }
 
+        /// <summary>
+        /// Purpose: Performs cache base pose for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void CacheBasePose()
         {
             if (hasCachedBasePose || visualRoot == null)
@@ -97,6 +127,11 @@ namespace BubbleTown.Items
             hasCachedBasePose = true;
         }
 
+        /// <summary>
+        /// Purpose: Updates visual pose.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void UpdateVisualPose()
         {
             float animationTime = elapsedSeconds + timeOffset;
@@ -110,6 +145,12 @@ namespace BubbleTown.Items
             ApplyPulseEmission(pulse);
         }
 
+        /// <summary>
+        /// Purpose: Applies pulse emission to the current object or scene.
+        /// Inputs: `pulse`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="pulse">Input value used by this method.</param>
         private void ApplyPulseEmission(float pulse)
         {
             if (pulseRenderers == null || pulseRenderers.Length == 0)
@@ -137,6 +178,11 @@ namespace BubbleTown.Items
             }
         }
 
+        /// <summary>
+        /// Purpose: Performs restore base pose for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void RestoreBasePose()
         {
             if (!hasCachedBasePose || visualRoot == null)

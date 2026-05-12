@@ -43,29 +43,48 @@ namespace BubbleTown.Map
         private Vector2Int singlePlayerGoalGrid = new Vector2Int(1, 1);
         private readonly Dictionary<Vector2Int, GameObject> softWallObjects = new Dictionary<Vector2Int, GameObject>();
 
+        /// <summary>
+        /// Purpose: Initializes this component before the scene starts running.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Awake()
         {
             InitializeGridData();
         }
 
+        /// <summary>
+        /// Purpose: Initializes this component after Unity enables it in the scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Start()
         {
             GenerateMap();
             RebuildSoftWallObjectLookup();
         }
 
+        /// <summary>
+        /// Purpose: Sets map type.
+        /// Inputs: `mapType`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="mapType">Input value used by this method.</param>
         public void SetMapType(BattleMapType mapType)
         {
             selectedMapType = mapType;
         }
 
         /// <summary>
-        /// Creates logical grid data only. No complex generation in this phase.
+        /// Purpose: Builds the logical grid data used by movement, bombs, items, and map visuals.
+        /// Inputs: no direct parameters; reads map size settings and optional MapGenerator dimensions.
+        /// Output: no return value; creates the GridCell array and applies the active map rules.
         /// </summary>
         public void InitializeGridData()
         {
             if (useMapGeneratorSize && mapGenerator != null)
             {
+                // Keep data and visuals in sync when the visual generator owns the arena dimensions.
                 mapWidth = Mathf.Max(1, mapGenerator.MapWidth);
                 mapHeight = Mathf.Max(1, mapGenerator.MapHeight);
                 cellSize = Mathf.Max(0.1f, mapGenerator.CellSize);
@@ -84,13 +103,13 @@ namespace BubbleTown.Map
         }
 
         /// <summary>
-        /// Applies lightweight Bomberman-style logical rules:
-        /// 1) hard-wall border
-        /// 2) mode-based spawn positions
-        /// 3) keep spawn-adjacent area empty
+        /// Purpose: Applies all lightweight Bomberman-style map rules after the empty grid is created.
+        /// Inputs: no direct parameters; reads selected map type and current game mode.
+        /// Output: no return value; marks hard walls, soft walls, spawns, and the Solo route objective.
         /// </summary>
         private void ApplyMapRules()
         {
+            // Order matters: later rules may clear cells reserved by earlier layout rules.
             ApplyHardWallBorder();
             ApplyInitialBlockingCells();
             ApplySelectedMapLayout();
@@ -101,6 +120,11 @@ namespace BubbleTown.Map
             ApplySinglePlayerRouteObjectiveRules();
         }
 
+        /// <summary>
+        /// Purpose: Applies selected map layout to the current object or scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ApplySelectedMapLayout()
         {
             switch (selectedMapType)
@@ -117,24 +141,44 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Applies candy park layout to the current object or scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ApplyCandyParkLayout()
         {
             ApplyClassicHardWallPillars();
             ApplyPatternedSoftWalls(3, 1);
         }
 
+        /// <summary>
+        /// Purpose: Applies open field layout to the current object or scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ApplyOpenFieldLayout()
         {
             ApplyOpenFieldHardWallIslands();
             ApplyPatternedSoftWalls(5, 2);
         }
 
+        /// <summary>
+        /// Purpose: Applies maze layout to the current object or scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ApplyMazeLayout()
         {
             ApplyClassicHardWallPillars();
             ApplyPatternedSoftWalls(2, 0);
         }
 
+        /// <summary>
+        /// Purpose: Applies classic hard wall pillars to the current object or scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ApplyClassicHardWallPillars()
         {
             for (int x = 2; x < mapWidth - 2; x += 2)
@@ -146,6 +190,11 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Applies open field hard wall islands to the current object or scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ApplyOpenFieldHardWallIslands()
         {
             if (mapWidth < 5 || mapHeight < 5)
@@ -167,6 +216,12 @@ namespace BubbleTown.Map
             SetInteriorHardWall(new Vector2Int(rightX, upperY));
         }
 
+        /// <summary>
+        /// Purpose: Sets interior hard wall.
+        /// Inputs: `gridPosition`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="gridPosition">Input value used by this method.</param>
         private void SetInteriorHardWall(Vector2Int gridPosition)
         {
             if (IsBorderCell(gridPosition))
@@ -177,6 +232,13 @@ namespace BubbleTown.Map
             SetHardWall(gridPosition, true);
         }
 
+        /// <summary>
+        /// Purpose: Applies patterned soft walls to the current object or scene.
+        /// Inputs: `interval`, `offset`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="interval">Input value used by this method.</param>
+        /// <param name="offset">Input value used by this method.</param>
         private void ApplyPatternedSoftWalls(int interval, int offset)
         {
             int safeInterval = Mathf.Max(2, interval);
@@ -192,6 +254,7 @@ namespace BubbleTown.Map
                     }
 
                     int patternValue = x * 7 + y * 11 + offset;
+                    // Prime-like weights create a repeatable pattern without needing authored level data.
                     if (patternValue % safeInterval == 0)
                     {
                         SetSoftWall(gridPosition, true);
@@ -200,6 +263,11 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Applies hard wall border to the current object or scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ApplyHardWallBorder()
         {
             for (int x = 0; x < mapWidth; x++)
@@ -215,6 +283,11 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Applies initial blocking cells to the current object or scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ApplyInitialBlockingCells()
         {
             for (int i = 0; i < initialHardWallCells.Length; i++)
@@ -228,6 +301,11 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Resolves spawn points by mode from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ResolveSpawnPointsByMode()
         {
             Vector2Int bottomLeft = new Vector2Int(1, 1);
@@ -263,6 +341,12 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Performs reserve spawn area for this component.
+        /// Inputs: `center`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="center">Input value used by this method.</param>
         private void ReserveSpawnArea(Vector2Int center)
         {
             ClearBlockingAt(center);
@@ -272,6 +356,11 @@ namespace BubbleTown.Map
             ClearBlockingAt(center + Vector2Int.down);
         }
 
+        /// <summary>
+        /// Purpose: Applies single player route objective rules to the current object or scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ApplySinglePlayerRouteObjectiveRules()
         {
             singlePlayerGoalGrid = new Vector2Int(mapWidth - 2, mapHeight - 2);
@@ -287,12 +376,19 @@ namespace BubbleTown.Map
             Vector2Int leftApproach = leftGate + Vector2Int.left;
             Vector2Int lowerApproach = lowerGate + Vector2Int.down;
 
+            // The goal is always reachable after the player breaks at least one nearby soft-wall gate.
             ClearBlockingAt(leftApproach);
             ClearBlockingAt(lowerApproach);
             SetSoftWallGate(leftGate);
             SetSoftWallGate(lowerGate);
         }
 
+        /// <summary>
+        /// Purpose: Resolves current game mode from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `GameMode` value.
+        /// </summary>
+        /// <returns>a `GameMode` value.</returns>
         private GameMode ResolveCurrentGameMode()
         {
             return GameManager.Instance != null
@@ -300,6 +396,12 @@ namespace BubbleTown.Map
                 : GameMode.SinglePlayer;
         }
 
+        /// <summary>
+        /// Purpose: Sets soft wall gate.
+        /// Inputs: `gridPos`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
         private void SetSoftWallGate(Vector2Int gridPos)
         {
             if (IsBorderCell(gridPos))
@@ -317,6 +419,12 @@ namespace BubbleTown.Map
             cell.IsSoftWall = true;
         }
 
+        /// <summary>
+        /// Purpose: Clears blocking at.
+        /// Inputs: `gridPos`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
         private void ClearBlockingAt(Vector2Int gridPos)
         {
             if (IsBorderCell(gridPos))
@@ -334,12 +442,26 @@ namespace BubbleTown.Map
             cell.IsSoftWall = false;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is border cell.
+        /// Inputs: `gridPos`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool IsBorderCell(Vector2Int gridPos)
         {
             return gridPos.x == 0 || gridPos.x == mapWidth - 1 ||
                    gridPos.y == 0 || gridPos.y == mapHeight - 1;
         }
 
+        /// <summary>
+        /// Purpose: Sets hard wall.
+        /// Inputs: `gridPos`, `isHardWall`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
+        /// <param name="isHardWall">Input value used by this method.</param>
         public void SetHardWall(Vector2Int gridPos, bool isHardWall)
         {
             GridCell cell = GetCell(gridPos);
@@ -356,6 +478,13 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Sets soft wall.
+        /// Inputs: `gridPos`, `isSoftWall`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
+        /// <param name="isSoftWall">Input value used by this method.</param>
         public void SetSoftWall(Vector2Int gridPos, bool isSoftWall)
         {
             GridCell cell = GetCell(gridPos);
@@ -372,6 +501,13 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Destroys soft wall.
+        /// Inputs: `gridPos`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public bool DestroySoftWall(Vector2Int gridPos)
         {
             GridCell cell = GetCell(gridPos);
@@ -386,11 +522,24 @@ namespace BubbleTown.Map
             return true;
         }
 
+        /// <summary>
+        /// Purpose: Performs notify soft wall destroyed for this component.
+        /// Inputs: `gridPos`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
         private void NotifySoftWallDestroyed(Vector2Int gridPos)
         {
             SoftWallDestroyed?.Invoke(gridPos);
         }
 
+        /// <summary>
+        /// Purpose: Gets cell.
+        /// Inputs: `gridPos`; may also read serialized fields and current runtime state.
+        /// Output: a `GridCell` value.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
+        /// <returns>a `GridCell` value.</returns>
         public GridCell GetCell(Vector2Int gridPos)
         {
             if (!IsInsideBounds(gridPos))
@@ -401,12 +550,26 @@ namespace BubbleTown.Map
             return grid[gridPos.x, gridPos.y];
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is inside bounds.
+        /// Inputs: `gridPos`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public bool IsInsideBounds(Vector2Int gridPos)
         {
             return gridPos.x >= 0 && gridPos.x < mapWidth &&
                    gridPos.y >= 0 && gridPos.y < mapHeight;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is walkable.
+        /// Inputs: `gridPos`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public bool IsWalkable(Vector2Int gridPos)
         {
             GridCell cell = GetCell(gridPos);
@@ -425,6 +588,7 @@ namespace BubbleTown.Map
                 return false;
             }
 
+            // Character occupancy prevents two actors from reserving the same grid cell.
             if (IsOccupiedByCharacter(cell))
             {
                 return false;
@@ -433,34 +597,76 @@ namespace BubbleTown.Map
             return true;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is blocked by wall.
+        /// Inputs: `gridPos`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public bool IsBlockedByWall(Vector2Int gridPos)
         {
             GridCell cell = GetCell(gridPos);
             return cell == null || IsBlockedByWall(cell);
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is blocked by bomb.
+        /// Inputs: `gridPos`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public bool IsBlockedByBomb(Vector2Int gridPos)
         {
             GridCell cell = GetCell(gridPos);
             return cell != null && IsBlockedByBomb(cell);
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is blocked by wall.
+        /// Inputs: `cell`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="cell">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool IsBlockedByWall(GridCell cell)
         {
             return cell.IsHardWall || cell.IsSoftWall;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is blocked by bomb.
+        /// Inputs: `cell`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="cell">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool IsBlockedByBomb(GridCell cell)
         {
             // Bombs block movement for now; later this can support owner grace rules.
             return cell.HasBomb;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is occupied by character.
+        /// Inputs: `cell`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="cell">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool IsOccupiedByCharacter(GridCell cell)
         {
             return cell.HasCharacter;
         }
 
+        /// <summary>
+        /// Purpose: Sets character.
+        /// Inputs: `gridPos`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public bool SetCharacter(Vector2Int gridPos)
         {
             GridCell cell = GetCell(gridPos);
@@ -473,6 +679,12 @@ namespace BubbleTown.Map
             return true;
         }
 
+        /// <summary>
+        /// Purpose: Clears character.
+        /// Inputs: `gridPos`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
         public void ClearCharacter(Vector2Int gridPos)
         {
             GridCell cell = GetCell(gridPos);
@@ -484,6 +696,13 @@ namespace BubbleTown.Map
             cell.HasCharacter = false;
         }
 
+        /// <summary>
+        /// Purpose: Returns place bomb for the current state.
+        /// Inputs: `gridPos`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public bool PlaceBomb(Vector2Int gridPos)
         {
             GridCell cell = GetCell(gridPos);
@@ -496,6 +715,12 @@ namespace BubbleTown.Map
             return true;
         }
 
+        /// <summary>
+        /// Purpose: Performs remove bomb for this component.
+        /// Inputs: `gridPos`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
         public void RemoveBomb(Vector2Int gridPos)
         {
             GridCell cell = GetCell(gridPos);
@@ -507,6 +732,13 @@ namespace BubbleTown.Map
             cell.HasBomb = false;
         }
 
+        /// <summary>
+        /// Purpose: Plays hard wall blocked feedback.
+        /// Inputs: `gridPos`, `explosionWorldPosition`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
+        /// <param name="explosionWorldPosition">Input value used by this method.</param>
         public void PlayHardWallBlockedFeedback(Vector2Int gridPos, Vector3 explosionWorldPosition)
         {
             GridCell cell = GetCell(gridPos);
@@ -528,6 +760,14 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Sets item.
+        /// Inputs: `gridPos`, `hasItem`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
+        /// <param name="hasItem">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public bool SetItem(Vector2Int gridPos, bool hasItem)
         {
             GridCell cell = GetCell(gridPos);
@@ -540,16 +780,53 @@ namespace BubbleTown.Map
             return true;
         }
 
+        /// <summary>
+        /// Purpose: Gets player1 spawn grid.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Vector2Int` value.
+        /// </summary>
+        /// <returns>a `Vector2Int` value.</returns>
         public Vector2Int GetPlayer1SpawnGrid() => player1SpawnGrid;
+        /// <summary>
+        /// Purpose: Gets player2 spawn grid.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Vector2Int` value.
+        /// </summary>
+        /// <returns>a `Vector2Int` value.</returns>
         public Vector2Int GetPlayer2SpawnGrid() => player2SpawnGrid;
+        /// <summary>
+        /// Purpose: Gets aispawn grid.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Vector2Int` value.
+        /// </summary>
+        /// <returns>a `Vector2Int` value.</returns>
         public Vector2Int GetAISpawnGrid() => aiSpawnGrid;
+        /// <summary>
+        /// Purpose: Gets single player goal grid.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Vector2Int` value.
+        /// </summary>
+        /// <returns>a `Vector2Int` value.</returns>
         public Vector2Int GetSinglePlayerGoalGrid() => singlePlayerGoalGrid;
 
+        /// <summary>
+        /// Purpose: Returns whether this object is single player goal.
+        /// Inputs: `gridPos`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public bool IsSinglePlayerGoal(Vector2Int gridPos)
         {
             return gridPos == singlePlayerGoalGrid;
         }
 
+        /// <summary>
+        /// Purpose: Returns count soft walls for the current state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `int` value.
+        /// </summary>
+        /// <returns>a `int` value.</returns>
         public int CountSoftWalls()
         {
             if (grid == null)
@@ -573,6 +850,13 @@ namespace BubbleTown.Map
             return count;
         }
 
+        /// <summary>
+        /// Purpose: Returns world to grid for the current state.
+        /// Inputs: `worldPosition`; may also read serialized fields and current runtime state.
+        /// Output: a `Vector2Int` value.
+        /// </summary>
+        /// <param name="worldPosition">Input value used by this method.</param>
+        /// <returns>a `Vector2Int` value.</returns>
         public Vector2Int WorldToGrid(Vector3 worldPosition)
         {
             int x = Mathf.RoundToInt(worldPosition.x / cellSize);
@@ -580,11 +864,26 @@ namespace BubbleTown.Map
             return new Vector2Int(x, y);
         }
 
+        /// <summary>
+        /// Purpose: Returns grid to world for the current state.
+        /// Inputs: `gridPos`, `y`; may also read serialized fields and current runtime state.
+        /// Output: a `Vector3` value.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
+        /// <param name="y">Input value used by this method.</param>
+        /// <returns>a `Vector3` value.</returns>
         public Vector3 GridToWorld(Vector2Int gridPos, float y = 0f)
         {
             return new Vector3(gridPos.x * cellSize, y, gridPos.y * cellSize);
         }
 
+        /// <summary>
+        /// Purpose: Registers soft wall object in the relevant runtime system.
+        /// Inputs: `gridPos`, `softWallObject`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
+        /// <param name="softWallObject">Input value used by this method.</param>
         public void RegisterSoftWallObject(Vector2Int gridPos, GameObject softWallObject)
         {
             if (softWallObject == null)
@@ -595,6 +894,11 @@ namespace BubbleTown.Map
             softWallObjects[gridPos] = softWallObject;
         }
 
+        /// <summary>
+        /// Purpose: Performs rebuild soft wall object lookup for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void RebuildSoftWallObjectLookup()
         {
             softWallObjects.Clear();
@@ -607,6 +911,12 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Performs rebuild soft wall object lookup recursive for this component.
+        /// Inputs: `root`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="root">Input value used by this method.</param>
         private void RebuildSoftWallObjectLookupRecursive(Transform root)
         {
             if (root == null)
@@ -627,6 +937,12 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Performs remove soft wall object for this component.
+        /// Inputs: `gridPos`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
         private void RemoveSoftWallObject(Vector2Int gridPos)
         {
             if (!softWallObjects.TryGetValue(gridPos, out GameObject softWallObject) || softWallObject == null)
@@ -664,6 +980,13 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Finds map visual object at grid from scene objects or cached data.
+        /// Inputs: `gridPos`; may also read serialized fields and current runtime state.
+        /// Output: a `GameObject` value.
+        /// </summary>
+        /// <param name="gridPos">Input value used by this method.</param>
+        /// <returns>a `GameObject` value.</returns>
         private GameObject FindMapVisualObjectAtGrid(Vector2Int gridPos)
         {
             if (mapGenerator != null && mapGenerator.GeneratedMapRoot != null)
@@ -679,6 +1002,14 @@ namespace BubbleTown.Map
             return FindMapVisualObjectAtGridRecursive(root, gridPos);
         }
 
+        /// <summary>
+        /// Purpose: Finds map visual object at grid recursive from scene objects or cached data.
+        /// Inputs: `root`, `gridPos`; may also read serialized fields and current runtime state.
+        /// Output: a `GameObject` value.
+        /// </summary>
+        /// <param name="root">Input value used by this method.</param>
+        /// <param name="gridPos">Input value used by this method.</param>
+        /// <returns>a `GameObject` value.</returns>
         private GameObject FindMapVisualObjectAtGridRecursive(Transform root, Vector2Int gridPos)
         {
             if (root == null)
@@ -703,18 +1034,37 @@ namespace BubbleTown.Map
             return null;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is wall visual object.
+        /// Inputs: `visualObject`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="visualObject">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool IsWallVisualObject(GameObject visualObject)
         {
             return visualObject != null &&
                    (visualObject.GetComponent<WallFeedback>() != null || visualObject.name.StartsWith("Wall_"));
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is soft wall visual object.
+        /// Inputs: `visualObject`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="visualObject">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool IsSoftWallVisualObject(GameObject visualObject)
         {
             return visualObject != null &&
                    (visualObject.name.StartsWith("Wall_Soft") || visualObject.GetComponent<WallFeedback>() != null);
         }
 
+        /// <summary>
+        /// Purpose: Performs generate map for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void GenerateMap()
         {
             if (mapGenerator == null)
@@ -726,6 +1076,11 @@ namespace BubbleTown.Map
             RebuildSoftWallObjectLookup();
         }
 
+        /// <summary>
+        /// Purpose: Clears map.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void ClearMap()
         {
             if (mapGenerator == null)
