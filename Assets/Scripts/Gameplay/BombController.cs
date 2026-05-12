@@ -71,12 +71,24 @@ namespace BubbleTown.Gameplay
         public bool HasExploded => exploded;
         public bool TriggeredByChainExplosion => triggeredByChainExplosion;
 
+        /// <summary>
+        /// Purpose: Initializes this component before the scene starts running.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Awake()
         {
             CacheVisualReferences();
             ResetFuseTimer();
         }
 
+        /// <summary>
+        /// Purpose: Performs initialize for this component.
+        /// Inputs: `bombOwner`, `bombRange`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="bombOwner">Input value used by this method.</param>
+        /// <param name="bombRange">Input value used by this method.</param>
         public void Initialize(CharacterBase bombOwner, int bombRange)
         {
             MapManager ownerMapManager = bombOwner != null ? bombOwner.MapManager : null;
@@ -84,6 +96,15 @@ namespace BubbleTown.Gameplay
             Initialize(bombOwner, ownerMapManager, ownerGridPosition, bombRange);
         }
 
+        /// <summary>
+        /// Purpose: Performs initialize for this component.
+        /// Inputs: `bombOwner`, `ownerMapManager`, `bombGridPosition`, `bombRange`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="bombOwner">Input value used by this method.</param>
+        /// <param name="ownerMapManager">Input value used by this method.</param>
+        /// <param name="bombGridPosition">Input value used by this method.</param>
+        /// <param name="bombRange">Input value used by this method.</param>
         public void Initialize(CharacterBase bombOwner, MapManager ownerMapManager, Vector2Int bombGridPosition, int bombRange)
         {
             owner = bombOwner;
@@ -98,17 +119,32 @@ namespace BubbleTown.Gameplay
             ResetFuseTimer();
         }
 
+        /// <summary>
+        /// Purpose: Initializes this component after Unity enables it in the scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Start()
         {
             BeginCountdown();
         }
 
+        /// <summary>
+        /// Purpose: Runs this component's per-frame logic.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Update()
         {
             TickFuseTimer();
             UpdateCountdownVisualFeedback();
         }
 
+        /// <summary>
+        /// Purpose: Begins countdown.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void BeginCountdown()
         {
             if (exploded)
@@ -120,17 +156,32 @@ namespace BubbleTown.Gameplay
             isCountingDown = true;
         }
 
+        /// <summary>
+        /// Purpose: Stops countdown.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void StopCountdown()
         {
             isCountingDown = false;
         }
 
+        /// <summary>
+        /// Purpose: Resets fuse timer to a safe default state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ResetFuseTimer()
         {
             remainingFuseSeconds = Mathf.Max(0.1f, fuseSeconds);
             isCountingDown = false;
         }
 
+        /// <summary>
+        /// Purpose: Advances fuse timer by one update step.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void TickFuseTimer()
         {
             if (!isCountingDown || exploded)
@@ -147,11 +198,23 @@ namespace BubbleTown.Gameplay
             TriggerExplosion();
         }
 
+        /// <summary>
+        /// Purpose: Performs trigger chain explosion for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void TriggerChainExplosion()
         {
             TryTriggerChainExplosion(null);
         }
 
+        /// <summary>
+        /// Purpose: Attempts to trigger chain explosion.
+        /// Inputs: `sourceExplosion`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="sourceExplosion">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public bool TryTriggerChainExplosion(ExplosionController sourceExplosion)
         {
             if (exploded)
@@ -165,6 +228,12 @@ namespace BubbleTown.Gameplay
             return TryTriggerExplosion();
         }
 
+        /// <summary>
+        /// Purpose: Attempts to trigger explosion.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <returns>a `bool` value.</returns>
         public bool TryTriggerExplosion()
         {
             if (exploded)
@@ -176,6 +245,11 @@ namespace BubbleTown.Gameplay
             return true;
         }
 
+        /// <summary>
+        /// Purpose: Runs the complete explosion flow for this bomb once, either from the fuse or a chain reaction.
+        /// Inputs: no direct parameters; reads owner, map position, range, explosion prefabs, and audio/camera settings.
+        /// Output: no return value; releases map occupancy, spawns explosion cells, notifies the owner, and destroys this bomb.
+        /// </summary>
         public void TriggerExplosion()
         {
             if (exploded)
@@ -183,6 +257,7 @@ namespace BubbleTown.Gameplay
                 return;
             }
 
+            // Set the guard flag before spawning explosions so chain reactions cannot re-enter this flow.
             exploded = true;
             isCountingDown = false;
             remainingFuseSeconds = 0f;
@@ -195,11 +270,21 @@ namespace BubbleTown.Gameplay
             Destroy(gameObject);
         }
 
+        /// <summary>
+        /// Purpose: Performs explode for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void Explode()
         {
             TriggerExplosion();
         }
 
+        /// <summary>
+        /// Purpose: Spawns the center explosion cell and then expands cross-shaped blast lines.
+        /// Inputs: no direct parameters; reads the bomb grid position, range, map data, and explosion prefab references.
+        /// Output: no return value; creates temporary ExplosionController instances in reachable cells.
+        /// </summary>
         protected virtual void SpawnExplosion()
         {
             if (!HasAnyExplosionPrefab())
@@ -208,6 +293,7 @@ namespace BubbleTown.Gameplay
             }
 
             EnsureMapManager();
+            // The center always appears, even when every direction is immediately blocked.
             SpawnExplosionCell(gridPosition, ResolveExplosionPrefab(Vector2Int.zero));
 
             for (int i = 0; i < ExplosionDirections.Length; i++)
@@ -216,6 +302,12 @@ namespace BubbleTown.Gameplay
             }
         }
 
+        /// <summary>
+        /// Purpose: Propagates one arm of the cross-shaped explosion in a single grid direction.
+        /// Inputs: direction is one of the four cardinal grid directions.
+        /// Output: no return value; stops at bounds, hard walls, or after destroying a soft wall.
+        /// </summary>
+        /// <param name="direction">Cardinal grid direction used for this explosion arm.</param>
         private void SpawnExplosionLine(Vector2Int direction)
         {
             for (int distance = 1; distance <= range; distance++)
@@ -223,6 +315,7 @@ namespace BubbleTown.Gameplay
                 Vector2Int targetGridPosition = gridPosition + direction * distance;
                 if (!TryGetExplosionCell(targetGridPosition, out GridCell targetCell))
                 {
+                    // Leaving the map stops only this arm; other directions keep propagating.
                     break;
                 }
 
@@ -236,12 +329,20 @@ namespace BubbleTown.Gameplay
 
                 if (ShouldStopPropagationAfterCell(targetCell))
                 {
+                    // Soft walls receive the blast, are destroyed, and block any cells behind them.
                     DestroySoftWallAt(targetGridPosition);
                     break;
                 }
             }
         }
 
+        /// <summary>
+        /// Purpose: Spawns explosion cell.
+        /// Inputs: `targetGridPosition`, `prefab`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="targetGridPosition">Input value used by this method.</param>
+        /// <param name="prefab">Input value used by this method.</param>
         private void SpawnExplosionCell(Vector2Int targetGridPosition, ExplosionController prefab)
         {
             if (prefab == null)
@@ -254,6 +355,12 @@ namespace BubbleTown.Gameplay
             explosion.Initialize(range, owner, targetGridPosition);
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object has any explosion prefab.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <returns>a `bool` value.</returns>
         private bool HasAnyExplosionPrefab()
         {
             return explosionPrefab != null ||
@@ -262,6 +369,13 @@ namespace BubbleTown.Gameplay
                    explosionVerticalPrefab != null;
         }
 
+        /// <summary>
+        /// Purpose: Resolves explosion prefab from the current runtime state.
+        /// Inputs: `direction`; may also read serialized fields and current runtime state.
+        /// Output: a `ExplosionController` value.
+        /// </summary>
+        /// <param name="direction">Input value used by this method.</param>
+        /// <returns>a `ExplosionController` value.</returns>
         private ExplosionController ResolveExplosionPrefab(Vector2Int direction)
         {
             if (direction == Vector2Int.zero)
@@ -277,6 +391,14 @@ namespace BubbleTown.Gameplay
             return explosionVerticalPrefab != null ? explosionVerticalPrefab : explosionPrefab;
         }
 
+        /// <summary>
+        /// Purpose: Attempts to get explosion cell.
+        /// Inputs: `targetGridPosition`, `cell`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="targetGridPosition">Input value used by this method.</param>
+        /// <param name="cell">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool TryGetExplosionCell(Vector2Int targetGridPosition, out GridCell cell)
         {
             cell = null;
@@ -294,11 +416,24 @@ namespace BubbleTown.Gameplay
             return cell != null;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object should stop propagation after cell.
+        /// Inputs: `cell`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="cell">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool ShouldStopPropagationAfterCell(GridCell cell)
         {
             return cell == null || cell.IsSoftWall;
         }
 
+        /// <summary>
+        /// Purpose: Destroys soft wall at.
+        /// Inputs: `targetGridPosition`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="targetGridPosition">Input value used by this method.</param>
         private void DestroySoftWallAt(Vector2Int targetGridPosition)
         {
             if (mapManager == null)
@@ -309,6 +444,12 @@ namespace BubbleTown.Gameplay
             mapManager.DestroySoftWall(targetGridPosition);
         }
 
+        /// <summary>
+        /// Purpose: Performs notify hard wall blocked explosion for this component.
+        /// Inputs: `targetGridPosition`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="targetGridPosition">Input value used by this method.</param>
         private void NotifyHardWallBlockedExplosion(Vector2Int targetGridPosition)
         {
             if (mapManager == null)
@@ -319,6 +460,11 @@ namespace BubbleTown.Gameplay
             mapManager.PlayHardWallBlockedFeedback(targetGridPosition, GridToWorld(gridPosition));
         }
 
+        /// <summary>
+        /// Purpose: Plays explosion camera feedback.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void PlayExplosionCameraFeedback()
         {
             if (!shakeCameraOnExplosion)
@@ -329,11 +475,25 @@ namespace BubbleTown.Gameplay
             CameraController.ShakeActiveCamera(explosionCameraShakeDuration, explosionCameraShakeMagnitude);
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is hard wall.
+        /// Inputs: `cell`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="cell">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool IsHardWall(GridCell cell)
         {
             return cell.IsHardWall;
         }
 
+        /// <summary>
+        /// Purpose: Returns grid to world for the current state.
+        /// Inputs: `targetGridPosition`; may also read serialized fields and current runtime state.
+        /// Output: a `Vector3` value.
+        /// </summary>
+        /// <param name="targetGridPosition">Input value used by this method.</param>
+        /// <returns>a `Vector3` value.</returns>
         private Vector3 GridToWorld(Vector2Int targetGridPosition)
         {
             if (mapManager != null)
@@ -347,6 +507,11 @@ namespace BubbleTown.Gameplay
                 targetGridPosition.y * GameConstants.GridCellSize);
         }
 
+        /// <summary>
+        /// Purpose: Ensures map manager exists or is initialized before use.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void EnsureMapManager()
         {
             if (mapManager == null)
@@ -355,6 +520,11 @@ namespace BubbleTown.Gameplay
             }
         }
 
+        /// <summary>
+        /// Purpose: Performs cache visual references for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void CacheVisualReferences()
         {
             if (visualRoot == null)
@@ -371,6 +541,11 @@ namespace BubbleTown.Gameplay
             flashPropertyBlock = new MaterialPropertyBlock();
         }
 
+        /// <summary>
+        /// Purpose: Updates bomb flash and scale feedback based on remaining fuse time.
+        /// Inputs: no direct parameters; reads fuse progress, flash timing, renderers, and visual root.
+        /// Output: no return value; makes the bomb blink faster as it gets closer to exploding.
+        /// </summary>
         private void UpdateCountdownVisualFeedback()
         {
             if (!isCountingDown || exploded)
@@ -387,12 +562,20 @@ namespace BubbleTown.Gameplay
             float fuseProgress = 1f - Mathf.Clamp01(remainingFuseSeconds / Mathf.Max(0.01f, fuseSeconds));
             float flashInterval = Mathf.Lerp(slowFlashInterval, fastFlashInterval, fuseProgress);
             float intervalProgress = Mathf.Repeat(Time.time, flashInterval) / flashInterval;
+            // A square pulse is intentionally readable for a cartoony bomb warning.
             float flashPulse = intervalProgress <= flashOnRatio ? 1f : 0f;
             float urgentGlow = Mathf.Lerp(0.35f, 1.25f, fuseProgress);
 
             ApplyCountdownFlash(flashPulse, urgentGlow);
         }
 
+        /// <summary>
+        /// Purpose: Applies countdown flash to the current object or scene.
+        /// Inputs: `flashPulse`, `urgentGlow`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="flashPulse">Input value used by this method.</param>
+        /// <param name="urgentGlow">Input value used by this method.</param>
         private void ApplyCountdownFlash(float flashPulse, float urgentGlow)
         {
             Color emissionColor = flashEmissionColor * flashPulse * urgentGlow;
@@ -415,6 +598,11 @@ namespace BubbleTown.Gameplay
             }
         }
 
+        /// <summary>
+        /// Purpose: Resets countdown visual feedback to a safe default state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ResetCountdownVisualFeedback()
         {
             if (flashPropertyBlock == null)
@@ -425,6 +613,11 @@ namespace BubbleTown.Gameplay
             ApplyCountdownFlash(0f, 0f);
         }
 
+        /// <summary>
+        /// Purpose: Cleans up runtime state before Unity destroys this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnDestroy()
         {
             ResetCountdownVisualFeedback();
@@ -432,6 +625,11 @@ namespace BubbleTown.Gameplay
             NotifyOwnerBombEnded();
         }
 
+        /// <summary>
+        /// Purpose: Performs release grid occupation for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ReleaseGridOccupation()
         {
             if (gridOccupationReleased)
@@ -442,6 +640,7 @@ namespace BubbleTown.Gameplay
             EnsureMapManager();
             if (hasGridOccupation && mapManager != null && mapManager.IsInsideBounds(gridPosition))
             {
+                // Remove the blocking flag even if this bomb was destroyed by another explosion.
                 mapManager.RemoveBomb(gridPosition);
             }
 
@@ -449,6 +648,12 @@ namespace BubbleTown.Gameplay
             gridOccupationReleased = true;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object has placed bomb occupation.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <returns>a `bool` value.</returns>
         private bool HasPlacedBombOccupation()
         {
             if (mapManager == null || !mapManager.IsInsideBounds(gridPosition))
@@ -460,6 +665,11 @@ namespace BubbleTown.Gameplay
             return cell != null && cell.HasBomb;
         }
 
+        /// <summary>
+        /// Purpose: Performs notify owner bomb ended for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void NotifyOwnerBombEnded()
         {
             if (ownerNotified)
