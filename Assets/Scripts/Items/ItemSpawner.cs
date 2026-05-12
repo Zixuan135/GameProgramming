@@ -48,26 +48,52 @@ namespace BubbleTown.Items
         public Transform ItemRoot => itemRoot;
         public bool SpawnOnSoftWallDestroyed => spawnOnSoftWallDestroyed;
 
+        /// <summary>
+        /// Purpose: Initializes this component before the scene starts running.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Awake()
         {
             EnsureMapManager();
         }
 
+        /// <summary>
+        /// Purpose: Subscribes or refreshes runtime state when this component becomes active.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnEnable()
         {
             SubscribeToMapManager();
         }
 
+        /// <summary>
+        /// Purpose: Initializes this component after Unity enables it in the scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Start()
         {
             SubscribeToMapManager();
         }
 
+        /// <summary>
+        /// Purpose: Cleans up subscriptions or runtime state when this component becomes inactive.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnDisable()
         {
             UnsubscribeFromMapManager();
         }
 
+        /// <summary>
+        /// Purpose: Handles soft wall destroyed.
+        /// Inputs: `gridPosition`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="gridPosition">Input value used by this method.</param>
         private void HandleSoftWallDestroyed(Vector2Int gridPosition)
         {
             if (!spawnOnSoftWallDestroyed)
@@ -85,11 +111,26 @@ namespace BubbleTown.Items
             Debug.Log($"[ItemSpawner] Soft wall destroyed at {gridPosition}. Spawned: {spawned}. Item: {itemName}");
         }
 
+        /// <summary>
+        /// Purpose: Attempts to spawn random item at grid.
+        /// Inputs: `gridPosition`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPosition">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public bool TrySpawnRandomItemAtGrid(Vector2Int gridPosition)
         {
             return TrySpawnRandomItemAtGrid(gridPosition, out _);
         }
 
+        /// <summary>
+        /// Purpose: Attempts to spawn random item at grid.
+        /// Inputs: `gridPosition`, `spawnedItem`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPosition">Input value used by this method.</param>
+        /// <param name="spawnedItem">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public bool TrySpawnRandomItemAtGrid(Vector2Int gridPosition, out ItemBase spawnedItem)
         {
             spawnedItem = null;
@@ -108,6 +149,15 @@ namespace BubbleTown.Items
             return TrySpawnItemAtGrid(definition.ItemType, gridPosition, out spawnedItem);
         }
 
+        /// <summary>
+        /// Purpose: Attempts to spawn item at grid.
+        /// Inputs: `itemType`, `gridPosition`, `spawnedItem`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="itemType">Input value used by this method.</param>
+        /// <param name="gridPosition">Input value used by this method.</param>
+        /// <param name="spawnedItem">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public bool TrySpawnItemAtGrid(ItemType itemType, Vector2Int gridPosition, out ItemBase spawnedItem)
         {
             spawnedItem = null;
@@ -137,11 +187,25 @@ namespace BubbleTown.Items
             return true;
         }
 
+        /// <summary>
+        /// Purpose: Attempts to spawn item.
+        /// Inputs: `worldPosition`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="worldPosition">Input value used by this method.</param>
         public void TrySpawnItem(Vector3 worldPosition)
         {
             TrySpawnRandomItem(worldPosition, out _);
         }
 
+        /// <summary>
+        /// Purpose: Attempts to spawn random item.
+        /// Inputs: `worldPosition`, `spawnedItem`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="worldPosition">Input value used by this method.</param>
+        /// <param name="spawnedItem">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public bool TrySpawnRandomItem(Vector3 worldPosition, out ItemBase spawnedItem)
         {
             spawnedItem = null;
@@ -168,6 +232,13 @@ namespace BubbleTown.Items
             return true;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object can spawn at grid.
+        /// Inputs: `gridPosition`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="gridPosition">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public bool CanSpawnAtGrid(Vector2Int gridPosition)
         {
             EnsureMapManager();
@@ -195,6 +266,13 @@ namespace BubbleTown.Items
             return !cell.IsHardWall && !cell.IsSoftWall && !cell.HasBomb && !cell.HasCharacter;
         }
 
+        /// <summary>
+        /// Purpose: Resolves world position from the current runtime state.
+        /// Inputs: `gridPosition`; may also read serialized fields and current runtime state.
+        /// Output: a `Vector3` value.
+        /// </summary>
+        /// <param name="gridPosition">Input value used by this method.</param>
+        /// <returns>a `Vector3` value.</returns>
         private Vector3 ResolveWorldPosition(Vector2Int gridPosition)
         {
             if (mapManager != null)
@@ -208,6 +286,13 @@ namespace BubbleTown.Items
                 gridPosition.y * GameConstants.GridCellSize);
         }
 
+        /// <summary>
+        /// Purpose: Finds definition from scene objects or cached data.
+        /// Inputs: `itemType`; may also read serialized fields and current runtime state.
+        /// Output: a `ItemSpawnDefinition` value.
+        /// </summary>
+        /// <param name="itemType">Input value used by this method.</param>
+        /// <returns>a `ItemSpawnDefinition` value.</returns>
         private ItemSpawnDefinition FindDefinition(ItemType itemType)
         {
             if (itemDefinitions == null)
@@ -227,6 +312,12 @@ namespace BubbleTown.Items
             return null;
         }
 
+        /// <summary>
+        /// Purpose: Returns pick random definition for the current state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `ItemSpawnDefinition` value.
+        /// </summary>
+        /// <returns>a `ItemSpawnDefinition` value.</returns>
         private ItemSpawnDefinition PickRandomDefinition()
         {
             if (itemDefinitions == null || itemDefinitions.Length == 0)
@@ -268,6 +359,11 @@ namespace BubbleTown.Items
             return null;
         }
 
+        /// <summary>
+        /// Purpose: Ensures map manager exists or is initialized before use.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void EnsureMapManager()
         {
             if (mapManager == null)
@@ -276,6 +372,11 @@ namespace BubbleTown.Items
             }
         }
 
+        /// <summary>
+        /// Purpose: Performs subscribe to map manager for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void SubscribeToMapManager()
         {
             EnsureMapManager();
@@ -289,6 +390,11 @@ namespace BubbleTown.Items
             subscribedMapManager.SoftWallDestroyed += HandleSoftWallDestroyed;
         }
 
+        /// <summary>
+        /// Purpose: Performs unsubscribe from map manager for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void UnsubscribeFromMapManager()
         {
             if (subscribedMapManager == null)

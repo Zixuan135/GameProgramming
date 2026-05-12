@@ -31,11 +31,22 @@ namespace BubbleTown.Characters
         private MaterialPropertyBlock propertyBlock;
         private Coroutine flashRoutine;
 
+        /// <summary>
+        /// Purpose: Initializes this component before the scene starts running.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Awake()
         {
             ResolveReferences();
         }
 
+        /// <summary>
+        /// Purpose: Plays pickup flash.
+        /// Inputs: `itemType`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="itemType">Input value used by this method.</param>
         public void PlayPickupFlash(ItemType itemType)
         {
             ResolveReferences();
@@ -49,6 +60,11 @@ namespace BubbleTown.Characters
             flashRoutine = StartCoroutine(FlashRoutine(ResolveColor(itemType)));
         }
 
+        /// <summary>
+        /// Purpose: Resolves references from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ResolveReferences()
         {
             if (flashRenderers == null || flashRenderers.Length == 0)
@@ -57,6 +73,13 @@ namespace BubbleTown.Characters
             }
         }
 
+        /// <summary>
+        /// Purpose: Resolves color from the current runtime state.
+        /// Inputs: `itemType`; may also read serialized fields and current runtime state.
+        /// Output: a `Color` value.
+        /// </summary>
+        /// <param name="itemType">Input value used by this method.</param>
+        /// <returns>a `Color` value.</returns>
         private Color ResolveColor(ItemType itemType)
         {
             switch (itemType)
@@ -76,6 +99,13 @@ namespace BubbleTown.Characters
             }
         }
 
+        /// <summary>
+        /// Purpose: Returns flash routine for the current state.
+        /// Inputs: `flashColor`; may also read serialized fields and current runtime state.
+        /// Output: a `IEnumerator` value.
+        /// </summary>
+        /// <param name="flashColor">Input value used by this method.</param>
+        /// <returns>a `IEnumerator` value.</returns>
         private IEnumerator FlashRoutine(Color flashColor)
         {
             float elapsed = 0f;
@@ -93,6 +123,12 @@ namespace BubbleTown.Characters
             flashRoutine = null;
         }
 
+        /// <summary>
+        /// Purpose: Applies emission to the current object or scene.
+        /// Inputs: `emissionColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="emissionColor">Input value used by this method.</param>
         private void ApplyEmission(Color emissionColor)
         {
             if (flashRenderers == null || flashRenderers.Length == 0)
@@ -119,6 +155,11 @@ namespace BubbleTown.Characters
             }
         }
 
+        /// <summary>
+        /// Purpose: Cleans up subscriptions or runtime state when this component becomes inactive.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnDisable()
         {
             if (flashRoutine != null)

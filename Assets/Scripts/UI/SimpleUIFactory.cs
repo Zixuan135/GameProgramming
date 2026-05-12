@@ -73,6 +73,14 @@ namespace BubbleTown.UI
         private static readonly Color TextSecondary = new Color(0.23f, 0.45f, 0.55f, 1f);
         private static readonly Color CreamText = new Color(1f, 0.97f, 0.78f, 1f);
 
+        /// <summary>
+        /// Purpose: Returns centered rect for the current state.
+        /// Inputs: `width`, `height`; may also read serialized fields and current runtime state.
+        /// Output: a `Rect` value.
+        /// </summary>
+        /// <param name="width">Input value used by this method.</param>
+        /// <param name="height">Input value used by this method.</param>
+        /// <returns>a `Rect` value.</returns>
         public static Rect CenteredRect(float width, float height)
         {
             float resolvedWidth = Mathf.Min(width, Screen.width - 40f);
@@ -84,6 +92,11 @@ namespace BubbleTown.UI
                 resolvedHeight);
         }
 
+        /// <summary>
+        /// Purpose: Draws candy background in the current GUI or scene context.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public static void DrawCandyBackground()
         {
             float t = Time.unscaledTime;
@@ -106,6 +119,12 @@ namespace BubbleTown.UI
                 0);
         }
 
+        /// <summary>
+        /// Purpose: Begins panel.
+        /// Inputs: `rect`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
         public static void BeginPanel(Rect rect)
         {
             EnsureStyles();
@@ -115,11 +134,22 @@ namespace BubbleTown.UI
             GUILayout.Space(18f);
         }
 
+        /// <summary>
+        /// Purpose: Performs end panel for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public static void EndPanel()
         {
             GUILayout.EndArea();
         }
 
+        /// <summary>
+        /// Purpose: Performs title for this component.
+        /// Inputs: `text`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="text">Input value used by this method.</param>
         public static void Title(string text)
         {
             EnsureStyles();
@@ -130,6 +160,12 @@ namespace BubbleTown.UI
             GUILayout.Space(6f);
         }
 
+        /// <summary>
+        /// Purpose: Performs compact title for this component.
+        /// Inputs: `text`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="text">Input value used by this method.</param>
         public static void CompactTitle(string text)
         {
             EnsureStyles();
@@ -140,6 +176,12 @@ namespace BubbleTown.UI
             GUILayout.Space(2f);
         }
 
+        /// <summary>
+        /// Purpose: Performs body for this component.
+        /// Inputs: `text`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="text">Input value used by this method.</param>
         public static void Body(string text)
         {
             EnsureStyles();
@@ -147,6 +189,12 @@ namespace BubbleTown.UI
             GUILayout.Space(12f);
         }
 
+        /// <summary>
+        /// Purpose: Performs small body for this component.
+        /// Inputs: `text`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="text">Input value used by this method.</param>
         public static void SmallBody(string text)
         {
             EnsureStyles();
@@ -154,11 +202,25 @@ namespace BubbleTown.UI
             GUILayout.Space(8f);
         }
 
+        /// <summary>
+        /// Purpose: Returns button for the current state.
+        /// Inputs: `text`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="text">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public static bool Button(string text)
         {
             return PrimaryButton(text);
         }
 
+        /// <summary>
+        /// Purpose: Returns primary button for the current state.
+        /// Inputs: `text`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="text">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public static bool PrimaryButton(string text)
         {
             GUILayout.Space(8f);
@@ -172,6 +234,14 @@ namespace BubbleTown.UI
                 Color.white);
         }
 
+        /// <summary>
+        /// Purpose: Returns fixed primary button for the current state.
+        /// Inputs: `rect`, `text`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="text">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public static bool FixedPrimaryButton(Rect rect, string text)
         {
             return CartoonButton(
@@ -183,6 +253,13 @@ namespace BubbleTown.UI
                 Color.white);
         }
 
+        /// <summary>
+        /// Purpose: Returns secondary button for the current state.
+        /// Inputs: `text`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="text">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public static bool SecondaryButton(string text)
         {
             GUILayout.Space(8f);
@@ -196,6 +273,14 @@ namespace BubbleTown.UI
                 Color.white);
         }
 
+        /// <summary>
+        /// Purpose: Returns fixed secondary button for the current state.
+        /// Inputs: `rect`, `text`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="text">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public static bool FixedSecondaryButton(Rect rect, string text)
         {
             return CartoonButton(
@@ -207,6 +292,15 @@ namespace BubbleTown.UI
                 Color.white);
         }
 
+        /// <summary>
+        /// Purpose: Returns menu tile button for the current state.
+        /// Inputs: `text`, `icon`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="text">Input value used by this method.</param>
+        /// <param name="icon">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public static bool MenuTileButton(string text, MenuButtonIcon icon, Color accentColor)
         {
             EnsureStyles();
@@ -217,6 +311,12 @@ namespace BubbleTown.UI
             return clicked;
         }
 
+        /// <summary>
+        /// Purpose: Performs label pill for this component.
+        /// Inputs: `text`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="text">Input value used by this method.</param>
         public static void LabelPill(string text)
         {
             EnsureStyles();
@@ -227,6 +327,12 @@ namespace BubbleTown.UI
             GUILayout.Space(6f);
         }
 
+        /// <summary>
+        /// Purpose: Performs compact label pill for this component.
+        /// Inputs: `text`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="text">Input value used by this method.</param>
         public static void CompactLabelPill(string text)
         {
             EnsureStyles();
@@ -237,6 +343,12 @@ namespace BubbleTown.UI
             GUILayout.Space(3f);
         }
 
+        /// <summary>
+        /// Purpose: Performs feature row for this component.
+        /// Inputs: `stringlabels`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="stringlabels">Input value used by this method.</param>
         public static void FeatureRow(params string[] labels)
         {
             EnsureStyles();
@@ -249,6 +361,11 @@ namespace BubbleTown.UI
             GUILayout.Space(12f);
         }
 
+        /// <summary>
+        /// Purpose: Performs main menu decorations for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public static void MainMenuDecorations()
         {
             EnsureStyles();
@@ -305,6 +422,13 @@ namespace BubbleTown.UI
             GUILayout.Space(4f);
         }
 
+        /// <summary>
+        /// Purpose: Performs map select decorations for this component.
+        /// Inputs: `panelWidth`, `panelHeight`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="panelWidth">Input value used by this method.</param>
+        /// <param name="panelHeight">Input value used by this method.</param>
         public static void MapSelectDecorations(float panelWidth, float panelHeight)
         {
             EnsureStyles();
@@ -341,6 +465,14 @@ namespace BubbleTown.UI
             GUILayout.Space(1f);
         }
 
+        /// <summary>
+        /// Purpose: Returns menu modal for the current state.
+        /// Inputs: `title`, `stringlines`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="title">Input value used by this method.</param>
+        /// <param name="stringlines">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public static bool MenuModal(string title, string[] lines)
         {
             EnsureStyles();
@@ -364,6 +496,13 @@ namespace BubbleTown.UI
             return shouldClose;
         }
 
+        /// <summary>
+        /// Purpose: Sets tings modal.
+        /// Inputs: `audioManager`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="audioManager">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public static bool SettingsModal(AudioManager audioManager)
         {
             EnsureStyles();
@@ -435,6 +574,12 @@ namespace BubbleTown.UI
             return shouldClose;
         }
 
+        /// <summary>
+        /// Purpose: Returns guide modal for the current state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <returns>a `bool` value.</returns>
         public static bool GuideModal()
         {
             EnsureStyles();
@@ -464,6 +609,16 @@ namespace BubbleTown.UI
             return shouldClose;
         }
 
+        /// <summary>
+        /// Purpose: Returns mode card for the current state.
+        /// Inputs: `title`, `tag`, `description`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="title">Input value used by this method.</param>
+        /// <param name="tag">Input value used by this method.</param>
+        /// <param name="description">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public static bool ModeCard(string title, string tag, string description, Color accentColor)
         {
             EnsureStyles();
@@ -471,12 +626,33 @@ namespace BubbleTown.UI
             return DrawModeCard(rect, title, tag, description, accentColor);
         }
 
+        /// <summary>
+        /// Purpose: Returns mode card for the current state.
+        /// Inputs: `rect`, `title`, `tag`, `description`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="title">Input value used by this method.</param>
+        /// <param name="tag">Input value used by this method.</param>
+        /// <param name="description">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public static bool ModeCard(Rect rect, string title, string tag, string description, Color accentColor)
         {
             EnsureStyles();
             return DrawModeCard(rect, title, tag, description, accentColor);
         }
 
+        /// <summary>
+        /// Purpose: Returns compact mode card for the current state.
+        /// Inputs: `title`, `tag`, `description`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="title">Input value used by this method.</param>
+        /// <param name="tag">Input value used by this method.</param>
+        /// <param name="description">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public static bool CompactModeCard(string title, string tag, string description, Color accentColor)
         {
             EnsureStyles();
@@ -484,6 +660,21 @@ namespace BubbleTown.UI
             return DrawModeCard(rect, title, tag, description, accentColor);
         }
 
+        /// <summary>
+        /// Purpose: Returns map card for the current state.
+        /// Inputs: `title`, `tag`, `description`, `accentColor`, `groundColor`, `blockColor`, `pathColor`, `isSelected`, `previewPattern`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="title">Input value used by this method.</param>
+        /// <param name="tag">Input value used by this method.</param>
+        /// <param name="description">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
+        /// <param name="groundColor">Input value used by this method.</param>
+        /// <param name="blockColor">Input value used by this method.</param>
+        /// <param name="pathColor">Input value used by this method.</param>
+        /// <param name="isSelected">Input value used by this method.</param>
+        /// <param name="previewPattern">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         public static bool MapCard(
             string title,
             string tag,
@@ -500,11 +691,28 @@ namespace BubbleTown.UI
             return DrawMapCard(rect, title, tag, description, accentColor, groundColor, blockColor, pathColor, isSelected, previewPattern);
         }
 
+        /// <summary>
+        /// Purpose: Performs flexible space for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public static void FlexibleSpace()
         {
             GUILayout.FlexibleSpace();
         }
 
+        /// <summary>
+        /// Purpose: Returns cartoon button for the current state.
+        /// Inputs: `rect`, `text`, `normalColor`, `hoverColor`, `activeColor`, `textColor`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="text">Input value used by this method.</param>
+        /// <param name="normalColor">Input value used by this method.</param>
+        /// <param name="hoverColor">Input value used by this method.</param>
+        /// <param name="activeColor">Input value used by this method.</param>
+        /// <param name="textColor">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private static bool CartoonButton(Rect rect, string text, Color normalColor, Color hoverColor, Color activeColor, Color textColor)
         {
             EnsureStyles();
@@ -521,6 +729,16 @@ namespace BubbleTown.UI
             return clicked;
         }
 
+        /// <summary>
+        /// Purpose: Draws menu tile button in the current GUI or scene context.
+        /// Inputs: `rect`, `text`, `icon`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="text">Input value used by this method.</param>
+        /// <param name="icon">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private static bool DrawMenuTileButton(Rect rect, string text, MenuButtonIcon icon, Color accentColor)
         {
             Matrix4x4 previousMatrix = GUI.matrix;
@@ -548,6 +766,17 @@ namespace BubbleTown.UI
             return clicked;
         }
 
+        /// <summary>
+        /// Purpose: Draws mode card in the current GUI or scene context.
+        /// Inputs: `rect`, `title`, `tag`, `description`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="title">Input value used by this method.</param>
+        /// <param name="tag">Input value used by this method.</param>
+        /// <param name="description">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private static bool DrawModeCard(Rect rect, string title, string tag, string description, Color accentColor)
         {
             Event currentEvent = Event.current;
@@ -573,6 +802,22 @@ namespace BubbleTown.UI
             return GUI.Button(rect, GUIContent.none, invisibleButtonStyle);
         }
 
+        /// <summary>
+        /// Purpose: Draws map card in the current GUI or scene context.
+        /// Inputs: `rect`, `title`, `tag`, `description`, `accentColor`, `groundColor`, `blockColor`, `pathColor`, `isSelected`, `previewPattern`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="title">Input value used by this method.</param>
+        /// <param name="tag">Input value used by this method.</param>
+        /// <param name="description">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
+        /// <param name="groundColor">Input value used by this method.</param>
+        /// <param name="blockColor">Input value used by this method.</param>
+        /// <param name="pathColor">Input value used by this method.</param>
+        /// <param name="isSelected">Input value used by this method.</param>
+        /// <param name="previewPattern">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private static bool DrawMapCard(
             Rect rect,
             string title,
@@ -621,6 +866,15 @@ namespace BubbleTown.UI
             return GUI.Button(rect, GUIContent.none, invisibleButtonStyle);
         }
 
+        /// <summary>
+        /// Purpose: Resolves interactive scale from the current runtime state.
+        /// Inputs: `rect`, `hoverScale`, `pressScale`; may also read serialized fields and current runtime state.
+        /// Output: a `float` value.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="hoverScale">Input value used by this method.</param>
+        /// <param name="pressScale">Input value used by this method.</param>
+        /// <returns>a `float` value.</returns>
         private static float ResolveInteractiveScale(Rect rect, float hoverScale, float pressScale)
         {
             Event currentEvent = Event.current;
@@ -640,6 +894,13 @@ namespace BubbleTown.UI
             return hoverScale + pulse;
         }
 
+        /// <summary>
+        /// Purpose: Applies scale around to the current object or scene.
+        /// Inputs: `rect`, `scale`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="scale">Input value used by this method.</param>
         private static void ApplyScaleAround(Rect rect, float scale)
         {
             if (Mathf.Approximately(scale, 1f))
@@ -650,6 +911,17 @@ namespace BubbleTown.UI
             GUIUtility.ScaleAroundPivot(new Vector2(scale, scale), rect.center);
         }
 
+        /// <summary>
+        /// Purpose: Draws map preview in the current GUI or scene context.
+        /// Inputs: `rect`, `groundColor`, `blockColor`, `pathColor`, `accentColor`, `previewPattern`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="groundColor">Input value used by this method.</param>
+        /// <param name="blockColor">Input value used by this method.</param>
+        /// <param name="pathColor">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
+        /// <param name="previewPattern">Input value used by this method.</param>
         private static void DrawMapPreview(Rect rect, Color groundColor, Color blockColor, Color pathColor, Color accentColor, MapPreviewPattern previewPattern)
         {
             DrawRoundedRect(rect, groundColor, Color.white, 14, 2);
@@ -686,6 +958,17 @@ namespace BubbleTown.UI
             DrawBubble(new Rect(rect.x + rect.width - 34f, rect.y + rect.height - 34f, 26f, 26f), new Color(accentColor.r, accentColor.g, accentColor.b, 0.55f));
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is preview block cell.
+        /// Inputs: `x`, `y`, `columns`, `rows`, `previewPattern`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="x">Input value used by this method.</param>
+        /// <param name="y">Input value used by this method.</param>
+        /// <param name="columns">Input value used by this method.</param>
+        /// <param name="rows">Input value used by this method.</param>
+        /// <param name="previewPattern">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private static bool IsPreviewBlockCell(int x, int y, int columns, int rows, MapPreviewPattern previewPattern)
         {
             bool edge = x == 0 || y == 0 || x == columns - 1 || y == rows - 1;
@@ -702,6 +985,17 @@ namespace BubbleTown.UI
             }
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is preview path cell.
+        /// Inputs: `x`, `y`, `columns`, `rows`, `previewPattern`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="x">Input value used by this method.</param>
+        /// <param name="y">Input value used by this method.</param>
+        /// <param name="columns">Input value used by this method.</param>
+        /// <param name="rows">Input value used by this method.</param>
+        /// <param name="previewPattern">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private static bool IsPreviewPathCell(int x, int y, int columns, int rows, MapPreviewPattern previewPattern)
         {
             switch (previewPattern)
@@ -715,6 +1009,13 @@ namespace BubbleTown.UI
             }
         }
 
+        /// <summary>
+        /// Purpose: Draws feature pill in the current GUI or scene context.
+        /// Inputs: `text`, `index`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="text">Input value used by this method.</param>
+        /// <param name="index">Input value used by this method.</param>
         private static void DrawFeaturePill(string text, int index)
         {
             Color[] colors =
@@ -731,6 +1032,13 @@ namespace BubbleTown.UI
             GUILayout.Space(6f);
         }
 
+        /// <summary>
+        /// Purpose: Draws settings controls in the current GUI or scene context.
+        /// Inputs: `rect`, `audioManager`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="audioManager">Input value used by this method.</param>
         private static void DrawSettingsControls(Rect rect, AudioManager audioManager)
         {
             float contentWidth = Mathf.Min(rect.width, 500f);
@@ -799,6 +1107,13 @@ namespace BubbleTown.UI
             }
         }
 
+        /// <summary>
+        /// Purpose: Draws audio status pill in the current GUI or scene context.
+        /// Inputs: `rect`, `audioManager`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="audioManager">Input value used by this method.</param>
         private static void DrawAudioStatusPill(Rect rect, AudioManager audioManager)
         {
             float width = Mathf.Min(rect.width, 500f);
@@ -819,6 +1134,13 @@ namespace BubbleTown.UI
             GUI.Label(new Rect(pillRect.x + 190f, pillRect.y + 4f, pillRect.width - 208f, pillRect.height - 8f), volumeText, settingsValueStyle);
         }
 
+        /// <summary>
+        /// Purpose: Draws settings preview buttons in the current GUI or scene context.
+        /// Inputs: `rect`, `audioManager`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="audioManager">Input value used by this method.</param>
         private static void DrawSettingsPreviewButtons(Rect rect, AudioManager audioManager)
         {
             float contentWidth = Mathf.Min(rect.width, 420f);
@@ -852,6 +1174,16 @@ namespace BubbleTown.UI
             }
         }
 
+        /// <summary>
+        /// Purpose: Draws settings slider in the current GUI or scene context.
+        /// Inputs: `rect`, `label`, `value`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: a `float` value.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="label">Input value used by this method.</param>
+        /// <param name="value">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
+        /// <returns>a `float` value.</returns>
         private static float DrawSettingsSlider(Rect rect, string label, float value, Color accentColor)
         {
             float resolvedValue = Mathf.Clamp01(value);
@@ -884,6 +1216,16 @@ namespace BubbleTown.UI
             return resolvedValue;
         }
 
+        /// <summary>
+        /// Purpose: Draws settings toggle in the current GUI or scene context.
+        /// Inputs: `rect`, `label`, `value`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="label">Input value used by this method.</param>
+        /// <param name="value">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private static bool DrawSettingsToggle(Rect rect, string label, bool value, Color accentColor)
         {
             DrawSettingsRowBackground(rect, accentColor);
@@ -909,6 +1251,13 @@ namespace BubbleTown.UI
             return value;
         }
 
+        /// <summary>
+        /// Purpose: Draws settings row background in the current GUI or scene context.
+        /// Inputs: `rect`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
         private static void DrawSettingsRowBackground(Rect rect, Color accentColor)
         {
             DrawRoundedRect(new Rect(rect.x + 3f, rect.y + 4f, rect.width, rect.height), PanelShadow, PanelShadow, 14, 0);
@@ -916,6 +1265,12 @@ namespace BubbleTown.UI
             DrawRoundedRect(new Rect(rect.x + 8f, rect.y + 7f, 5f, rect.height - 14f), accentColor, Color.clear, 4, 0);
         }
 
+        /// <summary>
+        /// Purpose: Draws guide compact grid in the current GUI or scene context.
+        /// Inputs: `rect`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
         private static void DrawGuideCompactGrid(Rect rect)
         {
             float contentWidth = Mathf.Min(rect.width, 480f);
@@ -954,6 +1309,17 @@ namespace BubbleTown.UI
                 GuideRowIcon.Goal);
         }
 
+        /// <summary>
+        /// Purpose: Draws guide compact card in the current GUI or scene context.
+        /// Inputs: `rect`, `title`, `keyText`, `detail`, `accentColor`, `icon`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="title">Input value used by this method.</param>
+        /// <param name="keyText">Input value used by this method.</param>
+        /// <param name="detail">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
+        /// <param name="icon">Input value used by this method.</param>
         private static void DrawGuideCompactCard(Rect rect, string title, string keyText, string detail, Color accentColor, GuideRowIcon icon)
         {
             DrawRoundedRect(new Rect(rect.x + 3f, rect.y + 5f, rect.width, rect.height), PanelShadow, PanelShadow, 16, 0);
@@ -968,6 +1334,14 @@ namespace BubbleTown.UI
             GUI.Label(new Rect(rect.x + 64f, rect.y + 54f, rect.width - 76f, rect.height - 59f), detail, guideTextStyle);
         }
 
+        /// <summary>
+        /// Purpose: Draws guide row icon in the current GUI or scene context.
+        /// Inputs: `rect`, `accentColor`, `icon`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
+        /// <param name="icon">Input value used by this method.</param>
         private static void DrawGuideRowIcon(Rect rect, Color accentColor, GuideRowIcon icon)
         {
             float phase = rect.x * 0.04f + rect.y * 0.03f;
@@ -1003,6 +1377,14 @@ namespace BubbleTown.UI
             GUI.matrix = previousMatrix;
         }
 
+        /// <summary>
+        /// Purpose: Draws mode card scene in the current GUI or scene context.
+        /// Inputs: `rect`, `accentColor`, `tag`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
+        /// <param name="tag">Input value used by this method.</param>
         private static void DrawModeCardScene(Rect rect, Color accentColor, string tag)
         {
             Rect sky = new Rect(rect.x + 12f, rect.y + 12f, rect.width - 24f, rect.height * 0.42f);
@@ -1034,6 +1416,14 @@ namespace BubbleTown.UI
             }
         }
 
+        /// <summary>
+        /// Purpose: Draws mode icon in the current GUI or scene context.
+        /// Inputs: `rect`, `tag`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="tag">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
         private static void DrawModeIcon(Rect rect, string tag, Color accentColor)
         {
             if (tag == "AI")
@@ -1057,6 +1447,13 @@ namespace BubbleTown.UI
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.76f, rect.y + rect.height * 0.1f, rect.width * 0.22f, rect.height * 0.12f), new Color(1f, 0.56f, 0.72f, 1f), Color.white, 4, 1);
         }
 
+        /// <summary>
+        /// Purpose: Draws tiny character in the current GUI or scene context.
+        /// Inputs: `rect`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
         private static void DrawTinyCharacter(Rect rect, Color accentColor)
         {
             DrawBubble(new Rect(rect.x + rect.width * 0.16f, rect.y + rect.height * 0.02f, rect.width * 0.68f, rect.height * 0.68f), new Color(1f, 0.9f, 0.7f, 1f));
@@ -1066,6 +1463,13 @@ namespace BubbleTown.UI
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.39f, rect.y + rect.height * 0.41f, rect.width * 0.22f, 3f), new Color(0.1f, 0.25f, 0.32f, 0.75f), Color.clear, 2, 0);
         }
 
+        /// <summary>
+        /// Purpose: Draws ai mode icon in the current GUI or scene context.
+        /// Inputs: `rect`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
         private static void DrawAiModeIcon(Rect rect, Color accentColor)
         {
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.16f, rect.y + rect.height * 0.18f, rect.width * 0.68f, rect.height * 0.55f), accentColor, Color.white, 16, 3);
@@ -1076,6 +1480,13 @@ namespace BubbleTown.UI
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.36f, rect.y + rect.height * 0.56f, rect.width * 0.28f, 4f), new Color(0.1f, 0.25f, 0.32f, 0.78f), Color.clear, 2, 0);
         }
 
+        /// <summary>
+        /// Purpose: Draws menu button icon in the current GUI or scene context.
+        /// Inputs: `rect`, `icon`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="icon">Input value used by this method.</param>
         private static void DrawMenuButtonIcon(Rect rect, MenuButtonIcon icon)
         {
             switch (icon)
@@ -1095,6 +1506,12 @@ namespace BubbleTown.UI
             }
         }
 
+        /// <summary>
+        /// Purpose: Draws play icon in the current GUI or scene context.
+        /// Inputs: `rect`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
         private static void DrawPlayIcon(Rect rect)
         {
             Color iconColor = new Color(1f, 0.96f, 0.74f, 1f);
@@ -1106,6 +1523,12 @@ namespace BubbleTown.UI
             DrawRotatedRoundedRect(new Rect(rect.x + 18f, rect.y + 23f, 24f, 5f), iconColor, -26f, 3);
         }
 
+        /// <summary>
+        /// Purpose: Draws guide icon in the current GUI or scene context.
+        /// Inputs: `rect`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
         private static void DrawGuideIcon(Rect rect)
         {
             Color page = new Color(1f, 0.98f, 0.78f, 1f);
@@ -1119,6 +1542,12 @@ namespace BubbleTown.UI
             DrawRoundedRect(new Rect(rect.x + 27f, rect.y + 25f, 16f, 3f), line, Color.clear, 2, 0);
         }
 
+        /// <summary>
+        /// Purpose: Draws settings icon in the current GUI or scene context.
+        /// Inputs: `rect`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
         private static void DrawSettingsIcon(Rect rect)
         {
             Color gear = new Color(1f, 0.96f, 0.74f, 1f);
@@ -1133,6 +1562,12 @@ namespace BubbleTown.UI
             DrawBubble(new Rect(rect.x + 15f, rect.y + 15f, rect.width - 30f, rect.height - 30f), new Color(0.12f, 0.36f, 0.48f, 0.9f));
         }
 
+        /// <summary>
+        /// Purpose: Draws quit icon in the current GUI or scene context.
+        /// Inputs: `rect`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
         private static void DrawQuitIcon(Rect rect)
         {
             Color iconColor = new Color(1f, 0.96f, 0.74f, 1f);
@@ -1141,6 +1576,12 @@ namespace BubbleTown.UI
             DrawRotatedRoundedRect(new Rect(rect.x + 7f, rect.y + 17f, rect.width - 14f, 8f), iconColor, -45f, 4);
         }
 
+        /// <summary>
+        /// Purpose: Draws castle in the current GUI or scene context.
+        /// Inputs: `rect`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
         private static void DrawCastle(Rect rect)
         {
             Color wall = new Color(1f, 0.86f, 0.62f, 1f);
@@ -1160,6 +1601,13 @@ namespace BubbleTown.UI
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.54f, rect.y + rect.height * 0.06f, 18f, 8f), new Color(1f, 0.52f, 0.66f, 1f), Color.white, 4, 1);
         }
 
+        /// <summary>
+        /// Purpose: Draws house in the current GUI or scene context.
+        /// Inputs: `rect`, `roof`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="roof">Input value used by this method.</param>
         private static void DrawHouse(Rect rect, Color roof)
         {
             Color wall = new Color(1f, 0.95f, 0.72f, 1f);
@@ -1168,6 +1616,13 @@ namespace BubbleTown.UI
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.44f, rect.y + rect.height * 0.58f, rect.width * 0.16f, rect.height * 0.31f), new Color(0.18f, 0.42f, 0.55f, 0.74f), Color.clear, 6, 0);
         }
 
+        /// <summary>
+        /// Purpose: Draws tree in the current GUI or scene context.
+        /// Inputs: `rect`, `leaves`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="leaves">Input value used by this method.</param>
         private static void DrawTree(Rect rect, Color leaves)
         {
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.43f, rect.y + rect.height * 0.48f, rect.width * 0.14f, rect.height * 0.42f), new Color(0.56f, 0.34f, 0.18f, 1f), Color.clear, 4, 0);
@@ -1176,6 +1631,13 @@ namespace BubbleTown.UI
             DrawBubble(new Rect(rect.x + rect.width * 0.22f, rect.y + rect.height * 0.22f, rect.width * 0.62f, rect.width * 0.62f), Color.Lerp(leaves, Color.white, 0.12f));
         }
 
+        /// <summary>
+        /// Purpose: Draws cloud in the current GUI or scene context.
+        /// Inputs: `rect`, `color`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="color">Input value used by this method.</param>
         private static void DrawCloud(Rect rect, Color color)
         {
             DrawBubble(new Rect(rect.x, rect.y + rect.height * 0.28f, rect.width * 0.36f, rect.height * 0.58f), color);
@@ -1184,6 +1646,16 @@ namespace BubbleTown.UI
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.12f, rect.y + rect.height * 0.48f, rect.width * 0.76f, rect.height * 0.28f), color, Color.clear, 10, 0);
         }
 
+        /// <summary>
+        /// Purpose: Draws floating menu icon in the current GUI or scene context.
+        /// Inputs: `rect`, `accentColor`, `icon`, `baseRotation`, `phase`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
+        /// <param name="icon">Input value used by this method.</param>
+        /// <param name="baseRotation">Input value used by this method.</param>
+        /// <param name="phase">Input value used by this method.</param>
         private static void DrawFloatingMenuIcon(Rect rect, Color accentColor, MenuDecorationIcon icon, float baseRotation, float phase)
         {
             float bob = Mathf.Sin(Time.unscaledTime * 2.3f + phase) * 7f;
@@ -1213,6 +1685,13 @@ namespace BubbleTown.UI
             GUI.matrix = previousMatrix;
         }
 
+        /// <summary>
+        /// Purpose: Draws bomb icon in the current GUI or scene context.
+        /// Inputs: `rect`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
         private static void DrawBombIcon(Rect rect, Color accentColor)
         {
             DrawBubble(rect, new Color(accentColor.r, accentColor.g, accentColor.b, 0.95f));
@@ -1221,6 +1700,13 @@ namespace BubbleTown.UI
             DrawBubble(new Rect(rect.x + rect.width * 0.9f, rect.y - 11f, 15f, 15f), new Color(1f, 0.65f, 0.2f, 0.9f));
         }
 
+        /// <summary>
+        /// Purpose: Draws guide bomb icon in the current GUI or scene context.
+        /// Inputs: `rect`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
         private static void DrawGuideBombIcon(Rect rect, Color accentColor)
         {
             Rect body = new Rect(rect.x + 2f, rect.y + 6f, rect.width * 0.72f, rect.height * 0.72f);
@@ -1237,6 +1723,13 @@ namespace BubbleTown.UI
             DrawSparkle(new Rect(body.x + body.width * 1.12f, body.y - 8f, 9f, 9f), new Color(1f, 0.96f, 0.45f, 0.8f));
         }
 
+        /// <summary>
+        /// Purpose: Draws block icon in the current GUI or scene context.
+        /// Inputs: `rect`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
         private static void DrawBlockIcon(Rect rect, Color accentColor)
         {
             float blockSize = rect.width * 0.36f;
@@ -1249,6 +1742,13 @@ namespace BubbleTown.UI
             DrawRoundedRect(new Rect(rect.x + rect.width * 0.5f - blockSize * 0.5f, rect.y + 4f, blockSize, blockSize), thirdColor, Color.white, 8, 2);
         }
 
+        /// <summary>
+        /// Purpose: Draws power up icon in the current GUI or scene context.
+        /// Inputs: `rect`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
         private static void DrawPowerUpIcon(Rect rect, Color accentColor)
         {
             DrawBubble(new Rect(rect.x + 4f, rect.y + 4f, rect.width - 8f, rect.height - 8f), new Color(accentColor.r, accentColor.g, accentColor.b, 0.82f));
@@ -1259,6 +1759,13 @@ namespace BubbleTown.UI
             DrawBubble(new Rect(rect.x + rect.width - 18f, rect.y + 4f, 16f, 16f), new Color(1f, 0.48f, 0.72f, 0.86f));
         }
 
+        /// <summary>
+        /// Purpose: Draws sparkle in the current GUI or scene context.
+        /// Inputs: `rect`, `color`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="color">Input value used by this method.</param>
         private static void DrawSparkle(Rect rect, Color color)
         {
             Rect vertical = new Rect(rect.x + rect.width * 0.5f - rect.width * 0.12f, rect.y, rect.width * 0.24f, rect.height);
@@ -1268,6 +1775,14 @@ namespace BubbleTown.UI
             DrawBubble(new Rect(rect.x + rect.width * 0.25f, rect.y + rect.height * 0.25f, rect.width * 0.5f, rect.height * 0.5f), new Color(1f, 1f, 1f, color.a * 0.4f));
         }
 
+        /// <summary>
+        /// Purpose: Draws vertical gradient in the current GUI or scene context.
+        /// Inputs: `rect`, `top`, `bottom`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="top">Input value used by this method.</param>
+        /// <param name="bottom">Input value used by this method.</param>
         private static void DrawVerticalGradient(Rect rect, Color top, Color bottom)
         {
             const int steps = 40;
@@ -1280,6 +1795,13 @@ namespace BubbleTown.UI
             }
         }
 
+        /// <summary>
+        /// Purpose: Draws bubble in the current GUI or scene context.
+        /// Inputs: `rect`, `color`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="color">Input value used by this method.</param>
         private static void DrawBubble(Rect rect, Color color)
         {
             GUI.DrawTexture(rect, GetCircleTexture(color));
@@ -1287,11 +1809,30 @@ namespace BubbleTown.UI
             GUI.DrawTexture(highlight, GetCircleTexture(new Color(1f, 1f, 1f, color.a * 0.55f)));
         }
 
+        /// <summary>
+        /// Purpose: Draws rounded rect in the current GUI or scene context.
+        /// Inputs: `rect`, `fill`, `border`, `radius`, `borderSize`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="fill">Input value used by this method.</param>
+        /// <param name="border">Input value used by this method.</param>
+        /// <param name="radius">Input value used by this method.</param>
+        /// <param name="borderSize">Input value used by this method.</param>
         private static void DrawRoundedRect(Rect rect, Color fill, Color border, int radius, int borderSize)
         {
             GUI.DrawTexture(rect, GetRoundedTexture(fill, border, radius, borderSize));
         }
 
+        /// <summary>
+        /// Purpose: Draws rotated rounded rect in the current GUI or scene context.
+        /// Inputs: `rect`, `fill`, `angle`, `radius`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="fill">Input value used by this method.</param>
+        /// <param name="angle">Input value used by this method.</param>
+        /// <param name="radius">Input value used by this method.</param>
         private static void DrawRotatedRoundedRect(Rect rect, Color fill, float angle, int radius)
         {
             Matrix4x4 previousMatrix = GUI.matrix;
@@ -1300,6 +1841,16 @@ namespace BubbleTown.UI
             GUI.matrix = previousMatrix;
         }
 
+        /// <summary>
+        /// Purpose: Draws rotated rounded rect in the current GUI or scene context.
+        /// Inputs: `rect`, `fill`, `angle`, `radius`, `pivot`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="fill">Input value used by this method.</param>
+        /// <param name="angle">Input value used by this method.</param>
+        /// <param name="radius">Input value used by this method.</param>
+        /// <param name="pivot">Input value used by this method.</param>
         private static void DrawRotatedRoundedRect(Rect rect, Color fill, float angle, int radius, Vector2 pivot)
         {
             Matrix4x4 previousMatrix = GUI.matrix;
@@ -1308,6 +1859,11 @@ namespace BubbleTown.UI
             GUI.matrix = previousMatrix;
         }
 
+        /// <summary>
+        /// Purpose: Ensures styles exists or is initialized before use.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private static void EnsureStyles()
         {
             if (titleStyle != null)
@@ -1464,6 +2020,13 @@ namespace BubbleTown.UI
             invisibleButtonStyle = new GUIStyle(GUIStyle.none);
         }
 
+        /// <summary>
+        /// Purpose: Performs lock text color for this component.
+        /// Inputs: `style`, `color`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="style">Input value used by this method.</param>
+        /// <param name="color">Input value used by this method.</param>
         private static void LockTextColor(GUIStyle style, Color color)
         {
             style.normal.textColor = color;
@@ -1476,6 +2039,16 @@ namespace BubbleTown.UI
             style.onFocused.textColor = color;
         }
 
+        /// <summary>
+        /// Purpose: Gets button style.
+        /// Inputs: `normalColor`, `hoverColor`, `activeColor`, `textColor`; may also read serialized fields and current runtime state.
+        /// Output: a `GUIStyle` value.
+        /// </summary>
+        /// <param name="normalColor">Input value used by this method.</param>
+        /// <param name="hoverColor">Input value used by this method.</param>
+        /// <param name="activeColor">Input value used by this method.</param>
+        /// <param name="textColor">Input value used by this method.</param>
+        /// <returns>a `GUIStyle` value.</returns>
         private static GUIStyle GetButtonStyle(Color normalColor, Color hoverColor, Color activeColor, Color textColor)
         {
             string key = ColorKey(normalColor) + ColorKey(hoverColor) + ColorKey(activeColor) + ColorKey(textColor);
@@ -1511,6 +2084,13 @@ namespace BubbleTown.UI
             return style;
         }
 
+        /// <summary>
+        /// Purpose: Gets solid texture.
+        /// Inputs: `color`; may also read serialized fields and current runtime state.
+        /// Output: a `Texture2D` value.
+        /// </summary>
+        /// <param name="color">Input value used by this method.</param>
+        /// <returns>a `Texture2D` value.</returns>
         private static Texture2D GetSolidTexture(Color color)
         {
             string key = ColorKey(color);
@@ -1529,6 +2109,13 @@ namespace BubbleTown.UI
             return texture;
         }
 
+        /// <summary>
+        /// Purpose: Gets circle texture.
+        /// Inputs: `color`; may also read serialized fields and current runtime state.
+        /// Output: a `Texture2D` value.
+        /// </summary>
+        /// <param name="color">Input value used by this method.</param>
+        /// <returns>a `Texture2D` value.</returns>
         private static Texture2D GetCircleTexture(Color color)
         {
             string key = ColorKey(color);
@@ -1561,6 +2148,16 @@ namespace BubbleTown.UI
             return texture;
         }
 
+        /// <summary>
+        /// Purpose: Gets rounded texture.
+        /// Inputs: `fill`, `border`, `radius`, `borderSize`; may also read serialized fields and current runtime state.
+        /// Output: a `Texture2D` value.
+        /// </summary>
+        /// <param name="fill">Input value used by this method.</param>
+        /// <param name="border">Input value used by this method.</param>
+        /// <param name="radius">Input value used by this method.</param>
+        /// <param name="borderSize">Input value used by this method.</param>
+        /// <returns>a `Texture2D` value.</returns>
         private static Texture2D GetRoundedTexture(Color fill, Color border, int radius, int borderSize)
         {
             string key = ColorKey(fill) + ColorKey(border) + radius + "_" + borderSize;
@@ -1601,6 +2198,17 @@ namespace BubbleTown.UI
             return texture;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is inside rounded rect.
+        /// Inputs: `x`, `y`, `width`, `height`, `radius`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="x">Input value used by this method.</param>
+        /// <param name="y">Input value used by this method.</param>
+        /// <param name="width">Input value used by this method.</param>
+        /// <param name="height">Input value used by this method.</param>
+        /// <param name="radius">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private static bool IsInsideRoundedRect(int x, int y, int width, int height, int radius)
         {
             if (width <= 0 || height <= 0)
@@ -1621,6 +2229,13 @@ namespace BubbleTown.UI
             return deltaX * deltaX + deltaY * deltaY <= clampedRadius * clampedRadius;
         }
 
+        /// <summary>
+        /// Purpose: Returns color key for the current state.
+        /// Inputs: `color`; may also read serialized fields and current runtime state.
+        /// Output: a `string` value.
+        /// </summary>
+        /// <param name="color">Input value used by this method.</param>
+        /// <returns>a `string` value.</returns>
         private static string ColorKey(Color color)
         {
             return ColorUtility.ToHtmlStringRGBA(color);

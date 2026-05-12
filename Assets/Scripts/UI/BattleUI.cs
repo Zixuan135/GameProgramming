@@ -102,11 +102,21 @@ namespace BubbleTown.UI
         private string resultPromptTitle;
         private string resultPromptDetail;
 
+        /// <summary>
+        /// Purpose: Initializes this component before the scene starts running.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Awake()
         {
             ResetBattleHudState();
         }
 
+        /// <summary>
+        /// Purpose: Subscribes or refreshes runtime state when this component becomes active.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnEnable()
         {
             ItemBase.ItemPickedUp += HandleItemPickedUp;
@@ -116,12 +126,22 @@ namespace BubbleTown.UI
             }
         }
 
+        /// <summary>
+        /// Purpose: Cleans up subscriptions or runtime state when this component becomes inactive.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnDisable()
         {
             RestoreTimeScaleIfPaused();
             ItemBase.ItemPickedUp -= HandleItemPickedUp;
         }
 
+        /// <summary>
+        /// Purpose: Runs this component's per-frame logic.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Update()
         {
             TickPauseInput();
@@ -143,6 +163,11 @@ namespace BubbleTown.UI
             }
         }
 
+        /// <summary>
+        /// Purpose: Draws and handles immediate-mode GUI controls for this screen.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnGUI()
         {
             EnsureStyles();
@@ -168,6 +193,11 @@ namespace BubbleTown.UI
             DrawResultPrompt();
         }
 
+        /// <summary>
+        /// Purpose: Draws hud safe background in the current GUI or scene context.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void DrawHudSafeBackground()
         {
             if (!drawLeftHudSafeBackground || leftHudSafeWidthNormalized <= 0f)
@@ -189,6 +219,11 @@ namespace BubbleTown.UI
             GUI.DrawTexture(gameplayBottomRect, GetRoundedTexture(hudSafeBackgroundColor, hudSafeBackgroundColor, 1, 0));
         }
 
+        /// <summary>
+        /// Purpose: Handles the back to menu button click.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void OnClickBackToMenu()
         {
             RestoreTimeScaleIfPaused();
@@ -197,6 +232,11 @@ namespace BubbleTown.UI
             SceneFlowManager.Instance?.LoadMainMenu();
         }
 
+        /// <summary>
+        /// Purpose: Handles the retry button click.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void OnClickRetry()
         {
             RestoreTimeScaleIfPaused();
@@ -215,11 +255,24 @@ namespace BubbleTown.UI
             SceneFlowManager.Instance?.LoadBattle();
         }
 
+        /// <summary>
+        /// Purpose: Performs show battle result prompt for this component.
+        /// Inputs: `title`, `detail`, `winner`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="title">Input value used by this method.</param>
+        /// <param name="detail">Input value used by this method.</param>
+        /// <param name="winner">Input value used by this method.</param>
         public void ShowBattleResultPrompt(string title, string detail, string winner)
         {
             QueueResult(title, detail, winner);
         }
 
+        /// <summary>
+        /// Purpose: Resets battle hud state to a safe default state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ResetBattleHudState()
         {
             RestoreTimeScaleIfPaused();
@@ -241,6 +294,11 @@ namespace BubbleTown.UI
             pickupToastTimer = 0f;
         }
 
+        /// <summary>
+        /// Purpose: Checks keyboard shortcuts for opening or closing the pause menu.
+        /// Inputs: no direct parameters; reads the configured pause keys and current pause/menu state.
+        /// Output: no return value; toggles pause state or closes the nested settings panel.
+        /// </summary>
         private void TickPauseInput()
         {
             if (!allowPause)
@@ -265,6 +323,12 @@ namespace BubbleTown.UI
             SetPaused(!isPaused);
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object can pause battle.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <returns>a `bool` value.</returns>
         private bool CanPauseBattle()
         {
             if (!allowPause || resultQueued || localVsNextRoundQueued)
@@ -282,6 +346,12 @@ namespace BubbleTown.UI
                    gameManager.CurrentGameState == GameState.BattleRunning;
         }
 
+        /// <summary>
+        /// Purpose: Applies or clears battle pause and freezes gameplay time while the pause menu is open.
+        /// Inputs: paused is the desired pause state from UI or keyboard input.
+        /// Output: no return value; updates local pause state, Time.timeScale, and GameManager pause state.
+        /// </summary>
+        /// <param name="paused">True to open pause and freeze gameplay; false to resume normal time.</param>
         private void SetPaused(bool paused)
         {
             if (paused == isPaused)
@@ -296,6 +366,7 @@ namespace BubbleTown.UI
                     return;
                 }
 
+                // Store the current time scale so future slow-motion effects can resume correctly.
                 timeScaleBeforePause = Time.timeScale > 0f ? Time.timeScale : 1f;
                 Time.timeScale = 0f;
                 isPaused = true;
@@ -311,6 +382,11 @@ namespace BubbleTown.UI
             AudioManager.Instance?.PlayButtonClickSFX();
         }
 
+        /// <summary>
+        /// Purpose: Restores gameplay time after pause before leaving, retrying, or disabling the HUD.
+        /// Inputs: no direct parameters; reads cached time scale and local pause state.
+        /// Output: no return value; resets Time.timeScale, closes pause UI, and clears GameManager pause state.
+        /// </summary>
         private void RestoreTimeScaleIfPaused()
         {
             if (isPaused)
@@ -323,6 +399,11 @@ namespace BubbleTown.UI
             GameManager.Instance?.SetBattlePaused(false);
         }
 
+        /// <summary>
+        /// Purpose: Ensures opening flow started exists or is initialized before use.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void EnsureOpeningFlowStarted()
         {
             if (openingFlowStarted)
@@ -357,6 +438,11 @@ namespace BubbleTown.UI
 
         }
 
+        /// <summary>
+        /// Purpose: Advances battle timer by one update step.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void TickBattleTimer()
         {
             GameManager gameManager = GameManager.Instance;
@@ -373,6 +459,11 @@ namespace BubbleTown.UI
             battleElapsedSeconds += Time.deltaTime;
         }
 
+        /// <summary>
+        /// Purpose: Advances opening prompt by one update step.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void TickOpeningPrompt()
         {
             if (!openingFlowStarted || openingPromptTimer <= 0f)
@@ -394,6 +485,11 @@ namespace BubbleTown.UI
 
         }
 
+        /// <summary>
+        /// Purpose: Performs start round with protection for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void StartRoundWithProtection()
         {
             if (roundStartTriggered)
@@ -405,6 +501,11 @@ namespace BubbleTown.UI
             GameManager.Instance?.StartBattleRound(spawnProtectionSeconds);
         }
 
+        /// <summary>
+        /// Purpose: Performs evaluate battle result for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void EvaluateBattleResult()
         {
             GameManager gameManager = GameManager.Instance;
@@ -492,6 +593,14 @@ namespace BubbleTown.UI
             }
         }
 
+        /// <summary>
+        /// Purpose: Queues result to run after a delay or state change.
+        /// Inputs: `title`, `detail`, `winner`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="title">Input value used by this method.</param>
+        /// <param name="detail">Input value used by this method.</param>
+        /// <param name="winner">Input value used by this method.</param>
         private void QueueResult(string title, string detail, string winner)
         {
             if (resultQueued)
@@ -508,6 +617,14 @@ namespace BubbleTown.UI
             PlayHudFeedbackShake(resultCameraShakeDuration, resultCameraShakeMagnitude);
         }
 
+        /// <summary>
+        /// Purpose: Queues local vs round result to run after a delay or state change.
+        /// Inputs: `title`, `detail`, `roundWinner`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="title">Input value used by this method.</param>
+        /// <param name="detail">Input value used by this method.</param>
+        /// <param name="roundWinner">Input value used by this method.</param>
         private void QueueLocalVsRoundResult(string title, string detail, string roundWinner)
         {
             if (resultQueued || localVsNextRoundQueued)
@@ -540,6 +657,11 @@ namespace BubbleTown.UI
             PlayHudFeedbackShake(resultCameraShakeDuration, resultCameraShakeMagnitude * 0.75f);
         }
 
+        /// <summary>
+        /// Purpose: Advances queued result by one update step.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void TickQueuedResult()
         {
             if (!resultQueued)
@@ -556,6 +678,11 @@ namespace BubbleTown.UI
             SceneFlowManager.Instance?.LoadResult();
         }
 
+        /// <summary>
+        /// Purpose: Advances queued local vs next round by one update step.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void TickQueuedLocalVsNextRound()
         {
             if (!localVsNextRoundQueued)
@@ -574,6 +701,11 @@ namespace BubbleTown.UI
             SceneFlowManager.Instance?.LoadBattle();
         }
 
+        /// <summary>
+        /// Purpose: Advances pickup toast by one update step.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void TickPickupToast()
         {
             if (pickupToastTimer <= 0f)
@@ -584,6 +716,11 @@ namespace BubbleTown.UI
             pickupToastTimer = Mathf.Max(0f, pickupToastTimer - Time.deltaTime);
         }
 
+        /// <summary>
+        /// Purpose: Draws the left-side battle HUD without covering the gameplay camera viewport.
+        /// Inputs: no direct parameters; reads GameManager state, active characters, timer, and objective progress.
+        /// Output: no return value; renders status, objective/score, and character ability panels.
+        /// </summary>
         private void DrawBattleHud()
         {
             GameManager gameManager = GameManager.Instance;
@@ -615,6 +752,12 @@ namespace BubbleTown.UI
             }
         }
 
+        /// <summary>
+        /// Purpose: Draws top status bar in the current GUI or scene context.
+        /// Inputs: `gameManager`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="gameManager">Input value used by this method.</param>
         private void DrawTopStatusBar(GameManager gameManager)
         {
             Rect topRect = new Rect(14f, 14f, 286f, 76f);
@@ -628,6 +771,12 @@ namespace BubbleTown.UI
             DrawInfoPill(new Rect(x + 136f, y + 33f, 130f, 25f), "STATE", FormatRoundState(gameManager), neutralColor);
         }
 
+        /// <summary>
+        /// Purpose: Draws single player objective panel in the current GUI or scene context.
+        /// Inputs: `gameManager`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="gameManager">Input value used by this method.</param>
         private void DrawSinglePlayerObjectivePanel(GameManager gameManager)
         {
             if (gameManager.CurrentGameMode != GameMode.SinglePlayer || !gameManager.IsSinglePlayerObjectiveEnabled)
@@ -649,6 +798,12 @@ namespace BubbleTown.UI
                 GetRoundedTexture(new Color(1f, 0.62f, 0.16f, 0.95f), Color.clear, 3, 0));
         }
 
+        /// <summary>
+        /// Purpose: Draws local vs scoreboard in the current GUI or scene context.
+        /// Inputs: `gameManager`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="gameManager">Input value used by this method.</param>
         private void DrawLocalVsScoreboard(GameManager gameManager)
         {
             if (gameManager.CurrentGameMode != GameMode.LocalVS)
@@ -662,6 +817,15 @@ namespace BubbleTown.UI
             GUI.Label(new Rect(rect.x + 12f, rect.y + 22f, rect.width - 24f, 20f), gameManager.LocalVsScoreLabel, hudTextStyle);
         }
 
+        /// <summary>
+        /// Purpose: Resolves right side character from the current runtime state.
+        /// Inputs: `gameManager`, `label`, `color`; may also read serialized fields and current runtime state.
+        /// Output: a `CharacterBase` value.
+        /// </summary>
+        /// <param name="gameManager">Input value used by this method.</param>
+        /// <param name="label">Input value used by this method.</param>
+        /// <param name="color">Input value used by this method.</param>
+        /// <returns>a `CharacterBase` value.</returns>
         private CharacterBase ResolveRightSideCharacter(GameManager gameManager, out string label, out Color color)
         {
             switch (gameManager.CurrentGameMode)
@@ -681,6 +845,15 @@ namespace BubbleTown.UI
             }
         }
 
+        /// <summary>
+        /// Purpose: Draws character panel in the current GUI or scene context.
+        /// Inputs: `rect`, `label`, `character`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="label">Input value used by this method.</param>
+        /// <param name="character">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
         private void DrawCharacterPanel(Rect rect, string label, CharacterBase character, Color accentColor)
         {
             DrawPanel(rect, new Color(1f, 0.94f, 0.72f, 0.82f), new Color(accentColor.r, accentColor.g, accentColor.b, 0.92f), 16, 2);
@@ -702,6 +875,18 @@ namespace BubbleTown.UI
                 accentColor);
         }
 
+        /// <summary>
+        /// Purpose: Draws ability row in the current GUI or scene context.
+        /// Inputs: `panelRect`, `remainingBombs`, `maxBombs`, `range`, `speed`, `shieldCharges`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="panelRect">Input value used by this method.</param>
+        /// <param name="remainingBombs">Input value used by this method.</param>
+        /// <param name="maxBombs">Input value used by this method.</param>
+        /// <param name="range">Input value used by this method.</param>
+        /// <param name="speed">Input value used by this method.</param>
+        /// <param name="shieldCharges">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
         private void DrawAbilityRow(Rect panelRect, int remainingBombs, int maxBombs, int range, float speed, int shieldCharges, Color accentColor)
         {
             float y = panelRect.y + 46f;
@@ -713,6 +898,15 @@ namespace BubbleTown.UI
             DrawAbilityBox(new Rect(panelRect.x + 10f + (itemWidth + gap) * 3f, y, itemWidth, 44f), "Guard", shieldCharges.ToString(), new Color(0.35f, 0.78f, 1f));
         }
 
+        /// <summary>
+        /// Purpose: Draws ability box in the current GUI or scene context.
+        /// Inputs: `rect`, `label`, `value`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="label">Input value used by this method.</param>
+        /// <param name="value">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
         private void DrawAbilityBox(Rect rect, string label, string value, Color accentColor)
         {
             DrawPanel(rect, new Color(1f, 0.98f, 0.86f, 0.86f), Color.Lerp(accentColor, Color.white, 0.2f), 12, 1);
@@ -720,6 +914,15 @@ namespace BubbleTown.UI
             DrawLockedLabel(new Rect(rect.x + 4f, rect.y + 20f, rect.width - 8f, 20f), value, abilityValueStyle);
         }
 
+        /// <summary>
+        /// Purpose: Draws info pill in the current GUI or scene context.
+        /// Inputs: `rect`, `label`, `value`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="label">Input value used by this method.</param>
+        /// <param name="value">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
         private void DrawInfoPill(Rect rect, string label, string value, Color accentColor)
         {
             DrawPanel(rect, accentColor, Color.white, 15, 2);
@@ -730,6 +933,11 @@ namespace BubbleTown.UI
             DrawLockedLabel(new Rect(rect.x + 10f + labelWidth, rect.y + 4f, rect.width - labelWidth - 16f, rect.height - 8f), value, hudPillValueStyle);
         }
 
+        /// <summary>
+        /// Purpose: Draws opening prompt in the current GUI or scene context.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void DrawOpeningPrompt()
         {
             if (openingPromptTimer <= 0f)
@@ -754,6 +962,11 @@ namespace BubbleTown.UI
             GUI.Label(new Rect(rect.x + 18f, rect.y + 78f, rect.width - 36f, 24f), body, promptBodyStyle);
         }
 
+        /// <summary>
+        /// Purpose: Draws result prompt in the current GUI or scene context.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void DrawResultPrompt()
         {
             if (!resultQueued && !localVsNextRoundQueued)
@@ -775,6 +988,11 @@ namespace BubbleTown.UI
             GUI.matrix = previousMatrix;
         }
 
+        /// <summary>
+        /// Purpose: Draws pickup toast in the current GUI or scene context.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void DrawPickupToast()
         {
             if (pickupToastTimer <= 0f || string.IsNullOrEmpty(pickupToastText))
@@ -803,6 +1021,11 @@ namespace BubbleTown.UI
             GUI.color = previousColor;
         }
 
+        /// <summary>
+        /// Purpose: Draws the small left-side action controls for Pause and Item Guide.
+        /// Inputs: no direct parameters; reads current guide and pause states.
+        /// Output: no return value; opens pause menu or toggles the item guide when clicked.
+        /// </summary>
         private void DrawBottomControls()
         {
             float bob = Mathf.Sin(Time.unscaledTime * 2.1f + 0.8f) * 0.7f;
@@ -834,6 +1057,11 @@ namespace BubbleTown.UI
             }
         }
 
+        /// <summary>
+        /// Purpose: Draws pause menu in the current GUI or scene context.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void DrawPauseMenu()
         {
             GUI.DrawTexture(
@@ -902,6 +1130,12 @@ namespace BubbleTown.UI
                 hudSmallStyle);
         }
 
+        /// <summary>
+        /// Purpose: Draws pause decorations in the current GUI or scene context.
+        /// Inputs: `panelRect`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="panelRect">Input value used by this method.</param>
         private void DrawPauseDecorations(Rect panelRect)
         {
             float t = Time.unscaledTime;
@@ -920,16 +1154,33 @@ namespace BubbleTown.UI
                 new Color(0.72f, 0.48f, 1f, 0.3f));
         }
 
+        /// <summary>
+        /// Purpose: Resolves bottom controls panel y from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `float` value.
+        /// </summary>
+        /// <returns>a `float` value.</returns>
         private float ResolveBottomControlsPanelY()
         {
             return Screen.height - BottomHudMargin - BottomControlsPanelHeight;
         }
 
+        /// <summary>
+        /// Purpose: Resolves character area bottom from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `float` value.
+        /// </summary>
+        /// <returns>a `float` value.</returns>
         private float ResolveCharacterAreaBottom()
         {
             return ResolveBottomControlsPanelY() - CharacterSectionGap;
         }
 
+        /// <summary>
+        /// Purpose: Draws item guide panel in the current GUI or scene context.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void DrawItemGuidePanel()
         {
             GUI.DrawTexture(
@@ -968,6 +1219,12 @@ namespace BubbleTown.UI
             DrawLockedLabel(tipRect, "Soft blocks hide power-ups.", guideTipStyle);
         }
 
+        /// <summary>
+        /// Purpose: Resolves centered item guide rect from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Rect` value.
+        /// </summary>
+        /// <returns>a `Rect` value.</returns>
         private Rect ResolveCenteredItemGuideRect()
         {
             float width = Mathf.Min(620f, Mathf.Max(420f, Screen.width - 70f));
@@ -979,6 +1236,16 @@ namespace BubbleTown.UI
                 height);
         }
 
+        /// <summary>
+        /// Purpose: Draws item guide card in the current GUI or scene context.
+        /// Inputs: `cardRect`, `itemType`, `title`, `body`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="cardRect">Input value used by this method.</param>
+        /// <param name="itemType">Input value used by this method.</param>
+        /// <param name="title">Input value used by this method.</param>
+        /// <param name="body">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
         private void DrawItemGuideCard(Rect cardRect, ItemType itemType, string title, string body, Color accentColor)
         {
             DrawPanel(cardRect, new Color(1f, 0.99f, 0.88f, 0.9f), Color.Lerp(accentColor, Color.white, 0.18f), 15, 2);
@@ -990,6 +1257,14 @@ namespace BubbleTown.UI
             DrawLockedLabel(new Rect(cardRect.x + 60f, cardRect.y + 30f, cardRect.width - 70f, 18f), body, guideItemBodyStyle);
         }
 
+        /// <summary>
+        /// Purpose: Draws locked label in the current GUI or scene context.
+        /// Inputs: `rect`, `text`, `style`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="text">Input value used by this method.</param>
+        /// <param name="style">Input value used by this method.</param>
         private void DrawLockedLabel(Rect rect, string text, GUIStyle style)
         {
             if (style == null)
@@ -1007,6 +1282,13 @@ namespace BubbleTown.UI
             GUI.contentColor = previousContentColor;
         }
 
+        /// <summary>
+        /// Purpose: Performs lock style text color for this component.
+        /// Inputs: `style`, `textColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="style">Input value used by this method.</param>
+        /// <param name="textColor">Input value used by this method.</param>
         private void LockStyleTextColor(GUIStyle style, Color textColor)
         {
             style.normal.textColor = textColor;
@@ -1019,6 +1301,14 @@ namespace BubbleTown.UI
             style.onFocused.textColor = textColor;
         }
 
+        /// <summary>
+        /// Purpose: Draws animated item guide icon in the current GUI or scene context.
+        /// Inputs: `iconRect`, `itemType`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="iconRect">Input value used by this method.</param>
+        /// <param name="itemType">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
         private void DrawAnimatedItemGuideIcon(Rect iconRect, ItemType itemType, Color accentColor)
         {
             Matrix4x4 previousMatrix = GUI.matrix;
@@ -1035,6 +1325,13 @@ namespace BubbleTown.UI
             GUI.matrix = previousMatrix;
         }
 
+        /// <summary>
+        /// Purpose: Draws sticker icon back in the current GUI or scene context.
+        /// Inputs: `iconRect`, `accentColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="iconRect">Input value used by this method.</param>
+        /// <param name="accentColor">Input value used by this method.</param>
         private void DrawStickerIconBack(Rect iconRect, Color accentColor)
         {
             DrawCircle(new Rect(iconRect.x + 2f, iconRect.y + 4f, iconRect.width - 2f, iconRect.height - 2f), new Color(0.04f, 0.22f, 0.34f, 0.22f));
@@ -1043,6 +1340,13 @@ namespace BubbleTown.UI
             DrawCircle(new Rect(iconRect.x + 9f, iconRect.y + 8f, 8f, 8f), new Color(1f, 1f, 1f, 0.55f));
         }
 
+        /// <summary>
+        /// Purpose: Draws item guide icon in the current GUI or scene context.
+        /// Inputs: `iconRect`, `itemType`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="iconRect">Input value used by this method.</param>
+        /// <param name="itemType">Input value used by this method.</param>
         private void DrawItemGuideIcon(Rect iconRect, ItemType itemType)
         {
             Rect inner = new Rect(iconRect.x + 6f, iconRect.y + 6f, iconRect.width - 12f, iconRect.height - 12f);
@@ -1102,16 +1406,38 @@ namespace BubbleTown.UI
             }
         }
 
+        /// <summary>
+        /// Purpose: Draws solid rect in the current GUI or scene context.
+        /// Inputs: `rect`, `color`, `radius`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="color">Input value used by this method.</param>
+        /// <param name="radius">Input value used by this method.</param>
         private void DrawSolidRect(Rect rect, Color color, int radius = 1)
         {
             GUI.DrawTexture(rect, GetRoundedTexture(color, Color.clear, radius, 0));
         }
 
+        /// <summary>
+        /// Purpose: Draws circle in the current GUI or scene context.
+        /// Inputs: `rect`, `color`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="color">Input value used by this method.</param>
         private void DrawCircle(Rect rect, Color color)
         {
             GUI.DrawTexture(rect, GetRoundedTexture(color, Color.clear, Mathf.RoundToInt(Mathf.Min(rect.width, rect.height) * 0.5f), 0));
         }
 
+        /// <summary>
+        /// Purpose: Animates d action button over time.
+        /// Inputs: `text`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="text">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool AnimatedActionButton(string text)
         {
             Rect rect = GUILayoutUtility.GetRect(118f, 26f, GUILayout.ExpandWidth(true));
@@ -1124,6 +1450,14 @@ namespace BubbleTown.UI
             return clicked;
         }
 
+        /// <summary>
+        /// Purpose: Animates d fixed button over time.
+        /// Inputs: `rect`, `text`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="text">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool AnimatedFixedButton(Rect rect, string text)
         {
             Matrix4x4 previousMatrix = GUI.matrix;
@@ -1134,6 +1468,13 @@ namespace BubbleTown.UI
             return clicked;
         }
 
+        /// <summary>
+        /// Purpose: Formats character name for display or logging.
+        /// Inputs: `character`; may also read serialized fields and current runtime state.
+        /// Output: a `string` value.
+        /// </summary>
+        /// <param name="character">Input value used by this method.</param>
+        /// <returns>a `string` value.</returns>
         private string FormatCharacterName(CharacterBase character)
         {
             if (character == null)
@@ -1159,6 +1500,13 @@ namespace BubbleTown.UI
             return character.name;
         }
 
+        /// <summary>
+        /// Purpose: Formats item name for display or logging.
+        /// Inputs: `itemType`; may also read serialized fields and current runtime state.
+        /// Output: a `string` value.
+        /// </summary>
+        /// <param name="itemType">Input value used by this method.</param>
+        /// <returns>a `string` value.</returns>
         private string FormatItemName(ItemType itemType)
         {
             switch (itemType)
@@ -1182,11 +1530,25 @@ namespace BubbleTown.UI
             }
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is alive and active.
+        /// Inputs: `character`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="character">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool IsAliveAndActive(CharacterBase character)
         {
             return character != null && character.gameObject.activeInHierarchy && character.IsAlive;
         }
 
+        /// <summary>
+        /// Purpose: Handles item picked up.
+        /// Inputs: `character`, `item`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="character">Input value used by this method.</param>
+        /// <param name="item">Input value used by this method.</param>
         private void HandleItemPickedUp(CharacterBase character, ItemBase item)
         {
             if (character == null || item == null)
@@ -1199,6 +1561,12 @@ namespace BubbleTown.UI
             PlayHudFeedbackShake(pickupCameraShakeDuration, pickupCameraShakeMagnitude);
         }
 
+        /// <summary>
+        /// Purpose: Resolves queued prompt entrance from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `float` value.
+        /// </summary>
+        /// <returns>a `float` value.</returns>
         private float ResolveQueuedPromptEntrance()
         {
             float total = resultQueued ? resultSceneDelay : localVsNextRoundDelay;
@@ -1211,6 +1579,13 @@ namespace BubbleTown.UI
             return Mathf.Clamp01(1f - remaining / total);
         }
 
+        /// <summary>
+        /// Purpose: Resolves button scale from the current runtime state.
+        /// Inputs: `rect`; may also read serialized fields and current runtime state.
+        /// Output: a `float` value.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <returns>a `float` value.</returns>
         private float ResolveButtonScale(Rect rect)
         {
             Event currentEvent = Event.current;
@@ -1229,6 +1604,13 @@ namespace BubbleTown.UI
             return 1.026f + Mathf.Sin(Time.unscaledTime * 11f) * 0.004f;
         }
 
+        /// <summary>
+        /// Purpose: Plays hud feedback shake.
+        /// Inputs: `duration`, `magnitude`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="duration">Input value used by this method.</param>
+        /// <param name="magnitude">Input value used by this method.</param>
         private void PlayHudFeedbackShake(float duration, float magnitude)
         {
             if (!enableHudFeedbackShake || duration <= 0f || magnitude <= 0f)
@@ -1239,6 +1621,13 @@ namespace BubbleTown.UI
             CameraController.ShakeActiveCamera(duration, magnitude);
         }
 
+        /// <summary>
+        /// Purpose: Formats map name for display or logging.
+        /// Inputs: `mapType`; may also read serialized fields and current runtime state.
+        /// Output: a `string` value.
+        /// </summary>
+        /// <param name="mapType">Input value used by this method.</param>
+        /// <returns>a `string` value.</returns>
         private string FormatMapName(BattleMapType mapType)
         {
             switch (mapType)
@@ -1252,6 +1641,13 @@ namespace BubbleTown.UI
             }
         }
 
+        /// <summary>
+        /// Purpose: Formats mode name for display or logging.
+        /// Inputs: `gameMode`; may also read serialized fields and current runtime state.
+        /// Output: a `string` value.
+        /// </summary>
+        /// <param name="gameMode">Input value used by this method.</param>
+        /// <returns>a `string` value.</returns>
         private string FormatModeName(GameMode gameMode)
         {
             switch (gameMode)
@@ -1265,6 +1661,13 @@ namespace BubbleTown.UI
             }
         }
 
+        /// <summary>
+        /// Purpose: Formats life state for display or logging.
+        /// Inputs: `character`; may also read serialized fields and current runtime state.
+        /// Output: a `string` value.
+        /// </summary>
+        /// <param name="character">Input value used by this method.</param>
+        /// <returns>a `string` value.</returns>
         private string FormatLifeState(CharacterBase character)
         {
             if (character == null || !character.gameObject.activeInHierarchy)
@@ -1285,6 +1688,13 @@ namespace BubbleTown.UI
             return character.IsAlive ? "ALIVE" : "DOWN";
         }
 
+        /// <summary>
+        /// Purpose: Formats round state for display or logging.
+        /// Inputs: `gameManager`; may also read serialized fields and current runtime state.
+        /// Output: a `string` value.
+        /// </summary>
+        /// <param name="gameManager">Input value used by this method.</param>
+        /// <returns>a `string` value.</returns>
         private string FormatRoundState(GameManager gameManager)
         {
             if (gameManager == null)
@@ -1321,6 +1731,13 @@ namespace BubbleTown.UI
             return gameManager.CurrentGameState.ToString();
         }
 
+        /// <summary>
+        /// Purpose: Formats local vs round header for display or logging.
+        /// Inputs: `gameManager`; may also read serialized fields and current runtime state.
+        /// Output: a `string` value.
+        /// </summary>
+        /// <param name="gameManager">Input value used by this method.</param>
+        /// <returns>a `string` value.</returns>
         private string FormatLocalVsRoundHeader(GameManager gameManager)
         {
             string matchLabel = gameManager.EnableLocalVsBestOf3
@@ -1329,6 +1746,13 @@ namespace BubbleTown.UI
             return $"{matchLabel}  |  ROUND {gameManager.LocalVsRoundNumber}";
         }
 
+        /// <summary>
+        /// Purpose: Resolves max protection remaining from the current runtime state.
+        /// Inputs: `gameManager`; may also read serialized fields and current runtime state.
+        /// Output: a `float` value.
+        /// </summary>
+        /// <param name="gameManager">Input value used by this method.</param>
+        /// <returns>a `float` value.</returns>
         private float ResolveMaxProtectionRemaining(GameManager gameManager)
         {
             if (gameManager == null)
@@ -1343,6 +1767,13 @@ namespace BubbleTown.UI
             return maxRemaining;
         }
 
+        /// <summary>
+        /// Purpose: Resolves protection remaining from the current runtime state.
+        /// Inputs: `character`; may also read serialized fields and current runtime state.
+        /// Output: a `float` value.
+        /// </summary>
+        /// <param name="character">Input value used by this method.</param>
+        /// <returns>a `float` value.</returns>
         private float ResolveProtectionRemaining(CharacterBase character)
         {
             if (character == null || !character.gameObject.activeInHierarchy || !character.IsAlive || !character.IsInvincible)
@@ -1353,6 +1784,13 @@ namespace BubbleTown.UI
             return character.InvincibleSecondsRemaining;
         }
 
+        /// <summary>
+        /// Purpose: Formats time for display or logging.
+        /// Inputs: `seconds`; may also read serialized fields and current runtime state.
+        /// Output: a `string` value.
+        /// </summary>
+        /// <param name="seconds">Input value used by this method.</param>
+        /// <returns>a `string` value.</returns>
         private string FormatTime(float seconds)
         {
             int totalSeconds = Mathf.Max(0, Mathf.FloorToInt(seconds));
@@ -1361,6 +1799,11 @@ namespace BubbleTown.UI
             return $"{minutes:00}:{secondsPart:00}";
         }
 
+        /// <summary>
+        /// Purpose: Ensures styles exists or is initialized before use.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void EnsureStyles()
         {
             if (hudTextStyle != null &&
@@ -1557,11 +2000,29 @@ namespace BubbleTown.UI
             };
         }
 
+        /// <summary>
+        /// Purpose: Draws panel in the current GUI or scene context.
+        /// Inputs: `rect`, `fill`, `border`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="fill">Input value used by this method.</param>
+        /// <param name="border">Input value used by this method.</param>
         private void DrawPanel(Rect rect, Color fill, Color border)
         {
             DrawPanel(rect, fill, border, 18, 3);
         }
 
+        /// <summary>
+        /// Purpose: Draws panel in the current GUI or scene context.
+        /// Inputs: `rect`, `fill`, `border`, `radius`, `borderSize`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="rect">Input value used by this method.</param>
+        /// <param name="fill">Input value used by this method.</param>
+        /// <param name="border">Input value used by this method.</param>
+        /// <param name="radius">Input value used by this method.</param>
+        /// <param name="borderSize">Input value used by this method.</param>
         private void DrawPanel(Rect rect, Color fill, Color border, int radius, int borderSize)
         {
             GUI.DrawTexture(
@@ -1570,6 +2031,16 @@ namespace BubbleTown.UI
             GUI.DrawTexture(rect, GetRoundedTexture(fill, border, radius, borderSize));
         }
 
+        /// <summary>
+        /// Purpose: Gets rounded texture.
+        /// Inputs: `fill`, `border`, `radius`, `borderSize`; may also read serialized fields and current runtime state.
+        /// Output: a `Texture2D` value.
+        /// </summary>
+        /// <param name="fill">Input value used by this method.</param>
+        /// <param name="border">Input value used by this method.</param>
+        /// <param name="radius">Input value used by this method.</param>
+        /// <param name="borderSize">Input value used by this method.</param>
+        /// <returns>a `Texture2D` value.</returns>
         private Texture2D GetRoundedTexture(Color fill, Color border, int radius, int borderSize)
         {
             string key = ColorKey(fill) + ColorKey(border) + radius + "_" + borderSize;
@@ -1610,6 +2081,17 @@ namespace BubbleTown.UI
             return texture;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is inside rounded rect.
+        /// Inputs: `x`, `y`, `width`, `height`, `radius`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="x">Input value used by this method.</param>
+        /// <param name="y">Input value used by this method.</param>
+        /// <param name="width">Input value used by this method.</param>
+        /// <param name="height">Input value used by this method.</param>
+        /// <param name="radius">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool IsInsideRoundedRect(int x, int y, int width, int height, int radius)
         {
             if (width <= 0 || height <= 0)
@@ -1630,6 +2112,13 @@ namespace BubbleTown.UI
             return deltaX * deltaX + deltaY * deltaY <= clampedRadius * clampedRadius;
         }
 
+        /// <summary>
+        /// Purpose: Returns color key for the current state.
+        /// Inputs: `color`; may also read serialized fields and current runtime state.
+        /// Output: a `string` value.
+        /// </summary>
+        /// <param name="color">Input value used by this method.</param>
+        /// <returns>a `string` value.</returns>
         private string ColorKey(Color color)
         {
             return ColorUtility.ToHtmlStringRGBA(color);

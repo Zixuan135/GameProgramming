@@ -30,17 +30,32 @@ namespace BubbleTown.Map
         private Vector3 spinEuler;
         private float phaseOffset;
 
+        /// <summary>
+        /// Purpose: Initializes this component before the scene starts running.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Awake()
         {
             CacheOriginalTransform();
             phaseOffset = Mathf.Abs(GetInstanceID() % 1000) * 0.037f;
         }
 
+        /// <summary>
+        /// Purpose: Subscribes or refreshes runtime state when this component becomes active.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnEnable()
         {
             CacheOriginalTransform();
         }
 
+        /// <summary>
+        /// Purpose: Runs this component's per-frame logic.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Update()
         {
             if (animatedRoot == null)
@@ -54,6 +69,19 @@ namespace BubbleTown.Map
             ApplyScalePulse(time);
         }
 
+        /// <summary>
+        /// Purpose: Performs configure for this component.
+        /// Inputs: `root`, `bob`, `bobAmount`, `bobRate`, `spinRate`, `scalePulse`, `pulseAmount`, `pulseRate`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="root">Input value used by this method.</param>
+        /// <param name="bob">Input value used by this method.</param>
+        /// <param name="bobAmount">Input value used by this method.</param>
+        /// <param name="bobRate">Input value used by this method.</param>
+        /// <param name="spinRate">Input value used by this method.</param>
+        /// <param name="scalePulse">Input value used by this method.</param>
+        /// <param name="pulseAmount">Input value used by this method.</param>
+        /// <param name="pulseRate">Input value used by this method.</param>
         public void Configure(
             Transform root,
             bool bob,
@@ -75,6 +103,11 @@ namespace BubbleTown.Map
             CacheOriginalTransform();
         }
 
+        /// <summary>
+        /// Purpose: Performs cache original transform for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void CacheOriginalTransform()
         {
             if (animatedRoot == null)
@@ -87,6 +120,12 @@ namespace BubbleTown.Map
             originalLocalRotation = animatedRoot.localRotation;
         }
 
+        /// <summary>
+        /// Purpose: Applies bob to the current object or scene.
+        /// Inputs: `time`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="time">Input value used by this method.</param>
         private void ApplyBob(float time)
         {
             if (!enableBob)
@@ -99,6 +138,11 @@ namespace BubbleTown.Map
             animatedRoot.localPosition = originalLocalPosition + Vector3.up * bob;
         }
 
+        /// <summary>
+        /// Purpose: Applies rotation to the current object or scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ApplyRotation()
         {
             if (rotationDegreesPerSecond == Vector3.zero)
@@ -111,6 +155,12 @@ namespace BubbleTown.Map
             animatedRoot.localRotation = originalLocalRotation * Quaternion.Euler(spinEuler);
         }
 
+        /// <summary>
+        /// Purpose: Applies scale pulse to the current object or scene.
+        /// Inputs: `time`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="time">Input value used by this method.</param>
         private void ApplyScalePulse(float time)
         {
             if (!enableScalePulse)

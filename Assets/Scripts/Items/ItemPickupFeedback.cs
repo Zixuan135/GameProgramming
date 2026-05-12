@@ -41,11 +41,24 @@ namespace BubbleTown.Items
 
         public bool IsPlaying => isPlaying;
 
+        /// <summary>
+        /// Purpose: Initializes this component before the scene starts running.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Awake()
         {
             ResolveReferences();
         }
 
+        /// <summary>
+        /// Purpose: Plays pickup feedback.
+        /// Inputs: `collector`, `itemType`, `onComplete`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="collector">Input value used by this method.</param>
+        /// <param name="itemType">Input value used by this method.</param>
+        /// <param name="onComplete">Input value used by this method.</param>
         public void PlayPickupFeedback(CharacterBase collector, ItemType itemType, Action onComplete)
         {
             if (isPlaying)
@@ -61,6 +74,11 @@ namespace BubbleTown.Items
             feedbackRoutine = StartCoroutine(PickupRoutine(onComplete));
         }
 
+        /// <summary>
+        /// Purpose: Resolves references from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ResolveReferences()
         {
             if (visualRoot == null)
@@ -75,6 +93,11 @@ namespace BubbleTown.Items
             }
         }
 
+        /// <summary>
+        /// Purpose: Performs disable idle visual animation for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void DisableIdleVisualAnimation()
         {
             ItemVisualAnimator visualAnimator = GetComponent<ItemVisualAnimator>();
@@ -84,6 +107,11 @@ namespace BubbleTown.Items
             }
         }
 
+        /// <summary>
+        /// Purpose: Performs disable pickup colliders for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void DisablePickupColliders()
         {
             if (!disableCollidersOnPickup)
@@ -98,6 +126,11 @@ namespace BubbleTown.Items
             }
         }
 
+        /// <summary>
+        /// Purpose: Plays pickup audio.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void PlayPickupAudio()
         {
             if (pickupClip == null)
@@ -117,6 +150,13 @@ namespace BubbleTown.Items
             }
         }
 
+        /// <summary>
+        /// Purpose: Returns pickup routine for the current state.
+        /// Inputs: `onComplete`; may also read serialized fields and current runtime state.
+        /// Output: a `IEnumerator` value.
+        /// </summary>
+        /// <param name="onComplete">Input value used by this method.</param>
+        /// <returns>a `IEnumerator` value.</returns>
         private IEnumerator PickupRoutine(Action onComplete)
         {
             isPlaying = true;
@@ -155,6 +195,12 @@ namespace BubbleTown.Items
             onComplete?.Invoke();
         }
 
+        /// <summary>
+        /// Purpose: Applies emission to the current object or scene.
+        /// Inputs: `pulse`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="pulse">Input value used by this method.</param>
         private void ApplyEmission(float pulse)
         {
             if (pulseRenderers == null || pulseRenderers.Length == 0)
@@ -182,6 +228,11 @@ namespace BubbleTown.Items
             }
         }
 
+        /// <summary>
+        /// Purpose: Cleans up subscriptions or runtime state when this component becomes inactive.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnDisable()
         {
             if (feedbackRoutine != null)

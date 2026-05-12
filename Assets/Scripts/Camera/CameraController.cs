@@ -24,8 +24,6 @@ namespace BubbleTown.CameraSystem
         [SerializeField] private bool useHudSafeViewport = true;
         [SerializeField] private bool autoFitViewportToHud = true;
         [SerializeField, Range(0f, 0.6f)] private float leftHudSafeWidthNormalized = 0.32f;
-        [SerializeField, Range(0f, 0.2f)] private float bottomHudSafeHeightNormalized = 0.08f;
-        [SerializeField, Range(0f, 0.08f)] private float viewportPaddingNormalized = 0.012f;
         [SerializeField] private Rect gameplayViewport = new Rect(0.32f, 0.08f, 0.68f, 0.92f);
 
         [Header("View")]
@@ -93,6 +91,11 @@ namespace BubbleTown.CameraSystem
         public float CurrentZoomOut => currentZoomOut;
         public bool IsShaking => shakeTimer > 0f;
 
+        /// <summary>
+        /// Purpose: Initializes this component before the scene starts running.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Awake()
         {
             if (controlledCamera == null)
@@ -111,11 +114,21 @@ namespace BubbleTown.CameraSystem
             }
         }
 
+        /// <summary>
+        /// Purpose: Subscribes or refreshes runtime state when this component becomes active.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnEnable()
         {
             activeCamera = this;
         }
 
+        /// <summary>
+        /// Purpose: Initializes this component after Unity enables it in the scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Start()
         {
             if (autoFindTargets)
@@ -129,6 +142,11 @@ namespace BubbleTown.CameraSystem
             SnapToTarget();
         }
 
+        /// <summary>
+        /// Purpose: Runs camera or visual follow-up logic after regular Update calls.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void LateUpdate()
         {
             if (autoFindTargets)
@@ -170,6 +188,11 @@ namespace BubbleTown.CameraSystem
             UpdateLens(useSharedView, sharedDistance);
         }
 
+        /// <summary>
+        /// Purpose: Cleans up subscriptions or runtime state when this component becomes inactive.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void OnDisable()
         {
             if (activeCamera == this)
@@ -178,16 +201,35 @@ namespace BubbleTown.CameraSystem
             }
         }
 
+        /// <summary>
+        /// Purpose: Performs shake active camera for this component.
+        /// Inputs: `duration`, `magnitude`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="duration">Input value used by this method.</param>
+        /// <param name="magnitude">Input value used by this method.</param>
         public static void ShakeActiveCamera(float duration, float magnitude)
         {
             activeCamera?.Shake(duration, magnitude);
         }
 
+        /// <summary>
+        /// Purpose: Performs shake default for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void ShakeDefault()
         {
             Shake(defaultShakeDuration, defaultShakeMagnitude);
         }
 
+        /// <summary>
+        /// Purpose: Performs shake for this component.
+        /// Inputs: `duration`, `magnitude`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="duration">Input value used by this method.</param>
+        /// <param name="magnitude">Input value used by this method.</param>
         public void Shake(float duration, float magnitude)
         {
             if (!enableShake || !GameSettings.ScreenShakeEnabled || duration <= 0f || magnitude <= 0f)
@@ -202,6 +244,12 @@ namespace BubbleTown.CameraSystem
             shakeSeedY = Random.Range(0f, 1000f);
         }
 
+        /// <summary>
+        /// Purpose: Sets target.
+        /// Inputs: `newTarget`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="newTarget">Input value used by this method.</param>
         public void SetTarget(Transform newTarget)
         {
             primaryTarget = newTarget;
@@ -209,6 +257,13 @@ namespace BubbleTown.CameraSystem
             SnapToTarget();
         }
 
+        /// <summary>
+        /// Purpose: Sets shared targets.
+        /// Inputs: `newPrimaryTarget`, `newSecondaryTarget`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="newPrimaryTarget">Input value used by this method.</param>
+        /// <param name="newSecondaryTarget">Input value used by this method.</param>
         public void SetSharedTargets(Transform newPrimaryTarget, Transform newSecondaryTarget)
         {
             primaryTarget = newPrimaryTarget;
@@ -216,6 +271,11 @@ namespace BubbleTown.CameraSystem
             SnapToTarget();
         }
 
+        /// <summary>
+        /// Purpose: Advances target refresh by one update step.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void TickTargetRefresh()
         {
             targetRefreshTimer -= Time.deltaTime;
@@ -228,6 +288,11 @@ namespace BubbleTown.CameraSystem
             FindSceneTargets();
         }
 
+        /// <summary>
+        /// Purpose: Finds scene targets from scene objects or cached data.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void FindSceneTargets()
         {
             RefreshMapManagerReference();
@@ -260,6 +325,13 @@ namespace BubbleTown.CameraSystem
             }
         }
 
+        /// <summary>
+        /// Purpose: Resolves secondary target from game manager from the current runtime state.
+        /// Inputs: `gameManager`; may also read serialized fields and current runtime state.
+        /// Output: a `Transform` value.
+        /// </summary>
+        /// <param name="gameManager">Input value used by this method.</param>
+        /// <returns>a `Transform` value.</returns>
         private Transform ResolveSecondaryTargetFromGameManager(GameManager gameManager)
         {
             if (gameManager == null)
@@ -280,6 +352,12 @@ namespace BubbleTown.CameraSystem
             return null;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object should use shared view.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <returns>a `bool` value.</returns>
         private bool ShouldUseSharedView()
         {
             if (!shareCameraInLocalVS && !frameAIInAIBattle)
@@ -302,6 +380,13 @@ namespace BubbleTown.CameraSystem
                    (frameAIInAIBattle && gameManager.CurrentGameMode == GameMode.AIBattle);
         }
 
+        /// <summary>
+        /// Purpose: Calculates the world point the camera should look at before applying follow smoothing.
+        /// Inputs: useSharedView chooses either Player1-only focus or the midpoint between two active targets.
+        /// Output: returns the biased and map-clamped focus point used by camera position and rotation.
+        /// </summary>
+        /// <param name="useSharedView">True when the camera should frame two targets together.</param>
+        /// <returns>World-space focus point on or near the battle map.</returns>
         private Vector3 ResolveFocusPoint(bool useSharedView)
         {
             Vector3 focusPoint;
@@ -319,6 +404,13 @@ namespace BubbleTown.CameraSystem
             return ClampFocusPointToMap(focusPoint, useSharedView);
         }
 
+        /// <summary>
+        /// Purpose: Resolves smoothed focus point from the current runtime state.
+        /// Inputs: `targetFocusPoint`; may also read serialized fields and current runtime state.
+        /// Output: a `Vector3` value.
+        /// </summary>
+        /// <param name="targetFocusPoint">Input value used by this method.</param>
+        /// <returns>a `Vector3` value.</returns>
         private Vector3 ResolveSmoothedFocusPoint(Vector3 targetFocusPoint)
         {
             if (!hasFocusPoint)
@@ -336,6 +428,14 @@ namespace BubbleTown.CameraSystem
             return smoothedFocusPoint;
         }
 
+        /// <summary>
+        /// Purpose: Resolves smoothed zoom out from the current runtime state.
+        /// Inputs: `useSharedView`, `sharedDistance`; may also read serialized fields and current runtime state.
+        /// Output: a `float` value.
+        /// </summary>
+        /// <param name="useSharedView">Input value used by this method.</param>
+        /// <param name="sharedDistance">Input value used by this method.</param>
+        /// <returns>a `float` value.</returns>
         private float ResolveSmoothedZoomOut(bool useSharedView, float sharedDistance)
         {
             float targetZoomOut = 0f;
@@ -349,12 +449,25 @@ namespace BubbleTown.CameraSystem
             return currentZoomOut;
         }
 
+        /// <summary>
+        /// Purpose: Resolves camera position from the current runtime state.
+        /// Inputs: `focusPoint`, `zoomOut`; may also read serialized fields and current runtime state.
+        /// Output: a `Vector3` value.
+        /// </summary>
+        /// <param name="focusPoint">Input value used by this method.</param>
+        /// <param name="zoomOut">Input value used by this method.</param>
+        /// <returns>a `Vector3` value.</returns>
         private Vector3 ResolveCameraPosition(Vector3 focusPoint, float zoomOut)
         {
             Vector3 offsetDirection = followOffset.sqrMagnitude > Mathf.Epsilon ? followOffset.normalized : Vector3.back;
             return focusPoint + followOffset + offsetDirection * zoomOut;
         }
 
+        /// <summary>
+        /// Purpose: Refreshes map manager reference from the latest runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void RefreshMapManagerReference()
         {
             if (cachedMapManager != null)
@@ -372,6 +485,14 @@ namespace BubbleTown.CameraSystem
             cachedMapManager = FindObjectOfType<MapManager>();
         }
 
+        /// <summary>
+        /// Purpose: Keeps the camera focus inside the useful map area so the arena stays visible near edges.
+        /// Inputs: focusPoint is the requested focus and useSharedView selects solo or shared padding.
+        /// Output: returns the clamped focus point.
+        /// </summary>
+        /// <param name="focusPoint">Requested world-space focus position.</param>
+        /// <param name="useSharedView">True when framing two targets, false for solo-style framing.</param>
+        /// <returns>Focus point clamped to the safe map rectangle.</returns>
         private Vector3 ClampFocusPointToMap(Vector3 focusPoint, bool useSharedView)
         {
             if (!clampFocusInsideMap)
@@ -402,6 +523,7 @@ namespace BubbleTown.CameraSystem
 
             if (minFocusX > maxFocusX)
             {
+                // Tiny maps can be smaller than the padding, so collapse the valid range to center.
                 float mapCenterX = (mapMinX + mapMaxX) * 0.5f;
                 minFocusX = mapCenterX;
                 maxFocusX = mapCenterX;
@@ -409,6 +531,7 @@ namespace BubbleTown.CameraSystem
 
             if (minFocusZ > maxFocusZ)
             {
+                // Same fallback for the Z axis when padding would invert the clamp range.
                 float mapCenterZ = (mapMinZ + mapMaxZ) * 0.5f;
                 minFocusZ = mapCenterZ;
                 maxFocusZ = mapCenterZ;
@@ -419,6 +542,14 @@ namespace BubbleTown.CameraSystem
             return focusPoint;
         }
 
+        /// <summary>
+        /// Purpose: Returns blend focus toward map center for the current state.
+        /// Inputs: `focusPoint`, `useSharedView`; may also read serialized fields and current runtime state.
+        /// Output: a `Vector3` value.
+        /// </summary>
+        /// <param name="focusPoint">Input value used by this method.</param>
+        /// <param name="useSharedView">Input value used by this method.</param>
+        /// <returns>a `Vector3` value.</returns>
         private Vector3 BlendFocusTowardMapCenter(Vector3 focusPoint, bool useSharedView)
         {
             RefreshMapManagerReference();
@@ -437,11 +568,24 @@ namespace BubbleTown.CameraSystem
             return Vector3.Lerp(mapCenter, focusPoint, targetInfluence);
         }
 
+        /// <summary>
+        /// Purpose: Resolves focus bias from the current runtime state.
+        /// Inputs: `useSharedView`; may also read serialized fields and current runtime state.
+        /// Output: a `Vector3` value.
+        /// </summary>
+        /// <param name="useSharedView">Input value used by this method.</param>
+        /// <returns>a `Vector3` value.</returns>
         private Vector3 ResolveFocusBias(bool useSharedView)
         {
             return useSharedView ? sharedFocusBias : soloFocusBias;
         }
 
+        /// <summary>
+        /// Purpose: Performs rotate toward for this component.
+        /// Inputs: `lookPoint`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="lookPoint">Input value used by this method.</param>
         private void RotateToward(Vector3 lookPoint)
         {
             Vector3 lookDirection = lookPoint - transform.position;
@@ -457,6 +601,13 @@ namespace BubbleTown.CameraSystem
                 rotationLerpSpeed * Time.deltaTime);
         }
 
+        /// <summary>
+        /// Purpose: Updates lens.
+        /// Inputs: `useSharedView`, `sharedDistance`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="useSharedView">Input value used by this method.</param>
+        /// <param name="sharedDistance">Input value used by this method.</param>
         private void UpdateLens(bool useSharedView, float sharedDistance)
         {
             float targetFieldOfView = Mathf.Clamp(defaultFieldOfView, minFieldOfView, maxFieldOfView);
@@ -472,6 +623,13 @@ namespace BubbleTown.CameraSystem
             ApplyLens(targetFieldOfView, false);
         }
 
+        /// <summary>
+        /// Purpose: Applies lens to the current object or scene.
+        /// Inputs: `fieldOfView`, `snap`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="fieldOfView">Input value used by this method.</param>
+        /// <param name="snap">Input value used by this method.</param>
         private void ApplyLens(float fieldOfView, bool snap)
         {
             if (controlledCamera == null || controlledCamera.orthographic)
@@ -496,6 +654,11 @@ namespace BubbleTown.CameraSystem
             controlledCamera.fieldOfView = currentFieldOfView;
         }
 
+        /// <summary>
+        /// Purpose: Applies camera viewport to the current object or scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ApplyCameraViewport()
         {
             if (controlledCamera == null)
@@ -508,6 +671,11 @@ namespace BubbleTown.CameraSystem
             lastScreenHeight = Screen.height;
         }
 
+        /// <summary>
+        /// Purpose: Refreshes camera viewport if needed from the latest runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void RefreshCameraViewportIfNeeded()
         {
             if (controlledCamera == null || (lastScreenWidth == Screen.width && lastScreenHeight == Screen.height))
@@ -518,6 +686,12 @@ namespace BubbleTown.CameraSystem
             ApplyCameraViewport();
         }
 
+        /// <summary>
+        /// Purpose: Resolves gameplay viewport from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Rect` value.
+        /// </summary>
+        /// <returns>a `Rect` value.</returns>
         private Rect ResolveGameplayViewport()
         {
             if (!autoFitViewportToHud)
@@ -525,8 +699,8 @@ namespace BubbleTown.CameraSystem
                 return ClampViewport(gameplayViewport);
             }
 
-            // Render the full gameplay pane so Unity never exposes black letterbox gaps
-            // around the camera viewport. The HUD itself reserves the left-side safe area.
+            // Render only the gameplay pane to the right of the HUD so world objects do not sit under UI panels.
+            // The full pane height avoids black letterbox gaps around the camera viewport.
             float left = Mathf.Clamp01(leftHudSafeWidthNormalized);
             float bottom = 0f;
             float right = 1f;
@@ -534,6 +708,13 @@ namespace BubbleTown.CameraSystem
             return ClampViewport(new Rect(left, bottom, Mathf.Max(0.05f, right - left), Mathf.Max(0.05f, top - bottom)));
         }
 
+        /// <summary>
+        /// Purpose: Clamps viewport into a valid range.
+        /// Inputs: `viewport`; may also read serialized fields and current runtime state.
+        /// Output: a `Rect` value.
+        /// </summary>
+        /// <param name="viewport">Input value used by this method.</param>
+        /// <returns>a `Rect` value.</returns>
         private Rect ClampViewport(Rect viewport)
         {
             float x = Mathf.Clamp01(viewport.x);
@@ -543,6 +724,12 @@ namespace BubbleTown.CameraSystem
             return new Rect(x, y, width, height);
         }
 
+        /// <summary>
+        /// Purpose: Resolves shake offset from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Vector3` value.
+        /// </summary>
+        /// <returns>a `Vector3` value.</returns>
         private Vector3 ResolveShakeOffset()
         {
             if (!enableShake || shakeTimer <= 0f)
@@ -567,6 +754,12 @@ namespace BubbleTown.CameraSystem
             return transform.right * (x * dampedMagnitude) + transform.up * (y * dampedMagnitude);
         }
 
+        /// <summary>
+        /// Purpose: Calculates target distance xz.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `float` value.
+        /// </summary>
+        /// <returns>a `float` value.</returns>
         private float CalculateTargetDistanceXZ()
         {
             if (!IsValidTarget(primaryTarget) || !IsValidTarget(secondaryTarget))
@@ -581,11 +774,23 @@ namespace BubbleTown.CameraSystem
             return Vector3.Distance(primaryPosition, secondaryPosition);
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is valid target.
+        /// Inputs: `target`; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <param name="target">Input value used by this method.</param>
+        /// <returns>a `bool` value.</returns>
         private bool IsValidTarget(Transform target)
         {
             return target != null && target.gameObject.activeInHierarchy;
         }
 
+        /// <summary>
+        /// Purpose: Performs snap to target for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void SnapToTarget()
         {
             if (!IsValidTarget(primaryTarget))

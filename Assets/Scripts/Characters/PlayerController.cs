@@ -20,6 +20,11 @@ namespace BubbleTown.Characters
         [SerializeField] private KeyCode primaryBombKey = KeyCode.Space;
         [SerializeField] private KeyCode secondaryBombKey = KeyCode.None;
 
+        /// <summary>
+        /// Purpose: Initializes this component after Unity enables it in the scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         protected override void Start()
         {
             if (!ShouldActivateForCurrentMode())
@@ -31,6 +36,11 @@ namespace BubbleTown.Characters
             base.Start();
         }
 
+        /// <summary>
+        /// Purpose: Runs this component's per-frame logic.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         protected override void Update()
         {
             base.Update();
@@ -48,6 +58,11 @@ namespace BubbleTown.Characters
             HandleBombInput();
         }
 
+        /// <summary>
+        /// Purpose: Handles movement input.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void HandleMovementInput()
         {
             if (IsMoving)
@@ -62,6 +77,12 @@ namespace BubbleTown.Characters
             }
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object should activate for current mode.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <returns>a `bool` value.</returns>
         private bool ShouldActivateForCurrentMode()
         {
             if (!localVsOnly)
@@ -77,6 +98,12 @@ namespace BubbleTown.Characters
             return GameManager.Instance.CurrentGameMode == GameMode.LocalVS;
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object can accept battle input.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <returns>a `bool` value.</returns>
         private bool CanAcceptBattleInput()
         {
             GameManager gameManager = GameManager.Instance;
@@ -84,6 +111,12 @@ namespace BubbleTown.Characters
                    (gameManager.CurrentGameState == GameState.BattleRunning && !gameManager.IsBattlePaused);
         }
 
+        /// <summary>
+        /// Purpose: Returns read move input for the current state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Vector2Int` value.
+        /// </summary>
+        /// <returns>a `Vector2Int` value.</returns>
         private Vector2Int ReadMoveInput()
         {
             if (Input.GetKey(moveUpKey)) return Vector2Int.up;
@@ -94,6 +127,11 @@ namespace BubbleTown.Characters
             return Vector2Int.zero;
         }
 
+        /// <summary>
+        /// Purpose: Handles bomb input.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void HandleBombInput()
         {
             if (IsBombInputPressed())
@@ -102,6 +140,12 @@ namespace BubbleTown.Characters
             }
         }
 
+        /// <summary>
+        /// Purpose: Returns whether this object is bomb input pressed.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `bool` value.
+        /// </summary>
+        /// <returns>a `bool` value.</returns>
         private bool IsBombInputPressed()
         {
             if (Input.GetKeyDown(primaryBombKey))
@@ -112,6 +156,11 @@ namespace BubbleTown.Characters
             return secondaryBombKey != KeyCode.None && Input.GetKeyDown(secondaryBombKey);
         }
 
+        /// <summary>
+        /// Purpose: Handles the bomb input pressed event or callback.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         protected virtual void OnBombInputPressed()
         {
             bool placedBomb = TryPlaceBomb();

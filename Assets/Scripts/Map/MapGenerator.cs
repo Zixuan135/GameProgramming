@@ -65,12 +65,25 @@ namespace BubbleTown.Map
         public float CellSize => cellSize;
         public Transform GeneratedMapRoot => generatedMapRoot;
 
+        /// <summary>
+        /// Purpose: Performs generate for this component.
+        /// Inputs: `mapType`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="mapType">Input value used by this method.</param>
         public void Generate(BattleMapType mapType)
         {
             MapManager mapManager = GetComponent<MapManager>();
             Generate(mapType, mapManager);
         }
 
+        /// <summary>
+        /// Purpose: Performs generate for this component.
+        /// Inputs: `mapType`, `mapManager`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="mapType">Input value used by this method.</param>
+        /// <param name="mapManager">Input value used by this method.</param>
         public void Generate(BattleMapType mapType, MapManager mapManager)
         {
             if (mapManager == null)
@@ -108,6 +121,11 @@ namespace BubbleTown.Map
             Debug.Log($"[MapGenerator] Generated {GetVisualThemeDisplayName(visualTheme)} visuals. Type: {mapType}, Size: {mapWidth}x{mapHeight}");
         }
 
+        /// <summary>
+        /// Purpose: Performs clear for this component.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         public void Clear()
         {
             for (int i = transform.childCount - 1; i >= 0; i--)
@@ -122,6 +140,16 @@ namespace BubbleTown.Map
             generatedMapRoot = null;
         }
 
+        /// <summary>
+        /// Purpose: Performs generate grid visuals for this component.
+        /// Inputs: `mapManager`, `groundRoot`, `hardWallRoot`, `softWallRoot`, `visualTheme`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="mapManager">Input value used by this method.</param>
+        /// <param name="groundRoot">Input value used by this method.</param>
+        /// <param name="hardWallRoot">Input value used by this method.</param>
+        /// <param name="softWallRoot">Input value used by this method.</param>
+        /// <param name="visualTheme">Input value used by this method.</param>
         private void GenerateGridVisuals(
             MapManager mapManager,
             Transform groundRoot,
@@ -166,6 +194,17 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Spawns map piece.
+        /// Inputs: `prefab`, `parent`, `position`, `objectName`, `fallbackFactory`; may also read serialized fields and current runtime state.
+        /// Output: a `GameObject` value.
+        /// </summary>
+        /// <param name="prefab">Input value used by this method.</param>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="position">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
+        /// <param name="fallbackFactory">Input value used by this method.</param>
+        /// <returns>a `GameObject` value.</returns>
         private GameObject SpawnMapPiece(
             GameObject prefab,
             Transform parent,
@@ -185,6 +224,14 @@ namespace BubbleTown.Map
             return instance;
         }
 
+        /// <summary>
+        /// Purpose: Performs generate decorations for this component.
+        /// Inputs: `mapType`, `visualTheme`, `decorationRoot`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="mapType">Input value used by this method.</param>
+        /// <param name="visualTheme">Input value used by this method.</param>
+        /// <param name="decorationRoot">Input value used by this method.</param>
         private void GenerateDecorations(BattleMapType mapType, MapVisualTheme visualTheme, Transform decorationRoot)
         {
             switch (visualTheme)
@@ -198,6 +245,14 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Performs generate single player goal visual for this component.
+        /// Inputs: `mapManager`, `goalRoot`, `visualTheme`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="mapManager">Input value used by this method.</param>
+        /// <param name="goalRoot">Input value used by this method.</param>
+        /// <param name="visualTheme">Input value used by this method.</param>
         private void GenerateSinglePlayerGoalVisual(MapManager mapManager, Transform goalRoot, MapVisualTheme visualTheme)
         {
             if (mapManager == null || goalRoot == null || GameManager.Instance == null ||
@@ -241,6 +296,13 @@ namespace BubbleTown.Map
             AddDecorationAnimation(goal, goalTransform, true, 0.05f, 2.4f, new Vector3(0f, 42f, 0f), true, 0.055f, 3.1f);
         }
 
+        /// <summary>
+        /// Purpose: Performs generate candy park decorations for this component.
+        /// Inputs: `mapType`, `decorationRoot`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="mapType">Input value used by this method.</param>
+        /// <param name="decorationRoot">Input value used by this method.</param>
         private void GenerateCandyParkDecorations(BattleMapType mapType, Transform decorationRoot)
         {
             float minX = -decorationOuterPadding;
@@ -272,6 +334,16 @@ namespace BubbleTown.Map
             CreateBackgroundCloud(decorationRoot, new Vector3(maxX - 0.45f, 1.25f, minZ + 0.05f), "Cloud_Background_SouthEast");
         }
 
+        /// <summary>
+        /// Purpose: Creates fence line.
+        /// Inputs: `parent`, `center`, `lengthCells`, `horizontal`, `objectName`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="center">Input value used by this method.</param>
+        /// <param name="lengthCells">Input value used by this method.</param>
+        /// <param name="horizontal">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
         private void CreateFenceLine(Transform parent, Vector3 center, int lengthCells, bool horizontal, string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -293,6 +365,15 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Creates lollipop tree.
+        /// Inputs: `parent`, `position`, `objectName`, `candyColor`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="position">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
+        /// <param name="candyColor">Input value used by this method.</param>
         private void CreateLollipopTree(Transform parent, Vector3 position, string objectName, Color candyColor)
         {
             GameObject root = new GameObject(objectName);
@@ -305,6 +386,14 @@ namespace BubbleTown.Map
             CreatePrimitiveChild(root.transform, "CandyHighlight", PrimitiveType.Sphere, new Vector3(-0.16f, 1.18f, -0.16f), new Vector3(0.18f, 0.18f, 0.18f), GetCreamMaterial());
         }
 
+        /// <summary>
+        /// Purpose: Creates balloon cluster.
+        /// Inputs: `parent`, `position`, `objectName`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="position">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
         private void CreateBalloonCluster(Transform parent, Vector3 position, string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -318,6 +407,14 @@ namespace BubbleTown.Map
             CreatePrimitiveChild(root.transform, "Balloon_Yellow", PrimitiveType.Sphere, new Vector3(0f, 1.55f, -0.12f), new Vector3(0.34f, 0.44f, 0.34f), GetPropYellowMaterial());
         }
 
+        /// <summary>
+        /// Purpose: Creates round bush.
+        /// Inputs: `parent`, `position`, `objectName`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="position">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
         private void CreateRoundBush(Transform parent, Vector3 position, string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -328,6 +425,14 @@ namespace BubbleTown.Map
             CreatePrimitiveChild(root.transform, "Bush_Right", PrimitiveType.Sphere, new Vector3(0.48f, 0.24f, 0f), new Vector3(0.48f, 0.32f, 0.42f), GetPropMintMaterial());
         }
 
+        /// <summary>
+        /// Purpose: Creates sign board.
+        /// Inputs: `parent`, `position`, `objectName`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="position">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
         private void CreateSignBoard(Transform parent, Vector3 position, string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -339,6 +444,14 @@ namespace BubbleTown.Map
             CreatePrimitiveChild(root.transform, "BoardStripe", PrimitiveType.Cube, new Vector3(0f, 0.82f, -0.065f), new Vector3(0.82f, 0.08f, 0.035f), GetCandyBlueMaterial());
         }
 
+        /// <summary>
+        /// Purpose: Creates small candy tree.
+        /// Inputs: `parent`, `position`, `objectName`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="position">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
         private void CreateSmallCandyTree(Transform parent, Vector3 position, string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -352,6 +465,14 @@ namespace BubbleTown.Map
             CreatePrimitiveChild(root.transform, "CandyDot", PrimitiveType.Sphere, new Vector3(0.12f, 0.96f, -0.28f), new Vector3(0.14f, 0.14f, 0.14f), GetPropPinkMaterial());
         }
 
+        /// <summary>
+        /// Purpose: Creates toy barrel.
+        /// Inputs: `parent`, `position`, `objectName`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="position">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
         private void CreateToyBarrel(Transform parent, Vector3 position, string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -364,6 +485,14 @@ namespace BubbleTown.Map
             CreatePrimitiveChild(root.transform, "BarrelLabel", PrimitiveType.Cube, new Vector3(0f, 0.37f, -0.38f), new Vector3(0.34f, 0.18f, 0.035f), GetCreamMaterial());
         }
 
+        /// <summary>
+        /// Purpose: Creates candy lamp.
+        /// Inputs: `parent`, `position`, `objectName`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="position">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
         private void CreateCandyLamp(Transform parent, Vector3 position, string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -377,6 +506,14 @@ namespace BubbleTown.Map
             AddDecorationAnimation(root, lampHead.transform, true, 0.025f, 2.4f, Vector3.zero, true, 0.08f, 3.2f);
         }
 
+        /// <summary>
+        /// Purpose: Creates background cloud.
+        /// Inputs: `parent`, `position`, `objectName`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="position">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
         private void CreateBackgroundCloud(Transform parent, Vector3 position, string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -389,6 +526,12 @@ namespace BubbleTown.Map
             AddDecorationAnimation(root, root.transform, true, 0.06f, 0.8f, new Vector3(0f, 4f, 0f), false, 0f, 1f);
         }
 
+        /// <summary>
+        /// Purpose: Performs generate jelly maze decorations for this component.
+        /// Inputs: `decorationRoot`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="decorationRoot">Input value used by this method.</param>
         private void GenerateJellyMazeDecorations(Transform decorationRoot)
         {
             float minX = -decorationOuterPadding;
@@ -418,6 +561,16 @@ namespace BubbleTown.Map
             CreateDataTower(decorationRoot, new Vector3(minX + 0.25f, 0f, centerZ + cellSize * 0.35f), "DataTower_West");
         }
 
+        /// <summary>
+        /// Purpose: Creates neon gate line.
+        /// Inputs: `parent`, `center`, `lengthCells`, `horizontal`, `objectName`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="center">Input value used by this method.</param>
+        /// <param name="lengthCells">Input value used by this method.</param>
+        /// <param name="horizontal">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
         private void CreateNeonGateLine(Transform parent, Vector3 center, int lengthCells, bool horizontal, string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -441,6 +594,14 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Creates jelly crystal cluster.
+        /// Inputs: `parent`, `position`, `objectName`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="position">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
         private void CreateJellyCrystalCluster(Transform parent, Vector3 position, string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -456,6 +617,15 @@ namespace BubbleTown.Map
             CreatePrimitiveChild(root.transform, "ClusterBase", PrimitiveType.Sphere, new Vector3(0f, 0.1f, 0f), new Vector3(0.78f, 0.16f, 0.58f), GetJellyDarkMaterial());
         }
 
+        /// <summary>
+        /// Purpose: Creates glow tube.
+        /// Inputs: `parent`, `position`, `objectName`, `horizontal`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="position">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
+        /// <param name="horizontal">Input value used by this method.</param>
         private void CreateGlowTube(Transform parent, Vector3 position, string objectName, bool horizontal)
         {
             GameObject root = new GameObject(objectName);
@@ -470,6 +640,14 @@ namespace BubbleTown.Map
             casingB.transform.localEulerAngles = Vector3.zero;
         }
 
+        /// <summary>
+        /// Purpose: Creates signal beacon.
+        /// Inputs: `parent`, `position`, `objectName`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="position">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
         private void CreateSignalBeacon(Transform parent, Vector3 position, string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -483,6 +661,14 @@ namespace BubbleTown.Map
             AddDecorationAnimation(root, root.transform, false, 0f, 1f, new Vector3(0f, 22f, 0f), true, 0.025f, 2.2f);
         }
 
+        /// <summary>
+        /// Purpose: Creates energy barrel.
+        /// Inputs: `parent`, `position`, `objectName`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="position">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
         private void CreateEnergyBarrel(Transform parent, Vector3 position, string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -495,6 +681,14 @@ namespace BubbleTown.Map
             CreatePrimitiveChild(root.transform, "WarningStripe", PrimitiveType.Cube, new Vector3(0f, 0.4f, -0.36f), new Vector3(0.32f, 0.1f, 0.035f), GetJellyPropPinkMaterial());
         }
 
+        /// <summary>
+        /// Purpose: Creates floating glow orb.
+        /// Inputs: `parent`, `position`, `objectName`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="position">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
         private void CreateFloatingGlowOrb(Transform parent, Vector3 position, string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -507,6 +701,14 @@ namespace BubbleTown.Map
             AddDecorationAnimation(root, orb.transform, true, 0.08f, 1.8f, new Vector3(0f, 46f, 0f), true, 0.08f, 3.1f);
         }
 
+        /// <summary>
+        /// Purpose: Creates holo sign.
+        /// Inputs: `parent`, `position`, `objectName`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="position">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
         private void CreateHoloSign(Transform parent, Vector3 position, string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -520,6 +722,14 @@ namespace BubbleTown.Map
             AddDecorationAnimation(root, signPanel.transform, true, 0.025f, 2f, Vector3.zero, true, 0.04f, 2.8f);
         }
 
+        /// <summary>
+        /// Purpose: Creates data tower.
+        /// Inputs: `parent`, `position`, `objectName`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="position">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
         private void CreateDataTower(Transform parent, Vector3 position, string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -534,6 +744,18 @@ namespace BubbleTown.Map
             AddDecorationAnimation(root, antenna.transform, true, 0.035f, 2.6f, new Vector3(0f, 30f, 0f), true, 0.08f, 3.4f);
         }
 
+        /// <summary>
+        /// Purpose: Creates primitive child.
+        /// Inputs: `parent`, `objectName`, `primitiveType`, `localPosition`, `localScale`, `material`; may also read serialized fields and current runtime state.
+        /// Output: a `GameObject` value.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
+        /// <param name="primitiveType">Input value used by this method.</param>
+        /// <param name="localPosition">Input value used by this method.</param>
+        /// <param name="localScale">Input value used by this method.</param>
+        /// <param name="material">Input value used by this method.</param>
+        /// <returns>a `GameObject` value.</returns>
         private GameObject CreatePrimitiveChild(Transform parent, string objectName, PrimitiveType primitiveType, Vector3 localPosition, Vector3 localScale, Material material)
         {
             GameObject primitive = GameObject.CreatePrimitive(primitiveType);
@@ -557,6 +779,13 @@ namespace BubbleTown.Map
             return primitive;
         }
 
+        /// <summary>
+        /// Purpose: Creates visual root.
+        /// Inputs: `parent`; may also read serialized fields and current runtime state.
+        /// Output: a `Transform` value.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <returns>a `Transform` value.</returns>
         private Transform CreateVisualRoot(Transform parent)
         {
             GameObject visualRootObject = new GameObject("VisualRoot");
@@ -568,6 +797,13 @@ namespace BubbleTown.Map
             return visualRoot;
         }
 
+        /// <summary>
+        /// Purpose: Configures generated wall feedback for the current battle or scene.
+        /// Inputs: `wallRoot`, `visualRoot`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="wallRoot">Input value used by this method.</param>
+        /// <param name="visualRoot">Input value used by this method.</param>
         private void ConfigureGeneratedWallFeedback(GameObject wallRoot, Transform visualRoot)
         {
             WallFeedback feedback = wallRoot.GetComponent<WallFeedback>();
@@ -579,6 +815,20 @@ namespace BubbleTown.Map
             feedback.SetVisualRoot(visualRoot);
         }
 
+        /// <summary>
+        /// Purpose: Performs add decoration animation for this component.
+        /// Inputs: `decorationRoot`, `animatedRoot`, `enableBob`, `bobAmplitude`, `bobSpeed`, `rotationDegreesPerSecond`, `enableScalePulse`, `scalePulseAmount`, `scalePulseSpeed`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="decorationRoot">Input value used by this method.</param>
+        /// <param name="animatedRoot">Input value used by this method.</param>
+        /// <param name="enableBob">Input value used by this method.</param>
+        /// <param name="bobAmplitude">Input value used by this method.</param>
+        /// <param name="bobSpeed">Input value used by this method.</param>
+        /// <param name="rotationDegreesPerSecond">Input value used by this method.</param>
+        /// <param name="enableScalePulse">Input value used by this method.</param>
+        /// <param name="scalePulseAmount">Input value used by this method.</param>
+        /// <param name="scalePulseSpeed">Input value used by this method.</param>
         private void AddDecorationAnimation(
             GameObject decorationRoot,
             Transform animatedRoot,
@@ -607,6 +857,14 @@ namespace BubbleTown.Map
                 scalePulseSpeed);
         }
 
+        /// <summary>
+        /// Purpose: Creates fallback ground tile.
+        /// Inputs: `objectName`, `visualTheme`; may also read serialized fields and current runtime state.
+        /// Output: a `GameObject` value.
+        /// </summary>
+        /// <param name="objectName">Input value used by this method.</param>
+        /// <param name="visualTheme">Input value used by this method.</param>
+        /// <returns>a `GameObject` value.</returns>
         private GameObject CreateFallbackGroundTile(string objectName, MapVisualTheme visualTheme)
         {
             return visualTheme == MapVisualTheme.JellyMaze
@@ -614,6 +872,13 @@ namespace BubbleTown.Map
                 : CreateCandyParkGroundTile(objectName);
         }
 
+        /// <summary>
+        /// Purpose: Creates candy park ground tile.
+        /// Inputs: `objectName`; may also read serialized fields and current runtime state.
+        /// Output: a `GameObject` value.
+        /// </summary>
+        /// <param name="objectName">Input value used by this method.</param>
+        /// <returns>a `GameObject` value.</returns>
         private GameObject CreateCandyParkGroundTile(string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -622,6 +887,13 @@ namespace BubbleTown.Map
             return root;
         }
 
+        /// <summary>
+        /// Purpose: Creates jelly maze ground tile.
+        /// Inputs: `objectName`; may also read serialized fields and current runtime state.
+        /// Output: a `GameObject` value.
+        /// </summary>
+        /// <param name="objectName">Input value used by this method.</param>
+        /// <returns>a `GameObject` value.</returns>
         private GameObject CreateJellyMazeGroundTile(string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -631,6 +903,14 @@ namespace BubbleTown.Map
             return root;
         }
 
+        /// <summary>
+        /// Purpose: Creates fallback hard wall.
+        /// Inputs: `objectName`, `visualTheme`; may also read serialized fields and current runtime state.
+        /// Output: a `GameObject` value.
+        /// </summary>
+        /// <param name="objectName">Input value used by this method.</param>
+        /// <param name="visualTheme">Input value used by this method.</param>
+        /// <returns>a `GameObject` value.</returns>
         private GameObject CreateFallbackHardWall(string objectName, MapVisualTheme visualTheme)
         {
             return visualTheme == MapVisualTheme.JellyMaze
@@ -638,6 +918,13 @@ namespace BubbleTown.Map
                 : CreateCandyParkHardWall(objectName);
         }
 
+        /// <summary>
+        /// Purpose: Creates candy park hard wall.
+        /// Inputs: `objectName`; may also read serialized fields and current runtime state.
+        /// Output: a `GameObject` value.
+        /// </summary>
+        /// <param name="objectName">Input value used by this method.</param>
+        /// <returns>a `GameObject` value.</returns>
         private GameObject CreateCandyParkHardWall(string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -652,6 +939,13 @@ namespace BubbleTown.Map
             return root;
         }
 
+        /// <summary>
+        /// Purpose: Creates jelly maze hard wall.
+        /// Inputs: `objectName`; may also read serialized fields and current runtime state.
+        /// Output: a `GameObject` value.
+        /// </summary>
+        /// <param name="objectName">Input value used by this method.</param>
+        /// <returns>a `GameObject` value.</returns>
         private GameObject CreateJellyMazeHardWall(string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -667,6 +961,14 @@ namespace BubbleTown.Map
             return root;
         }
 
+        /// <summary>
+        /// Purpose: Creates fallback soft wall.
+        /// Inputs: `objectName`, `visualTheme`; may also read serialized fields and current runtime state.
+        /// Output: a `GameObject` value.
+        /// </summary>
+        /// <param name="objectName">Input value used by this method.</param>
+        /// <param name="visualTheme">Input value used by this method.</param>
+        /// <returns>a `GameObject` value.</returns>
         private GameObject CreateFallbackSoftWall(string objectName, MapVisualTheme visualTheme)
         {
             return visualTheme == MapVisualTheme.JellyMaze
@@ -674,6 +976,13 @@ namespace BubbleTown.Map
                 : CreateCandyParkSoftWall(objectName);
         }
 
+        /// <summary>
+        /// Purpose: Creates candy park soft wall.
+        /// Inputs: `objectName`; may also read serialized fields and current runtime state.
+        /// Output: a `GameObject` value.
+        /// </summary>
+        /// <param name="objectName">Input value used by this method.</param>
+        /// <returns>a `GameObject` value.</returns>
         private GameObject CreateCandyParkSoftWall(string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -687,6 +996,13 @@ namespace BubbleTown.Map
             return root;
         }
 
+        /// <summary>
+        /// Purpose: Creates jelly maze soft wall.
+        /// Inputs: `objectName`; may also read serialized fields and current runtime state.
+        /// Output: a `GameObject` value.
+        /// </summary>
+        /// <param name="objectName">Input value used by this method.</param>
+        /// <returns>a `GameObject` value.</returns>
         private GameObject CreateJellyMazeSoftWall(string objectName)
         {
             GameObject root = new GameObject(objectName);
@@ -702,6 +1018,14 @@ namespace BubbleTown.Map
             return root;
         }
 
+        /// <summary>
+        /// Purpose: Resolves generated root from the current runtime state.
+        /// Inputs: `mapType`, `createIfMissing`; may also read serialized fields and current runtime state.
+        /// Output: a `Transform` value.
+        /// </summary>
+        /// <param name="mapType">Input value used by this method.</param>
+        /// <param name="createIfMissing">Input value used by this method.</param>
+        /// <returns>a `Transform` value.</returns>
         private Transform ResolveGeneratedRoot(BattleMapType mapType, bool createIfMissing = true)
         {
             string rootName = GetGeneratedRootName(mapType);
@@ -731,6 +1055,12 @@ namespace BubbleTown.Map
             return generatedMapRoot;
         }
 
+        /// <summary>
+        /// Purpose: Clears inactive generated roots.
+        /// Inputs: `activeRoot`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="activeRoot">Input value used by this method.</param>
         private void ClearInactiveGeneratedRoots(Transform activeRoot)
         {
             for (int i = transform.childCount - 1; i >= 0; i--)
@@ -748,6 +1078,14 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Creates child root.
+        /// Inputs: `parent`, `rootName`; may also read serialized fields and current runtime state.
+        /// Output: a `Transform` value.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="rootName">Input value used by this method.</param>
+        /// <returns>a `Transform` value.</returns>
         private Transform CreateChildRoot(Transform parent, string rootName)
         {
             GameObject rootObject = new GameObject(rootName);
@@ -759,6 +1097,12 @@ namespace BubbleTown.Map
             return childRoot;
         }
 
+        /// <summary>
+        /// Purpose: Clears generated children.
+        /// Inputs: `root`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="root">Input value used by this method.</param>
         private void ClearGeneratedChildren(Transform root)
         {
             if (root == null)
@@ -772,6 +1116,13 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Sets legacy scene visual roots active.
+        /// Inputs: `generatedRoot`, `isActive`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="generatedRoot">Input value used by this method.</param>
+        /// <param name="isActive">Input value used by this method.</param>
         private void SetLegacySceneVisualRootsActive(Transform generatedRoot, bool isActive)
         {
             for (int i = 0; i < transform.childCount; i++)
@@ -789,6 +1140,12 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Destroys generated object.
+        /// Inputs: `target`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="target">Input value used by this method.</param>
         private void DestroyGeneratedObject(Object target)
         {
             if (target == null)
@@ -806,26 +1163,62 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Resolves visual theme from the current runtime state.
+        /// Inputs: `mapType`; may also read serialized fields and current runtime state.
+        /// Output: a `MapVisualTheme` value.
+        /// </summary>
+        /// <param name="mapType">Input value used by this method.</param>
+        /// <returns>a `MapVisualTheme` value.</returns>
         private MapVisualTheme ResolveVisualTheme(BattleMapType mapType)
         {
             return mapType == BattleMapType.Maze ? MapVisualTheme.JellyMaze : MapVisualTheme.CandyPark;
         }
 
+        /// <summary>
+        /// Purpose: Gets generated root name.
+        /// Inputs: `mapType`; may also read serialized fields and current runtime state.
+        /// Output: a `string` value.
+        /// </summary>
+        /// <param name="mapType">Input value used by this method.</param>
+        /// <returns>a `string` value.</returns>
         private string GetGeneratedRootName(BattleMapType mapType)
         {
             return GeneratedRootPrefix + GetVisualThemeKey(ResolveVisualTheme(mapType));
         }
 
+        /// <summary>
+        /// Purpose: Gets visual theme key.
+        /// Inputs: `visualTheme`; may also read serialized fields and current runtime state.
+        /// Output: a `string` value.
+        /// </summary>
+        /// <param name="visualTheme">Input value used by this method.</param>
+        /// <returns>a `string` value.</returns>
         private string GetVisualThemeKey(MapVisualTheme visualTheme)
         {
             return visualTheme == MapVisualTheme.JellyMaze ? "JellyMaze" : "CandyPark";
         }
 
+        /// <summary>
+        /// Purpose: Gets visual theme display name.
+        /// Inputs: `visualTheme`; may also read serialized fields and current runtime state.
+        /// Output: a `string` value.
+        /// </summary>
+        /// <param name="visualTheme">Input value used by this method.</param>
+        /// <returns>a `string` value.</returns>
         private string GetVisualThemeDisplayName(MapVisualTheme visualTheme)
         {
             return visualTheme == MapVisualTheme.JellyMaze ? "Jelly Maze" : "Candy Park";
         }
 
+        /// <summary>
+        /// Purpose: Gets theme accent color.
+        /// Inputs: `mapType`, `index`; may also read serialized fields and current runtime state.
+        /// Output: a `Color` value.
+        /// </summary>
+        /// <param name="mapType">Input value used by this method.</param>
+        /// <param name="index">Input value used by this method.</param>
+        /// <returns>a `Color` value.</returns>
         private Color GetThemeAccentColor(BattleMapType mapType, int index)
         {
             switch (mapType)
@@ -839,6 +1232,12 @@ namespace BubbleTown.Map
             }
         }
 
+        /// <summary>
+        /// Purpose: Gets grass material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material GetGrassMaterial()
         {
             if (grassMaterial == null)
@@ -849,6 +1248,12 @@ namespace BubbleTown.Map
             return grassMaterial;
         }
 
+        /// <summary>
+        /// Purpose: Gets candy blue material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material GetCandyBlueMaterial()
         {
             if (candyBlueMaterial == null)
@@ -859,6 +1264,12 @@ namespace BubbleTown.Map
             return candyBlueMaterial;
         }
 
+        /// <summary>
+        /// Purpose: Gets cream material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material GetCreamMaterial()
         {
             if (creamMaterial == null)
@@ -869,6 +1280,12 @@ namespace BubbleTown.Map
             return creamMaterial;
         }
 
+        /// <summary>
+        /// Purpose: Gets jelly blue material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material GetJellyBlueMaterial()
         {
             if (jellyBlueMaterial == null)
@@ -879,6 +1296,12 @@ namespace BubbleTown.Map
             return jellyBlueMaterial;
         }
 
+        /// <summary>
+        /// Purpose: Gets shadow material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material GetShadowMaterial()
         {
             if (shadowMaterial == null)
@@ -889,6 +1312,12 @@ namespace BubbleTown.Map
             return shadowMaterial;
         }
 
+        /// <summary>
+        /// Purpose: Gets prop pink material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material GetPropPinkMaterial()
         {
             if (propPinkMaterial == null)
@@ -899,6 +1328,12 @@ namespace BubbleTown.Map
             return propPinkMaterial;
         }
 
+        /// <summary>
+        /// Purpose: Gets prop mint material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material GetPropMintMaterial()
         {
             if (propMintMaterial == null)
@@ -909,6 +1344,12 @@ namespace BubbleTown.Map
             return propMintMaterial;
         }
 
+        /// <summary>
+        /// Purpose: Gets prop yellow material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material GetPropYellowMaterial()
         {
             if (propYellowMaterial == null)
@@ -919,6 +1360,12 @@ namespace BubbleTown.Map
             return propYellowMaterial;
         }
 
+        /// <summary>
+        /// Purpose: Gets jelly floor material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material GetJellyFloorMaterial()
         {
             if (jellyFloorMaterial == null)
@@ -929,6 +1376,12 @@ namespace BubbleTown.Map
             return jellyFloorMaterial;
         }
 
+        /// <summary>
+        /// Purpose: Gets jelly tile inset material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material GetJellyTileInsetMaterial()
         {
             if (jellyTileInsetMaterial == null)
@@ -939,6 +1392,12 @@ namespace BubbleTown.Map
             return jellyTileInsetMaterial;
         }
 
+        /// <summary>
+        /// Purpose: Gets jelly hard wall material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material GetJellyHardWallMaterial()
         {
             if (jellyHardWallMaterial == null)
@@ -949,6 +1408,12 @@ namespace BubbleTown.Map
             return jellyHardWallMaterial;
         }
 
+        /// <summary>
+        /// Purpose: Gets jelly hard wall highlight material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material GetJellyHardWallHighlightMaterial()
         {
             if (jellyHardWallHighlightMaterial == null)
@@ -959,6 +1424,12 @@ namespace BubbleTown.Map
             return jellyHardWallHighlightMaterial;
         }
 
+        /// <summary>
+        /// Purpose: Gets jelly soft wall material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material GetJellySoftWallMaterial()
         {
             if (jellySoftWallMaterial == null)
@@ -969,6 +1440,12 @@ namespace BubbleTown.Map
             return jellySoftWallMaterial;
         }
 
+        /// <summary>
+        /// Purpose: Gets jelly glow material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material GetJellyGlowMaterial()
         {
             if (jellyGlowMaterial == null)
@@ -979,6 +1456,12 @@ namespace BubbleTown.Map
             return jellyGlowMaterial;
         }
 
+        /// <summary>
+        /// Purpose: Gets jelly dark material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material GetJellyDarkMaterial()
         {
             if (jellyDarkMaterial == null)
@@ -989,6 +1472,12 @@ namespace BubbleTown.Map
             return jellyDarkMaterial;
         }
 
+        /// <summary>
+        /// Purpose: Gets jelly prop cyan material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material GetJellyPropCyanMaterial()
         {
             if (jellyPropCyanMaterial == null)
@@ -999,6 +1488,12 @@ namespace BubbleTown.Map
             return jellyPropCyanMaterial;
         }
 
+        /// <summary>
+        /// Purpose: Gets jelly prop pink material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
         private Material GetJellyPropPinkMaterial()
         {
             if (jellyPropPinkMaterial == null)
@@ -1009,6 +1504,16 @@ namespace BubbleTown.Map
             return jellyPropPinkMaterial;
         }
 
+        /// <summary>
+        /// Purpose: Creates runtime material.
+        /// Inputs: `materialName`, `color`, `useEmission`, `emissionIntensity`; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <param name="materialName">Input value used by this method.</param>
+        /// <param name="color">Input value used by this method.</param>
+        /// <param name="useEmission">Input value used by this method.</param>
+        /// <param name="emissionIntensity">Input value used by this method.</param>
+        /// <returns>a `Material` value.</returns>
         private Material CreateRuntimeMaterial(string materialName, Color color, bool useEmission = false, float emissionIntensity = 0f)
         {
             Material material = new Material(Shader.Find("Standard"))

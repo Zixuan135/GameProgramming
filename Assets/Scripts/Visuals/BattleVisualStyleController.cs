@@ -36,22 +36,43 @@ namespace BubbleTown.Visuals
 
         private BattleMapType lastAppliedMapType = (BattleMapType)(-1);
 
+        /// <summary>
+        /// Purpose: Initializes this component before the scene starts running.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Awake()
         {
             ResolveReferences();
             ApplyCurrentStyle(true);
         }
 
+        /// <summary>
+        /// Purpose: Initializes this component after Unity enables it in the scene.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void Start()
         {
             ApplyCurrentStyle(true);
         }
 
+        /// <summary>
+        /// Purpose: Runs camera or visual follow-up logic after regular Update calls.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void LateUpdate()
         {
             ApplyCurrentStyle(false);
         }
 
+        /// <summary>
+        /// Purpose: Applies current style to the current object or scene.
+        /// Inputs: `force`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="force">Input value used by this method.</param>
         public void ApplyCurrentStyle(bool force)
         {
             BattleMapType mapType = GameManager.Instance != null
@@ -69,6 +90,11 @@ namespace BubbleTown.Visuals
             lastAppliedMapType = mapType;
         }
 
+        /// <summary>
+        /// Purpose: Resolves references from the current runtime state.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
         private void ResolveReferences()
         {
             if (!autoFindReferences)
@@ -87,6 +113,12 @@ namespace BubbleTown.Visuals
             }
         }
 
+        /// <summary>
+        /// Purpose: Finds directional light from scene objects or cached data.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Light` value.
+        /// </summary>
+        /// <returns>a `Light` value.</returns>
         private Light FindDirectionalLight()
         {
             Light[] lights = FindObjectsOfType<Light>();
@@ -101,6 +133,12 @@ namespace BubbleTown.Visuals
             return null;
         }
 
+        /// <summary>
+        /// Purpose: Applies lighting to the current object or scene.
+        /// Inputs: `mapType`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="mapType">Input value used by this method.</param>
         private void ApplyLighting(BattleMapType mapType)
         {
             bool useJellyMood = mapType == BattleMapType.Maze;
@@ -125,6 +163,12 @@ namespace BubbleTown.Visuals
             RenderSettings.sun = directionalLight;
         }
 
+        /// <summary>
+        /// Purpose: Applies camera background to the current object or scene.
+        /// Inputs: `mapType`; may also read serialized fields and current runtime state.
+        /// Output: no return value; updates component, scene, or game state as needed.
+        /// </summary>
+        /// <param name="mapType">Input value used by this method.</param>
         private void ApplyCameraBackground(BattleMapType mapType)
         {
             if (targetCamera == null)
