@@ -44,6 +44,7 @@ namespace BubbleTown.UI
         private static GUIStyle guideTextStyle;
         private static GUIStyle settingsLabelStyle;
         private static GUIStyle settingsValueStyle;
+        private static GUIStyle settingsFeedbackStyle;
         private static GUIStyle invisibleButtonStyle;
 
         private enum MenuDecorationIcon
@@ -72,6 +73,11 @@ namespace BubbleTown.UI
         private static readonly Color TextPrimary = new Color(0.11f, 0.28f, 0.42f, 1f);
         private static readonly Color TextSecondary = new Color(0.23f, 0.45f, 0.55f, 1f);
         private static readonly Color CreamText = new Color(1f, 0.97f, 0.78f, 1f);
+        private const float SettingsFeedbackSeconds = 2.2f;
+
+        private static string settingsFeedbackMessage = "Saved automatically";
+        private static float settingsFeedbackVisibleUntil;
+        private static Color settingsFeedbackColor = new Color(0.42f, 0.88f, 0.38f, 1f);
 
         /// <summary>
         /// Purpose: Returns centered rect for the current state.
@@ -497,12 +503,12 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
-        /// Purpose: Sets tings modal.
-        /// Inputs: `audioManager`; may also read serialized fields and current runtime state.
-        /// Output: a `bool` value.
+        /// Purpose: Draws the player settings modal and applies changes immediately.
+        /// Inputs: audioManager provides live audio values and preview playback; falls back to AudioManager.Instance when null.
+        /// Output: returns true when the caller should close the modal; otherwise false.
         /// </summary>
-        /// <param name="audioManager">Input value used by this method.</param>
-        /// <returns>a `bool` value.</returns>
+        /// <param name="audioManager">Audio manager used to read/apply audio settings and play previews.</param>
+        /// <returns>True if the settings modal requested closing; otherwise false.</returns>
         public static bool SettingsModal(AudioManager audioManager)
         {
             EnsureStyles();
@@ -513,12 +519,12 @@ namespace BubbleTown.UI
 
             GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), GetSolidTexture(new Color(0.02f, 0.09f, 0.14f, 0.42f)));
 
-            Rect rect = CenteredRect(610f, 460f);
+            Rect rect = CenteredRect(640f, 500f);
             DrawRoundedRect(new Rect(rect.x + 8f, rect.y + 10f, rect.width, rect.height), PanelShadow, PanelShadow, 24, 0);
             DrawRoundedRect(rect, PanelFill, PanelBorder, 24, 4);
 
             GUI.Label(new Rect(rect.x + 40f, rect.y + 18f, rect.width - 80f, 42f), "Settings", modalTitleStyle);
-            GUI.Label(new Rect(rect.x + 60f, rect.y + 58f, rect.width - 120f, 24f), "Tune sound and battle feedback.", modalBodyStyle);
+            GUI.Label(new Rect(rect.x + 60f, rect.y + 58f, rect.width - 120f, 24f), "Tune sound, feedback, and saved preferences.", modalBodyStyle);
 
             bool shouldClose = false;
             Rect topCloseRect = new Rect(rect.x + rect.width - 52f, rect.y + 18f, 34f, 30f);
@@ -533,23 +539,24 @@ namespace BubbleTown.UI
                 shouldClose = true;
             }
 
-            Rect statusRect = new Rect(rect.x + 55f, rect.y + 92f, rect.width - 110f, 28f);
-            DrawAudioStatusPill(statusRect, audioManager);
+            Rect feedbackRect = new Rect(rect.x + 55f, rect.y + 92f, rect.width - 110f, 34f);
+            DrawSettingsFeedback(feedbackRect);
 
-            Rect controlsRect = new Rect(rect.x + 55f, rect.y + 132f, rect.width - 110f, 238f);
+            Rect controlsRect = new Rect(rect.x + 55f, rect.y + 138f, rect.width - 110f, 238f);
             DrawSettingsControls(controlsRect, audioManager);
 
-            Rect previewSlot = new Rect(rect.x + 95f, rect.y + rect.height - 86f, rect.width - 190f, 36f);
+            Rect previewSlot = new Rect(rect.x + 95f, rect.y + rect.height - 82f, rect.width - 190f, 34f);
             DrawSettingsPreviewButtons(previewSlot, audioManager);
 
-            Rect buttonSlot = new Rect(rect.x + 105f, rect.y + rect.height - 42f, rect.width - 210f, 36f);
-            float buttonWidth = Mathf.Min(210f, (buttonSlot.width - 20f) * 0.5f);
-            Rect resetRect = new Rect(buttonSlot.center.x - buttonWidth - 10f, buttonSlot.y, buttonWidth, buttonSlot.height);
-            Rect closeRect = new Rect(buttonSlot.center.x + 10f, buttonSlot.y, buttonWidth, buttonSlot.height);
+            Rect buttonSlot = new Rect(rect.x + 90f, rect.y + rect.height - 42f, rect.width - 180f, 34f);
+            float resetWidth = Mathf.Min(250f, buttonSlot.width * 0.58f);
+            float closeWidth = Mathf.Min(170f, buttonSlot.width - resetWidth - 18f);
+            Rect resetRect = new Rect(buttonSlot.center.x - (resetWidth + closeWidth + 18f) * 0.5f, buttonSlot.y, resetWidth, buttonSlot.height);
+            Rect closeRect = new Rect(resetRect.xMax + 18f, buttonSlot.y, closeWidth, buttonSlot.height);
 
             if (CartoonButton(
                 resetRect,
-                "RESET",
+                "RESTORE DEFAULTS",
                 new Color(1f, 0.58f, 0.28f, 1f),
                 new Color(1f, 0.72f, 0.38f, 1f),
                 new Color(0.88f, 0.42f, 0.18f, 1f),
@@ -558,6 +565,7 @@ namespace BubbleTown.UI
                 AudioManager.Instance?.PlayButtonClickSFX();
                 GameSettings.ResetToDefaults();
                 audioManager?.ReloadFromGameSettings();
+                ShowSettingsFeedback("Defaults restored and saved", new Color(1f, 0.62f, 0.22f, 1f));
             }
 
             if (CartoonButton(
@@ -1061,6 +1069,7 @@ namespace BubbleTown.UI
             {
                 audioManager?.SetMasterVolume(newMasterVolume);
                 audioManager?.PlaySettingsPreviewSFX();
+                ShowSettingsFeedback($"Saved Master Volume {Mathf.RoundToInt(newMasterVolume * 100f)}%", blue);
             }
 
             row.y += rowHeight + rowGap;
@@ -1068,6 +1077,7 @@ namespace BubbleTown.UI
             if (!Mathf.Approximately(newBgmVolume, bgmVolume))
             {
                 audioManager?.SetBgmVolume(newBgmVolume);
+                ShowSettingsFeedback($"Saved BGM Volume {Mathf.RoundToInt(newBgmVolume * 100f)}%", green);
             }
 
             row.y += rowHeight + rowGap;
@@ -1076,6 +1086,7 @@ namespace BubbleTown.UI
             {
                 audioManager?.SetSfxVolume(newSfxVolume);
                 audioManager?.PlaySettingsPreviewSFX();
+                ShowSettingsFeedback($"Saved SFX Volume {Mathf.RoundToInt(newSfxVolume * 100f)}%", orange);
             }
 
             row.y += rowHeight + rowGap + 4f;
@@ -1084,6 +1095,7 @@ namespace BubbleTown.UI
             {
                 audioManager?.SetBgmMuted(newMuteBGM);
                 AudioManager.Instance?.PlayButtonClickSFX();
+                ShowSettingsFeedback(newMuteBGM ? "BGM muted and saved" : "BGM unmuted and saved", green);
             }
 
             row.y += rowHeight + rowGap;
@@ -1095,6 +1107,8 @@ namespace BubbleTown.UI
                 {
                     AudioManager.Instance?.PlayButtonClickSFX();
                 }
+
+                ShowSettingsFeedback(newMuteSFX ? "SFX muted and saved" : "SFX unmuted and saved", orange);
             }
 
             row.y += rowHeight + rowGap;
@@ -1104,43 +1118,58 @@ namespace BubbleTown.UI
             {
                 AudioManager.Instance?.PlayButtonClickSFX();
                 GameSettings.SetScreenShakeEnabled(newShakeEnabled);
+                ShowSettingsFeedback(newShakeEnabled ? "Screen shake enabled" : "Screen shake disabled", blue);
             }
         }
 
         /// <summary>
-        /// Purpose: Draws audio status pill in the current GUI or scene context.
-        /// Inputs: `rect`, `audioManager`; may also read serialized fields and current runtime state.
-        /// Output: no return value; updates component, scene, or game state as needed.
+        /// Purpose: Draws the temporary settings save message near the top of the settings modal.
+        /// Inputs: rect defines where the message should appear; reads the latest feedback message and timer.
+        /// Output: no return value; renders a saved/default/preview status line for the player.
         /// </summary>
-        /// <param name="rect">Input value used by this method.</param>
-        /// <param name="audioManager">Input value used by this method.</param>
-        private static void DrawAudioStatusPill(Rect rect, AudioManager audioManager)
+        /// <param name="rect">Screen-space rectangle used for the feedback message.</param>
+        private static void DrawSettingsFeedback(Rect rect)
         {
-            float width = Mathf.Min(rect.width, 500f);
-            Rect pillRect = new Rect(rect.x + (rect.width - width) * 0.5f, rect.y, width, rect.height);
-            bool audioReady = audioManager != null && audioManager.IsAudioReady;
-            Color accentColor = audioReady
-                ? new Color(0.42f, 0.88f, 0.38f, 1f)
-                : new Color(1f, 0.62f, 0.22f, 1f);
-            string status = audioReady ? "Audio Ready" : "Audio Clips Missing";
-            string volumeText = audioManager != null
-                ? $"BGM {Mathf.RoundToInt(audioManager.BgmVolume * 100f)}%  |  SFX {Mathf.RoundToInt(audioManager.SfxVolume * 100f)}%"
-                : "Audio manager loading";
+            float remainingSeconds = settingsFeedbackVisibleUntil - Time.unscaledTime;
+            bool hasFreshMessage = remainingSeconds > 0f && !string.IsNullOrEmpty(settingsFeedbackMessage);
+            string message = hasFreshMessage
+                ? settingsFeedbackMessage
+                : "Changes are saved automatically on this device.";
+            Color accentColor = hasFreshMessage
+                ? settingsFeedbackColor
+                : new Color(0.16f, 0.72f, 1f, 1f);
+            float alpha = hasFreshMessage
+                ? Mathf.Lerp(0.55f, 1f, Mathf.Clamp01(remainingSeconds / SettingsFeedbackSeconds))
+                : 0.72f;
 
-            DrawRoundedRect(new Rect(pillRect.x + 3f, pillRect.y + 4f, pillRect.width, pillRect.height), PanelShadow, PanelShadow, 14, 0);
-            DrawRoundedRect(pillRect, new Color(1f, 0.96f, 0.76f, 0.96f), Color.Lerp(accentColor, Color.white, 0.2f), 14, 2);
-            DrawRoundedRect(new Rect(pillRect.x + 8f, pillRect.y + 7f, 5f, pillRect.height - 14f), accentColor, Color.clear, 4, 0);
-            GUI.Label(new Rect(pillRect.x + 20f, pillRect.y + 4f, 170f, pillRect.height - 8f), status, settingsLabelStyle);
-            GUI.Label(new Rect(pillRect.x + 190f, pillRect.y + 4f, pillRect.width - 208f, pillRect.height - 8f), volumeText, settingsValueStyle);
+            Color previousColor = GUI.color;
+            GUI.color = new Color(1f, 1f, 1f, alpha);
+            DrawRoundedRect(rect, new Color(1f, 0.99f, 0.84f, 0.86f), Color.Lerp(accentColor, Color.white, 0.22f), 12, 1);
+            GUI.Label(new Rect(rect.x + 12f, rect.y + 2f, rect.width - 24f, rect.height - 4f), message, settingsFeedbackStyle);
+            GUI.color = previousColor;
         }
 
         /// <summary>
-        /// Purpose: Draws settings preview buttons in the current GUI or scene context.
-        /// Inputs: `rect`, `audioManager`; may also read serialized fields and current runtime state.
-        /// Output: no return value; updates component, scene, or game state as needed.
+        /// Purpose: Stores a short settings feedback message shown in the modal.
+        /// Inputs: message is the player-facing status text and accentColor controls the message border color.
+        /// Output: no return value; updates static UI feedback state used by DrawSettingsFeedback.
         /// </summary>
-        /// <param name="rect">Input value used by this method.</param>
-        /// <param name="audioManager">Input value used by this method.</param>
+        /// <param name="message">Player-facing message describing what just happened.</param>
+        /// <param name="accentColor">Color used to visually connect the message to the changed setting.</param>
+        private static void ShowSettingsFeedback(string message, Color accentColor)
+        {
+            settingsFeedbackMessage = string.IsNullOrEmpty(message) ? "Saved automatically" : message;
+            settingsFeedbackColor = accentColor;
+            settingsFeedbackVisibleUntil = Time.unscaledTime + SettingsFeedbackSeconds;
+        }
+
+        /// <summary>
+        /// Purpose: Draws preview buttons so players can test current SFX and music settings immediately.
+        /// Inputs: rect defines the preview button area and audioManager plays the requested preview sounds.
+        /// Output: no return value; may trigger audio preview playback and a short feedback message.
+        /// </summary>
+        /// <param name="rect">Screen-space rectangle used to lay out the preview buttons.</param>
+        /// <param name="audioManager">Audio manager used to play SFX and BGM preview clips.</param>
         private static void DrawSettingsPreviewButtons(Rect rect, AudioManager audioManager)
         {
             float contentWidth = Mathf.Min(rect.width, 420f);
@@ -1159,6 +1188,7 @@ namespace BubbleTown.UI
                 Color.white))
             {
                 audioManager?.PlaySettingsPreviewSFX();
+                ShowSettingsFeedback("Playing SFX preview", new Color(1f, 0.62f, 0.22f, 1f));
             }
 
             if (CartoonButton(
@@ -1171,19 +1201,20 @@ namespace BubbleTown.UI
             {
                 AudioManager.Instance?.PlayButtonClickSFX();
                 audioManager?.PlayCurrentSceneBGMPreview();
+                ShowSettingsFeedback("Playing music preview", new Color(0.42f, 0.88f, 0.38f, 1f));
             }
         }
 
         /// <summary>
-        /// Purpose: Draws settings slider in the current GUI or scene context.
-        /// Inputs: `rect`, `label`, `value`, `accentColor`; may also read serialized fields and current runtime state.
-        /// Output: a `float` value.
+        /// Purpose: Draws an interactive volume slider row.
+        /// Inputs: rect is the row area, label is the row name, value is the current 0-1 setting, and accentColor themes the row.
+        /// Output: returns the updated 0-1 value after mouse input; returns the original value when the player did not drag or click.
         /// </summary>
-        /// <param name="rect">Input value used by this method.</param>
-        /// <param name="label">Input value used by this method.</param>
-        /// <param name="value">Input value used by this method.</param>
-        /// <param name="accentColor">Input value used by this method.</param>
-        /// <returns>a `float` value.</returns>
+        /// <param name="rect">Screen-space rectangle for the entire slider row.</param>
+        /// <param name="label">Player-facing name shown on the left side of the row.</param>
+        /// <param name="value">Current slider value, expected in the 0-1 range.</param>
+        /// <param name="accentColor">Color used for the filled slider track and row border.</param>
+        /// <returns>The clamped slider value after handling current mouse input.</returns>
         private static float DrawSettingsSlider(Rect rect, string label, float value, Color accentColor)
         {
             float resolvedValue = Mathf.Clamp01(value);
@@ -1217,15 +1248,15 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
-        /// Purpose: Draws settings toggle in the current GUI or scene context.
-        /// Inputs: `rect`, `label`, `value`, `accentColor`; may also read serialized fields and current runtime state.
-        /// Output: a `bool` value.
+        /// Purpose: Draws an interactive ON/OFF settings row.
+        /// Inputs: rect is the row area, label is the row name, value is the current state, and accentColor themes the active state.
+        /// Output: returns the toggled value when the player clicks the row; otherwise returns the original value.
         /// </summary>
-        /// <param name="rect">Input value used by this method.</param>
-        /// <param name="label">Input value used by this method.</param>
-        /// <param name="value">Input value used by this method.</param>
-        /// <param name="accentColor">Input value used by this method.</param>
-        /// <returns>a `bool` value.</returns>
+        /// <param name="rect">Screen-space rectangle for the entire toggle row.</param>
+        /// <param name="label">Player-facing name shown on the left side of the row.</param>
+        /// <param name="value">Current toggle state.</param>
+        /// <param name="accentColor">Color used when the toggle is enabled.</param>
+        /// <returns>The new toggle state after processing the current GUI event.</returns>
         private static bool DrawSettingsToggle(Rect rect, string label, bool value, Color accentColor)
         {
             DrawSettingsRowBackground(rect, accentColor);
@@ -1243,7 +1274,8 @@ namespace BubbleTown.UI
             DrawBubble(knobRect, Color.white);
             GUI.Label(toggleRect, value ? "ON" : "OFF", settingsValueStyle);
 
-            if (GUI.Button(toggleRect, GUIContent.none, invisibleButtonStyle))
+            // Make the full row clickable so the toggle feels forgiving on mouse and trackpad.
+            if (GUI.Button(rect, GUIContent.none, invisibleButtonStyle))
             {
                 return !value;
             }
@@ -1252,16 +1284,24 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
-        /// Purpose: Draws settings row background in the current GUI or scene context.
-        /// Inputs: `rect`, `accentColor`; may also read serialized fields and current runtime state.
-        /// Output: no return value; updates component, scene, or game state as needed.
+        /// Purpose: Draws the rounded card background shared by slider and toggle rows.
+        /// Inputs: rect defines the row bounds and accentColor defines the colored left stripe/border.
+        /// Output: no return value; renders a hover-highlighted row background.
         /// </summary>
-        /// <param name="rect">Input value used by this method.</param>
-        /// <param name="accentColor">Input value used by this method.</param>
+        /// <param name="rect">Screen-space rectangle for the row background.</param>
+        /// <param name="accentColor">Theme color for the row accent stripe and hover border.</param>
         private static void DrawSettingsRowBackground(Rect rect, Color accentColor)
         {
+            bool isHovered = Event.current != null && rect.Contains(Event.current.mousePosition);
+            Color fillColor = isHovered
+                ? new Color(1f, 0.99f, 0.82f, 0.98f)
+                : new Color(1f, 0.96f, 0.76f, 0.96f);
+            Color borderColor = isHovered
+                ? Color.Lerp(accentColor, Color.white, 0.05f)
+                : Color.Lerp(accentColor, Color.white, 0.2f);
+
             DrawRoundedRect(new Rect(rect.x + 3f, rect.y + 4f, rect.width, rect.height), PanelShadow, PanelShadow, 14, 0);
-            DrawRoundedRect(rect, new Color(1f, 0.96f, 0.76f, 0.96f), Color.Lerp(accentColor, Color.white, 0.2f), 14, 2);
+            DrawRoundedRect(rect, fillColor, borderColor, 14, isHovered ? 3 : 2);
             DrawRoundedRect(new Rect(rect.x + 8f, rect.y + 7f, 5f, rect.height - 14f), accentColor, Color.clear, 4, 0);
         }
 
@@ -2016,6 +2056,15 @@ namespace BubbleTown.UI
                 normal = { textColor = TextPrimary }
             };
             LockTextColor(settingsValueStyle, TextPrimary);
+
+            settingsFeedbackStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 12,
+                fontStyle = FontStyle.Bold,
+                normal = { textColor = TextPrimary }
+            };
+            LockTextColor(settingsFeedbackStyle, TextPrimary);
 
             invisibleButtonStyle = new GUIStyle(GUIStyle.none);
         }
