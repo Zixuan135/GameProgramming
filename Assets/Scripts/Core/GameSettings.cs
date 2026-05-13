@@ -184,9 +184,9 @@ namespace BubbleTown.Core
         }
 
         /// <summary>
-        /// Purpose: Resets to defaults to a safe default state.
-        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
-        /// Output: no return value; updates component, scene, or game state as needed.
+        /// Purpose: Restores every saved player-facing setting to the project defaults.
+        /// Inputs: no direct parameters; uses the default constants in this class.
+        /// Output: no return value; updates cached settings and writes the default values to PlayerPrefs.
         /// </summary>
         public static void ResetToDefaults()
         {
