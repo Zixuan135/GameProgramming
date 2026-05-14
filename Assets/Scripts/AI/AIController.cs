@@ -42,6 +42,12 @@ namespace BubbleTown.AI
         [SerializeField, Min(0.1f)] private float strategicMoveRetryDelay = 0.18f;
         [SerializeField, Min(0f)] private float postBombEscapeSeconds = 1.4f;
 
+        [Header("AI Safety Scoring")]
+        [SerializeField, Min(0)] private int minimumSafeNeighborsAfterBomb = 1;
+        [SerializeField, Min(0f)] private float safeNeighborScoreWeight = 4f;
+        [SerializeField, Min(0f)] private float bombDistanceScoreWeight = 1.2f;
+        [SerializeField, Min(0f)] private float escapeDepthPenalty = 0.35f;
+
         [Header("AI Bomb Logic")]
         [SerializeField] private bool enableBombPlacement = true;
         [SerializeField, Min(0.25f)] private float bombDecisionInterval = 2f;
@@ -225,9 +231,18 @@ namespace BubbleTown.AI
             if (TryFindPlayerAttackPositionDirection(out Vector2Int playerDirection, out Vector2Int playerTarget))
             {
                 currentStrategicTarget = playerTarget;
-                currentIntent = "Chase Player";
-                LogDecision($"Moving toward player attack position via {playerDirection}. Target: {playerTarget}");
+                currentIntent = "Set Player Trap";
+                LogDecision($"Moving toward safe player attack position via {playerDirection}. Target: {playerTarget}");
                 TryMoveOrRegisterFailure(playerDirection, strategicMoveRetryDelay);
+                return true;
+            }
+
+            if (TryFindPlayerChaseDirection(out Vector2Int chaseDirection, out Vector2Int chaseTarget))
+            {
+                currentStrategicTarget = chaseTarget;
+                currentIntent = "Chase Player";
+                LogDecision($"Closing distance to player via {chaseDirection}. Target: {chaseTarget}");
+                TryMoveOrRegisterFailure(chaseDirection, strategicMoveRetryDelay);
                 return true;
             }
 
@@ -606,13 +621,13 @@ namespace BubbleTown.AI
         }
 
         /// <summary>
-        /// Purpose: Attempts to find player attack position direction.
-        /// Inputs: `direction`, `targetGridPosition`; may also read serialized fields and current runtime state.
-        /// Output: a `bool` value.
+        /// Purpose: Finds the first step toward a cell where the AI can safely threaten the nearest player with a bomb.
+        /// Inputs: no direct parameters; reads the nearest active player, map data, bomb range, and escape settings.
+        /// Output: returns true when a safe attack route exists and outputs the first step plus the target attack cell.
         /// </summary>
-        /// <param name="direction">Input value used by this method.</param>
-        /// <param name="targetGridPosition">Input value used by this method.</param>
-        /// <returns>a `bool` value.</returns>
+        /// <param name="direction">First grid step toward the attack cell.</param>
+        /// <param name="targetGridPosition">Reachable grid cell where a bomb could threaten the player and still leave an escape route.</param>
+        /// <returns>True if a safe attack position was found; otherwise false.</returns>
         private bool TryFindPlayerAttackPositionDirection(out Vector2Int direction, out Vector2Int targetGridPosition)
         {
             direction = Vector2Int.zero;
@@ -637,10 +652,48 @@ namespace BubbleTown.AI
             }
 
             return TryFindDirectionToGoal(
-                position => position != CurrentGridPosition && IsGridInBombBlast(playerGridPosition, position, BombRange),
+                position => position != CurrentGridPosition &&
+                            IsGridInBombBlast(playerGridPosition, position, BombRange) &&
+                            CanSafelyPlantBombAt(position),
                 playerChaseDistance,
                 true,
-                out direction);
+                out direction,
+                out targetGridPosition);
+        }
+
+        /// <summary>
+        /// Purpose: Finds a stable step that moves the AI closer to the nearest player when no safe bomb trap is ready.
+        /// Inputs: no direct parameters; reads active players, map walkability, and danger information.
+        /// Output: returns true and outputs a first step when the AI can reduce distance without entering obvious danger.
+        /// </summary>
+        /// <param name="direction">First grid step toward a closer player approach cell.</param>
+        /// <param name="targetGridPosition">Reachable grid cell chosen as the current chase target.</param>
+        /// <returns>True if a safer chase step was found; otherwise false.</returns>
+        private bool TryFindPlayerChaseDirection(out Vector2Int direction, out Vector2Int targetGridPosition)
+        {
+            direction = Vector2Int.zero;
+            targetGridPosition = Vector2Int.zero;
+
+            if (!TryFindNearestActivePlayer(out PlayerController nearestPlayer))
+            {
+                return false;
+            }
+
+            Vector2Int playerGridPosition = nearestPlayer.CurrentGridPosition;
+            int currentDistance = ManhattanDistance(CurrentGridPosition, playerGridPosition);
+            if (currentDistance <= 1 || currentDistance > playerChaseDistance)
+            {
+                return false;
+            }
+
+            return TryFindDirectionToGoal(
+                position => position != CurrentGridPosition &&
+                            ManhattanDistance(position, playerGridPosition) < currentDistance &&
+                            HasSafeMovementOptions(position),
+                playerChaseDistance,
+                true,
+                out direction,
+                out targetGridPosition);
         }
 
         /// <summary>
@@ -677,13 +730,13 @@ namespace BubbleTown.AI
         }
 
         /// <summary>
-        /// Purpose: Attempts to find soft wall approach direction.
-        /// Inputs: `direction`, `targetGridPosition`; may also read serialized fields and current runtime state.
-        /// Output: a `bool` value.
+        /// Purpose: Finds the first step toward a soft-wall clearing position that still has a post-bomb escape route.
+        /// Inputs: no direct parameters; reads map cells, bomb range, and configured search depth.
+        /// Output: returns true when a safe soft-wall approach cell exists and outputs the first step plus target cell.
         /// </summary>
-        /// <param name="direction">Input value used by this method.</param>
-        /// <param name="targetGridPosition">Input value used by this method.</param>
-        /// <returns>a `bool` value.</returns>
+        /// <param name="direction">First grid step toward the soft-wall approach cell.</param>
+        /// <param name="targetGridPosition">Reachable cell beside a soft wall where the AI can safely plant a bomb later.</param>
+        /// <returns>True if a safe soft-wall approach was found; otherwise false.</returns>
         private bool TryFindSoftWallApproachDirection(out Vector2Int direction, out Vector2Int targetGridPosition)
         {
             direction = Vector2Int.zero;
@@ -694,35 +747,54 @@ namespace BubbleTown.AI
                 return false;
             }
 
-            bool found = TryFindDirectionToGoal(
-                position => HasAdjacentSoftWall(position),
+            return TryFindDirectionToGoal(
+                position => HasAdjacentSoftWall(position) && CanSafelyPlantBombAt(position),
                 softWallTargetSearchDepth,
                 true,
-                out direction);
-
-            if (found)
-            {
-                targetGridPosition = CurrentGridPosition + direction;
-            }
-
-            return found;
+                out direction,
+                out targetGridPosition);
         }
 
         /// <summary>
-        /// Purpose: Returns whether this object can reach safety after placing bomb.
-        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
-        /// Output: a `bool` value.
+        /// Purpose: Checks whether the AI can escape if it plants a bomb on its current cell.
+        /// Inputs: no direct parameters; reads the current grid position, bomb range, map data, and active danger.
+        /// Output: returns true when a safe cell can be reached within the configured bomb escape search depth.
         /// </summary>
-        /// <returns>a `bool` value.</returns>
+        /// <returns>True if the AI can escape its own bomb from the current cell; otherwise false.</returns>
         private bool CanReachSafetyAfterPlacingBomb()
         {
-            Vector2Int hypotheticalBombGridPosition = CurrentGridPosition;
-            return TryFindEscapeDirection(
-                gridPosition => IsGridDangerous(gridPosition) || IsGridInBombBlast(gridPosition, hypotheticalBombGridPosition, BombRange),
+            return CanSafelyPlantBombAt(CurrentGridPosition);
+        }
+
+        /// <summary>
+        /// Purpose: Checks whether a candidate cell is a safe place for the AI to plant a bomb later.
+        /// Inputs: bombGridPosition is the candidate bomb cell; reads bomb range, map data, and current active danger.
+        /// Output: returns true when the cell has a reachable escape path after the hypothetical bomb is placed.
+        /// </summary>
+        /// <param name="bombGridPosition">Candidate grid cell where the AI may plant a bomb.</param>
+        /// <returns>True if the candidate bomb cell has a safe escape route; otherwise false.</returns>
+        private bool CanSafelyPlantBombAt(Vector2Int bombGridPosition)
+        {
+            return TryFindEscapeDirectionFrom(
+                bombGridPosition,
+                gridPosition => IsGridDangerous(gridPosition) || IsGridInBombBlast(gridPosition, bombGridPosition, BombRange),
                 bombEscapeSearchDepth,
                 true,
-                hypotheticalBombGridPosition,
+                bombGridPosition,
                 out _);
+        }
+
+        /// <summary>
+        /// Purpose: Checks whether a movement target has enough nearby safe options to avoid obvious dead ends.
+        /// Inputs: gridPosition is the candidate movement cell; reads map walkability and danger.
+        /// Output: returns true when the cell is not dangerous and has at least one safe neighboring route.
+        /// </summary>
+        /// <param name="gridPosition">Candidate grid cell being evaluated for movement.</param>
+        /// <returns>True if the cell is safe enough for strategic movement; otherwise false.</returns>
+        private bool HasSafeMovementOptions(Vector2Int gridPosition)
+        {
+            return !IsGridDangerous(gridPosition) &&
+                   CountSafeNeighborCells(gridPosition, IsGridDangerous, false, Vector2Int.zero) >= minimumSafeNeighborsAfterBomb;
         }
 
         /// <summary>
@@ -741,7 +813,29 @@ namespace BubbleTown.AI
             bool avoidDangerousCells,
             out Vector2Int direction)
         {
+            return TryFindDirectionToGoal(isGoal, maxDepth, avoidDangerousCells, out direction, out _);
+        }
+
+        /// <summary>
+        /// Purpose: Searches nearby walkable cells and returns both the first step and matched goal cell.
+        /// Inputs: isGoal tests cells, maxDepth limits search, and avoidDangerousCells skips active danger while pathing.
+        /// Output: returns true with direction and targetGridPosition when a reachable goal is found.
+        /// </summary>
+        /// <param name="isGoal">Callback that returns true for an acceptable target grid cell.</param>
+        /// <param name="maxDepth">Maximum number of grid steps the AI may search from its current cell.</param>
+        /// <param name="avoidDangerousCells">When true, cells threatened by bombs or active explosions are ignored.</param>
+        /// <param name="direction">First grid step the AI should take toward the found goal.</param>
+        /// <param name="targetGridPosition">Actual goal cell found by the breadth-first search.</param>
+        /// <returns>True if a reachable goal was found within maxDepth; otherwise false.</returns>
+        private bool TryFindDirectionToGoal(
+            Func<Vector2Int, bool> isGoal,
+            int maxDepth,
+            bool avoidDangerousCells,
+            out Vector2Int direction,
+            out Vector2Int targetGridPosition)
+        {
             direction = Vector2Int.zero;
+            targetGridPosition = Vector2Int.zero;
             if (MapManager == null || isGoal == null)
             {
                 return false;
@@ -761,6 +855,7 @@ namespace BubbleTown.AI
                 if (currentNode.Depth > 0 && isGoal(currentNode.Position))
                 {
                     direction = currentNode.FirstDirection;
+                    targetGridPosition = currentNode.Position;
                     return true;
                 }
 
@@ -817,16 +912,47 @@ namespace BubbleTown.AI
             Vector2Int blockedBombCell,
             out Vector2Int direction)
         {
+            return TryFindEscapeDirectionFrom(
+                CurrentGridPosition,
+                isDangerous,
+                maxDepth,
+                hasBlockedBombCell,
+                blockedBombCell,
+                out direction);
+        }
+
+        /// <summary>
+        /// Purpose: Searches from any start cell and chooses the safest reachable escape cell, not just the first safe one.
+        /// Inputs: startPosition is the simulated AI cell, isDangerous marks unsafe cells, maxDepth limits search, and blockedBombCell can represent a newly planted bomb.
+        /// Output: returns true and outputs the first step toward the best-scored safe cell; otherwise returns false.
+        /// </summary>
+        /// <param name="startPosition">Grid cell where the escape search begins.</param>
+        /// <param name="isDangerous">Callback that returns true when a grid cell is unsafe.</param>
+        /// <param name="maxDepth">Maximum number of grid steps the AI may inspect.</param>
+        /// <param name="hasBlockedBombCell">Whether blockedBombCell should be treated as unwalkable after leaving it.</param>
+        /// <param name="blockedBombCell">Bomb cell to avoid, usually the AI's current or simulated bomb cell.</param>
+        /// <param name="direction">First grid step toward the best escape cell.</param>
+        /// <returns>True if at least one safe escape cell was found; otherwise false.</returns>
+        private bool TryFindEscapeDirectionFrom(
+            Vector2Int startPosition,
+            Func<Vector2Int, bool> isDangerous,
+            int maxDepth,
+            bool hasBlockedBombCell,
+            Vector2Int blockedBombCell,
+            out Vector2Int direction)
+        {
             direction = Vector2Int.zero;
-            if (MapManager == null)
+            if (MapManager == null || isDangerous == null)
             {
                 return false;
             }
 
-            // The queue explores cells in rings around the AI, so the first safe cell is nearby.
+            // The queue explores the map in short paths; scoring below keeps the final choice less trap-prone.
             Queue<EscapeSearchNode> openNodes = new Queue<EscapeSearchNode>();
             HashSet<Vector2Int> visitedPositions = new HashSet<Vector2Int>();
-            Vector2Int startPosition = CurrentGridPosition;
+            Vector2Int bestDirection = Vector2Int.zero;
+            float bestScore = float.MinValue;
+            bool foundSafeCell = false;
 
             openNodes.Enqueue(new EscapeSearchNode(startPosition, Vector2Int.zero, 0));
             visitedPositions.Add(startPosition);
@@ -836,8 +962,19 @@ namespace BubbleTown.AI
                 EscapeSearchNode currentNode = openNodes.Dequeue();
                 if (currentNode.Depth > 0 && !isDangerous(currentNode.Position))
                 {
-                    direction = currentNode.FirstDirection;
-                    return true;
+                    float score = CalculateEscapeCellScore(
+                        currentNode.Position,
+                        currentNode.Depth,
+                        isDangerous,
+                        hasBlockedBombCell,
+                        blockedBombCell);
+
+                    if (!foundSafeCell || score > bestScore)
+                    {
+                        foundSafeCell = true;
+                        bestScore = score;
+                        bestDirection = currentNode.FirstDirection;
+                    }
                 }
 
                 if (currentNode.Depth >= maxDepth)
@@ -860,6 +997,11 @@ namespace BubbleTown.AI
                         continue;
                     }
 
+                    if (IsGridHitByActiveExplosion(nextPosition))
+                    {
+                        continue;
+                    }
+
                     // Keep the original first step instead of storing the whole path.
                     Vector2Int firstDirection = currentNode.Depth == 0 ? stepDirection : currentNode.FirstDirection;
                     openNodes.Enqueue(new EscapeSearchNode(nextPosition, firstDirection, currentNode.Depth + 1));
@@ -867,19 +1009,89 @@ namespace BubbleTown.AI
                 }
             }
 
-            return false;
+            direction = bestDirection;
+            return foundSafeCell;
         }
 
         /// <summary>
-        /// Purpose: Returns whether this object can use cell for escape search.
-        /// Inputs: `gridPosition`, `startPosition`, `hasBlockedBombCell`, `blockedBombCell`; may also read serialized fields and current runtime state.
-        /// Output: a `bool` value.
+        /// Purpose: Scores a safe escape candidate so the AI prefers open cells farther away from its own bomb.
+        /// Inputs: gridPosition is the safe candidate, depth is path length, isDangerous checks neighbor safety, and blockedBombCell marks the bomb cell if any.
+        /// Output: returns a higher score for safer, more flexible escape destinations.
         /// </summary>
-        /// <param name="gridPosition">Input value used by this method.</param>
-        /// <param name="startPosition">Input value used by this method.</param>
-        /// <param name="hasBlockedBombCell">Input value used by this method.</param>
-        /// <param name="blockedBombCell">Input value used by this method.</param>
-        /// <returns>a `bool` value.</returns>
+        /// <param name="gridPosition">Safe candidate cell being scored.</param>
+        /// <param name="depth">Number of grid steps from the escape start to this candidate.</param>
+        /// <param name="isDangerous">Callback that returns true when a grid cell is unsafe.</param>
+        /// <param name="hasBlockedBombCell">Whether blockedBombCell should affect the distance score.</param>
+        /// <param name="blockedBombCell">Bomb cell the AI should move away from.</param>
+        /// <returns>Weighted score used to choose the best escape direction.</returns>
+        private float CalculateEscapeCellScore(
+            Vector2Int gridPosition,
+            int depth,
+            Func<Vector2Int, bool> isDangerous,
+            bool hasBlockedBombCell,
+            Vector2Int blockedBombCell)
+        {
+            int safeNeighborCount = CountSafeNeighborCells(gridPosition, isDangerous, hasBlockedBombCell, blockedBombCell);
+            int bombDistance = hasBlockedBombCell ? ManhattanDistance(gridPosition, blockedBombCell) : 0;
+            float openSpaceScore = safeNeighborCount * safeNeighborScoreWeight;
+            float distanceScore = bombDistance * bombDistanceScoreWeight;
+            float pathPenalty = depth * escapeDepthPenalty;
+
+            // Cells with no safe exits are still usable in emergencies, but the AI should prefer open routes.
+            if (safeNeighborCount < minimumSafeNeighborsAfterBomb)
+            {
+                openSpaceScore -= safeNeighborScoreWeight;
+            }
+
+            return openSpaceScore + distanceScore - pathPenalty;
+        }
+
+        /// <summary>
+        /// Purpose: Counts safe neighboring cells around a candidate position.
+        /// Inputs: gridPosition is the center cell, isDangerous checks danger, and blockedBombCell represents a bomb to avoid.
+        /// Output: returns the number of adjacent cells that are physically usable and not dangerous.
+        /// </summary>
+        /// <param name="gridPosition">Center grid cell whose neighbors are checked.</param>
+        /// <param name="isDangerous">Callback that returns true when a neighboring cell is unsafe.</param>
+        /// <param name="hasBlockedBombCell">Whether blockedBombCell should be treated as blocked.</param>
+        /// <param name="blockedBombCell">Bomb cell to exclude from safe neighbor counting.</param>
+        /// <returns>Number of safe neighboring cells around gridPosition.</returns>
+        private int CountSafeNeighborCells(
+            Vector2Int gridPosition,
+            Func<Vector2Int, bool> isDangerous,
+            bool hasBlockedBombCell,
+            Vector2Int blockedBombCell)
+        {
+            int safeNeighborCount = 0;
+            for (int i = 0; i < MoveDirections.Length; i++)
+            {
+                Vector2Int neighborPosition = gridPosition + MoveDirections[i];
+                if (!CanUseCellForEscapeSearch(neighborPosition, gridPosition, hasBlockedBombCell, blockedBombCell))
+                {
+                    continue;
+                }
+
+                if (isDangerous != null && isDangerous(neighborPosition))
+                {
+                    continue;
+                }
+
+                safeNeighborCount++;
+            }
+
+            return safeNeighborCount;
+        }
+
+        /// <summary>
+        /// Purpose: Checks whether a cell can be used by AI path searches that simulate escaping from bombs.
+        /// Inputs: gridPosition is the tested cell, startPosition is always allowed, and blockedBombCell may represent a bomb.
+        /// Output: returns true when the cell is physically usable for the simulated path.
+        /// </summary>
+        /// <param name="gridPosition">Grid cell being tested for escape search usage.</param>
+        /// <param name="startPosition">Search start cell that remains usable even when it contains the AI or a just-placed bomb.</param>
+        /// <param name="hasBlockedBombCell">Whether blockedBombCell should be treated as unwalkable after leaving it.</param>
+        /// <param name="blockedBombCell">Bomb cell to avoid during the search.</param>
+        /// <returns>True if the search may move through this cell; otherwise false.</returns>
         private bool CanUseCellForEscapeSearch(
             Vector2Int gridPosition,
             Vector2Int startPosition,
@@ -896,7 +1108,26 @@ namespace BubbleTown.AI
                 return false;
             }
 
+            if (gridPosition == CurrentGridPosition)
+            {
+                return IsGridPhysicallyWalkableIgnoringCharacters(gridPosition);
+            }
+
             return IsGridWalkable(gridPosition);
+        }
+
+        /// <summary>
+        /// Purpose: Checks wall and bomb blocking while ignoring character occupancy for AI simulations.
+        /// Inputs: gridPosition is the tested map cell.
+        /// Output: returns true when the cell has no wall or bomb, even if the AI currently occupies it.
+        /// </summary>
+        /// <param name="gridPosition">Grid cell being checked for physical blocking.</param>
+        /// <returns>True if walls and bombs do not block the cell; otherwise false.</returns>
+        private bool IsGridPhysicallyWalkableIgnoringCharacters(Vector2Int gridPosition)
+        {
+            return MapManager != null &&
+                   !MapManager.IsBlockedByWall(gridPosition) &&
+                   !MapManager.IsBlockedByBomb(gridPosition);
         }
 
         /// <summary>
