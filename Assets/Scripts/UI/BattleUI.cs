@@ -69,6 +69,9 @@ namespace BubbleTown.UI
         [SerializeField, Range(0f, 0.2f)] private float gameplayBottomFillNormalized = 0f;
         [SerializeField] private Color hudSafeBackgroundColor = new Color(0.74f, 0.93f, 1f, 1f);
 
+        [Header("Canvas HUD Migration")]
+        [SerializeField] private bool useCanvasHud = true;
+
         private static readonly Dictionary<string, Texture2D> RoundedTextureCache = new Dictionary<string, Texture2D>();
         private GUIStyle hudTextStyle;
         private GUIStyle hudSmallStyle;
@@ -101,6 +104,124 @@ namespace BubbleTown.UI
         private float pickupToastTimer;
         private string resultPromptTitle;
         private string resultPromptDetail;
+        private BattleCanvasHUD canvasHud;
+
+        /// <summary>
+        /// Purpose: Reports whether the item guide overlay is currently open.
+        /// Inputs: no direct parameters; reads the local item guide state.
+        /// Output: returns true while the item guide overlay should be visible.
+        /// </summary>
+        public bool IsItemGuideOpen => isItemGuideOpen;
+
+        /// <summary>
+        /// Purpose: Reports whether the battle pause menu is currently open.
+        /// Inputs: no direct parameters; reads the local pause state.
+        /// Output: returns true while gameplay is paused by BattleUI.
+        /// </summary>
+        public bool IsBattlePaused => isPaused;
+
+        /// <summary>
+        /// Purpose: Reports whether the pause settings sub-panel is currently open.
+        /// Inputs: no direct parameters; reads the local pause settings state.
+        /// Output: returns true while the Canvas settings panel should be visible.
+        /// </summary>
+        public bool IsPauseSettingsOpen => isPauseSettingsOpen;
+
+        /// <summary>
+        /// Purpose: Reports whether the Ready/Go opening prompt should be visible.
+        /// Inputs: no direct parameters; reads the opening prompt timer.
+        /// Output: returns true while the opening prompt timer is active.
+        /// </summary>
+        public bool IsOpeningPromptVisible => openingPromptTimer > 0f;
+
+        /// <summary>
+        /// Purpose: Reports whether the opening prompt is still in the READY phase.
+        /// Inputs: no direct parameters; reads the round-start flag.
+        /// Output: returns true before controls are released on GO.
+        /// </summary>
+        public bool IsOpeningReadyPhase => !roundStartTriggered;
+
+        /// <summary>
+        /// Purpose: Provides the current opening prompt title for Canvas rendering.
+        /// Inputs: no direct parameters; reads ready/go prompt text and round-start state.
+        /// Output: returns READY or GO-style title text.
+        /// </summary>
+        public string OpeningPromptTitle => IsOpeningReadyPhase ? readyText : goText;
+
+        /// <summary>
+        /// Purpose: Provides the current opening prompt body for Canvas rendering.
+        /// Inputs: no direct parameters; reads protection timers and opening prompt phase.
+        /// Output: returns the helper text shown below READY/GO.
+        /// </summary>
+        public string OpeningPromptBody
+        {
+            get
+            {
+                if (IsOpeningReadyPhase)
+                {
+                    return "Controls unlock on GO";
+                }
+
+                float protectionRemaining = ResolveMaxProtectionRemaining(GameManager.Instance);
+                return protectionRemaining > 0f ? $"Shield {protectionRemaining:0.0}s" : "Move!";
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Reports whether an in-battle result prompt should be visible.
+        /// Inputs: no direct parameters; reads queued result flags.
+        /// Output: returns true while a delayed result or next-round prompt is active.
+        /// </summary>
+        public bool IsResultPromptVisible => resultQueued || localVsNextRoundQueued;
+
+        /// <summary>
+        /// Purpose: Provides the result prompt title for Canvas rendering.
+        /// Inputs: no direct parameters; reads the queued result title.
+        /// Output: returns a non-empty title string.
+        /// </summary>
+        public string ResultPromptTitle => string.IsNullOrEmpty(resultPromptTitle) ? "Battle Finished" : resultPromptTitle;
+
+        /// <summary>
+        /// Purpose: Provides the result prompt detail for Canvas rendering.
+        /// Inputs: no direct parameters; reads the queued result detail.
+        /// Output: returns a non-empty detail string.
+        /// </summary>
+        public string ResultPromptDetail => string.IsNullOrEmpty(resultPromptDetail) ? "The battle has ended." : resultPromptDetail;
+
+        /// <summary>
+        /// Purpose: Provides result prompt entrance progress for Canvas animation.
+        /// Inputs: no direct parameters; reads queued result timers.
+        /// Output: returns a 0-1 progress value.
+        /// </summary>
+        public float ResultPromptEntrance => ResolveQueuedPromptEntrance();
+
+        /// <summary>
+        /// Purpose: Reports whether the pickup toast should be visible.
+        /// Inputs: no direct parameters; reads toast text and timer.
+        /// Output: returns true while a pickup toast is active.
+        /// </summary>
+        public bool IsPickupToastVisible => pickupToastTimer > 0f && !string.IsNullOrEmpty(pickupToastText);
+
+        /// <summary>
+        /// Purpose: Provides pickup toast text for Canvas rendering.
+        /// Inputs: no direct parameters; reads the latest pickup message.
+        /// Output: returns the visible pickup message.
+        /// </summary>
+        public string PickupToastText => pickupToastText;
+
+        /// <summary>
+        /// Purpose: Provides pickup toast color for Canvas rendering.
+        /// Inputs: no direct parameters; reads the serialized toast color.
+        /// Output: returns the current toast color.
+        /// </summary>
+        public Color PickupToastColor => pickupToastColor;
+
+        /// <summary>
+        /// Purpose: Provides pickup toast entrance progress for Canvas animation.
+        /// Inputs: no direct parameters; reads toast timer and total toast duration.
+        /// Output: returns a 0-1 progress value.
+        /// </summary>
+        public float PickupToastProgress01 => pickupToastSeconds <= 0f ? 1f : Mathf.Clamp01(1f - pickupToastTimer / pickupToastSeconds);
 
         /// <summary>
         /// Purpose: Initializes this component before the scene starts running.
@@ -110,6 +231,7 @@ namespace BubbleTown.UI
         private void Awake()
         {
             ResetBattleHudState();
+            EnsureCanvasHud();
         }
 
         /// <summary>
@@ -124,6 +246,9 @@ namespace BubbleTown.UI
             {
                 ResetBattleHudState();
             }
+
+            EnsureCanvasHud();
+            RefreshCanvasHud();
         }
 
         /// <summary>
@@ -135,6 +260,11 @@ namespace BubbleTown.UI
         {
             RestoreTimeScaleIfPaused();
             ItemBase.ItemPickedUp -= HandleItemPickedUp;
+
+            if (canvasHud != null)
+            {
+                canvasHud.SetVisible(false);
+            }
         }
 
         /// <summary>
@@ -147,6 +277,7 @@ namespace BubbleTown.UI
             TickPauseInput();
             if (isPaused)
             {
+                RefreshCanvasHud();
                 return;
             }
 
@@ -161,6 +292,8 @@ namespace BubbleTown.UI
             {
                 EvaluateBattleResult();
             }
+
+            RefreshCanvasHud();
         }
 
         /// <summary>
@@ -170,6 +303,12 @@ namespace BubbleTown.UI
         /// </summary>
         private void OnGUI()
         {
+            bool canvasHudActive = IsCanvasHudActive();
+            if (canvasHudActive)
+            {
+                return;
+            }
+
             EnsureStyles();
             DrawHudSafeBackground();
             DrawBattleHud();
@@ -181,12 +320,6 @@ namespace BubbleTown.UI
             }
 
             DrawBottomControls();
-
-            if (isPaused)
-            {
-                DrawPauseMenu();
-                return;
-            }
 
             DrawPickupToast();
             DrawOpeningPrompt();
@@ -256,6 +389,96 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
+        /// Purpose: Handles the Canvas pause button without exposing pause internals to the Canvas HUD.
+        /// Inputs: no direct parameters; reads current battle state to decide whether pausing is allowed.
+        /// Output: no return value; opens the pause menu when the battle can be paused.
+        /// </summary>
+        public void OnCanvasPauseRequested()
+        {
+            SetPaused(true);
+            RefreshCanvasHud();
+        }
+
+        /// <summary>
+        /// Purpose: Handles the Canvas resume button.
+        /// Inputs: no direct parameters; reads current pause state.
+        /// Output: no return value; resumes gameplay and refreshes Canvas overlays.
+        /// </summary>
+        public void OnCanvasResumeRequested()
+        {
+            SetPaused(false);
+            RefreshCanvasHud();
+        }
+
+        /// <summary>
+        /// Purpose: Opens the Canvas settings sub-panel from the pause menu.
+        /// Inputs: no direct parameters; reads current pause state.
+        /// Output: no return value; toggles the settings panel only while paused.
+        /// </summary>
+        public void OnCanvasSettingsRequested()
+        {
+            if (!isPaused)
+            {
+                return;
+            }
+
+            isPauseSettingsOpen = true;
+            AudioManager.Instance?.PlayButtonClickSFX();
+            RefreshCanvasHud();
+        }
+
+        /// <summary>
+        /// Purpose: Closes the Canvas settings sub-panel and returns to the pause menu.
+        /// Inputs: no direct parameters; reads current pause state.
+        /// Output: no return value; hides the settings panel and refreshes Canvas overlays.
+        /// </summary>
+        public void OnCanvasCloseSettingsRequested()
+        {
+            if (!isPauseSettingsOpen)
+            {
+                return;
+            }
+
+            isPauseSettingsOpen = false;
+            AudioManager.Instance?.PlayButtonClickSFX();
+            RefreshCanvasHud();
+        }
+
+        /// <summary>
+        /// Purpose: Handles the Canvas item guide button.
+        /// Inputs: no direct parameters; reads pause state so guide cannot open behind the pause menu.
+        /// Output: no return value; toggles the item guide overlay and refreshes Canvas button text.
+        /// </summary>
+        public void OnCanvasItemGuideRequested()
+        {
+            if (isPaused)
+            {
+                return;
+            }
+
+            AudioManager.Instance?.PlayButtonClickSFX();
+            isItemGuideOpen = !isItemGuideOpen;
+            RefreshCanvasHud();
+        }
+
+        /// <summary>
+        /// Purpose: Closes the Canvas item guide overlay.
+        /// Inputs: no direct parameters; reads current item guide state.
+        /// Output: no return value; hides the guide and refreshes Canvas button text.
+        /// </summary>
+        public void OnCanvasCloseItemGuideRequested()
+        {
+            if (!isItemGuideOpen)
+            {
+                return;
+            }
+
+            AudioManager.Instance?.PlayButtonClickSFX();
+            isItemGuideOpen = false;
+            RefreshCanvasHud();
+        }
+
+        /// <summary>
         /// Purpose: Performs show battle result prompt for this component.
         /// Inputs: `title`, `detail`, `winner`; may also read serialized fields and current runtime state.
         /// Output: no return value; updates component, scene, or game state as needed.
@@ -292,6 +515,70 @@ namespace BubbleTown.UI
             resultPromptDetail = string.Empty;
             pickupToastText = string.Empty;
             pickupToastTimer = 0f;
+        }
+
+        /// <summary>
+        /// Purpose: Ensures the new Canvas HUD exists when the migration flag is enabled.
+        /// Inputs: no direct parameters; reads useCanvasHud and searches children for an existing BattleCanvasHUD.
+        /// Output: no return value; creates, shows, or hides the runtime Canvas HUD.
+        /// </summary>
+        private void EnsureCanvasHud()
+        {
+            if (!useCanvasHud)
+            {
+                if (canvasHud != null)
+                {
+                    canvasHud.SetVisible(false);
+                }
+
+                return;
+            }
+
+            if (canvasHud == null)
+            {
+                canvasHud = GetComponentInChildren<BattleCanvasHUD>(true);
+            }
+
+            if (canvasHud == null)
+            {
+                canvasHud = BattleCanvasHUD.Create(this);
+            }
+            else
+            {
+                canvasHud.Initialize(this);
+            }
+
+            if (canvasHud != null)
+            {
+                canvasHud.SetVisible(true);
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Refreshes the Canvas HUD from the current battle state when it is enabled.
+        /// Inputs: no direct parameters; reads GameManager and the elapsed battle timer.
+        /// Output: no return value; updates Canvas labels and panel positions.
+        /// </summary>
+        private void RefreshCanvasHud()
+        {
+            if (!useCanvasHud)
+            {
+                return;
+            }
+
+            EnsureCanvasHud();
+            canvasHud?.Refresh(GameManager.Instance, battleElapsedSeconds);
+        }
+
+        /// <summary>
+        /// Purpose: Checks whether the Canvas HUD is currently responsible for the persistent left HUD.
+        /// Inputs: no direct parameters; reads the migration flag and Canvas HUD active state.
+        /// Output: returns true when OnGUI should skip drawing the old persistent HUD.
+        /// </summary>
+        /// <returns>True when the runtime Canvas HUD is active.</returns>
+        private bool IsCanvasHudActive()
+        {
+            return useCanvasHud && canvasHud != null && canvasHud.gameObject.activeInHierarchy;
         }
 
         /// <summary>
@@ -380,6 +667,7 @@ namespace BubbleTown.UI
             }
 
             AudioManager.Instance?.PlayButtonClickSFX();
+            RefreshCanvasHud();
         }
 
         /// <summary>
