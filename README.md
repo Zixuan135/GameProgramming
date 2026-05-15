@@ -16,7 +16,7 @@ The project currently uses low-cost placeholder art and procedural Unity primiti
 - AI Battle mode with a basic grid-aware opponent
 - Local VS mode with shared-keyboard controls and Best of 3 scoring
 - Player-facing menu flow: Main Menu, Mode Select, Character Select, Map Select, Battle, Result
-- Battle HUD with mode, map, timer, objective, player stats, item guide, and a compact pause entry
+- Canvas-based Battle HUD with mode, map, timer, objective, player stats, item guide, pause, and settings overlays
 - Built-in placeholder BGM/SFX with settings, reset defaults, preview playback, mute, and screen shake
 
 ## Game Modes
@@ -89,7 +89,7 @@ These sounds are placeholders and can be replaced later with final original or l
 
 BubbleTown is currently a playable prototype rather than a finished game. The core loop is in place: choose a mode, enter a map, move on the grid, place bombs, trigger explosions, collect items, finish a round, and return to the menu or retry.
 
-The current visuals are intentionally lightweight. Most assets are placeholder primitives or generated UI shapes, but the game already has a clear playable loop, character selection, readable battle HUD, and basic sound feedback.
+The current visuals are intentionally lightweight. Most assets are placeholder primitives or generated UI shapes, but the game already has a clear playable loop, character selection, a Canvas-backed battle HUD, and basic sound feedback.
 
 ## Project Structure
 
@@ -121,5 +121,6 @@ Docs/                    Art direction, map themes, and visual style notes
 - Polish character silhouettes, animations, and selection icons
 - Replace primitive placeholder art with stronger reusable prefabs
 - Improve AI behavior and game balance
-- Polish menus, HUD, result screen, and feedback animations
+- Convert more runtime-built UI into reusable Canvas prefabs
+- Polish menus, result screen, and feedback animations
 - Continue refining maps so each mode feels distinct and readable
