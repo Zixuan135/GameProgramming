@@ -14,6 +14,7 @@ namespace BubbleTown.Map
         private enum MapVisualTheme
         {
             CandyPark,
+            SnowfieldPlayground,
             JellyMaze
         }
 
@@ -59,6 +60,16 @@ namespace BubbleTown.Map
         private Material jellyDarkMaterial;
         private Material jellyPropCyanMaterial;
         private Material jellyPropPinkMaterial;
+        private Material snowFloorMaterial;
+        private Material snowTileInsetMaterial;
+        private Material snowHardWallMaterial;
+        private Material snowHardWallHighlightMaterial;
+        private Material snowSoftWallMaterial;
+        private Material snowSoftWallRibbonMaterial;
+        private Material snowIceMaterial;
+        private Material snowWoodMaterial;
+        private Material snowPropBlueMaterial;
+        private Material snowPropPinkMaterial;
 
         public int MapWidth => mapWidth;
         public int MapHeight => mapHeight;
@@ -236,6 +247,9 @@ namespace BubbleTown.Map
         {
             switch (visualTheme)
             {
+                case MapVisualTheme.SnowfieldPlayground:
+                    GenerateSnowfieldDecorations(decorationRoot);
+                    break;
                 case MapVisualTheme.JellyMaze:
                     GenerateJellyMazeDecorations(decorationRoot);
                     break;
@@ -269,9 +283,9 @@ namespace BubbleTown.Map
             goalTransform.position = goalWorld;
             goalTransform.rotation = Quaternion.identity;
 
-            Material baseMaterial = visualTheme == MapVisualTheme.JellyMaze ? GetJellyTileInsetMaterial() : GetPropMintMaterial();
-            Material accentMaterial = visualTheme == MapVisualTheme.JellyMaze ? GetJellyGlowMaterial() : GetPropYellowMaterial();
-            Material flagMaterial = visualTheme == MapVisualTheme.JellyMaze ? GetJellyPropPinkMaterial() : GetPropPinkMaterial();
+            Material baseMaterial = ResolveGoalBaseMaterial(visualTheme);
+            Material accentMaterial = ResolveGoalAccentMaterial(visualTheme);
+            Material flagMaterial = ResolveGoalFlagMaterial(visualTheme);
 
             CreatePrimitiveChild(goalTransform, "GoalPad_Large", PrimitiveType.Cylinder, new Vector3(0f, 0.055f, 0f), new Vector3(0.98f, 0.045f, 0.98f), baseMaterial);
             CreatePrimitiveChild(goalTransform, "GoalRing_Outer", PrimitiveType.Cylinder, new Vector3(0f, 0.12f, 0f), new Vector3(0.78f, 0.035f, 0.78f), accentMaterial);
@@ -524,6 +538,179 @@ namespace BubbleTown.Map
             CreatePrimitiveChild(root.transform, "Cloud_Center", PrimitiveType.Sphere, new Vector3(0.04f, 0.08f, 0f), new Vector3(0.64f, 0.36f, 0.3f), GetCreamMaterial());
             CreatePrimitiveChild(root.transform, "Cloud_Right", PrimitiveType.Sphere, new Vector3(0.44f, -0.02f, 0f), new Vector3(0.44f, 0.26f, 0.24f), GetCreamMaterial());
             AddDecorationAnimation(root, root.transform, true, 0.06f, 0.8f, new Vector3(0f, 4f, 0f), false, 0f, 1f);
+        }
+
+        /// <summary>
+        /// Purpose: Generates decorative snowfield props outside the playable grid.
+        /// Inputs: decorationRoot receives visual-only objects around the arena border.
+        /// Output: no return value; creates snow fences, pine trees, gifts, lamps, and snow clouds.
+        /// </summary>
+        /// <param name="decorationRoot">Parent transform for generated snowfield decorations.</param>
+        private void GenerateSnowfieldDecorations(Transform decorationRoot)
+        {
+            float minX = -decorationOuterPadding;
+            float maxX = (mapWidth - 1) * cellSize + decorationOuterPadding;
+            float minZ = -decorationOuterPadding;
+            float maxZ = (mapHeight - 1) * cellSize + decorationOuterPadding;
+            float centerX = (mapWidth - 1) * cellSize * 0.5f;
+            float centerZ = (mapHeight - 1) * cellSize * 0.5f;
+
+            CreateSnowFenceLine(decorationRoot, new Vector3(centerX, 0f, minZ), mapWidth, true, "SnowFence_South");
+            CreateSnowFenceLine(decorationRoot, new Vector3(centerX, 0f, maxZ), mapWidth, true, "SnowFence_North");
+            CreateSnowFenceLine(decorationRoot, new Vector3(minX, 0f, centerZ), mapHeight, false, "SnowFence_West");
+            CreateSnowFenceLine(decorationRoot, new Vector3(maxX, 0f, centerZ), mapHeight, false, "SnowFence_East");
+
+            CreateSnowPineTree(decorationRoot, new Vector3(minX + 0.15f, 0f, minZ + 0.2f), "SnowPine_SouthWest", GetSnowPropBlueMaterial());
+            CreateSnowPineTree(decorationRoot, new Vector3(maxX - 0.15f, 0f, maxZ - 0.2f), "SnowPine_NorthEast", GetSnowPropPinkMaterial());
+            CreateSnowman(decorationRoot, new Vector3(minX + 0.25f, 0f, centerZ + cellSize * 1.5f), "Snowman_West");
+            CreateSnowman(decorationRoot, new Vector3(maxX - 0.25f, 0f, centerZ - cellSize * 1.4f), "Snowman_East");
+            CreateGiftCrate(decorationRoot, new Vector3(centerX - cellSize * 2.2f, 0f, minZ + 0.12f), "GiftCrate_SouthWest", GetSnowPropPinkMaterial());
+            CreateGiftCrate(decorationRoot, new Vector3(centerX + cellSize * 2.1f, 0f, maxZ - 0.12f), "GiftCrate_NorthEast", GetSnowPropBlueMaterial());
+            CreateIceLamp(decorationRoot, new Vector3(centerX, 0f, maxZ - 0.08f), "IceLamp_North");
+            CreateIceLamp(decorationRoot, new Vector3(centerX, 0f, minZ + 0.08f), "IceLamp_South");
+            CreateSnowCloud(decorationRoot, new Vector3(minX + 0.4f, 1.35f, maxZ - 0.05f), "SnowCloud_NorthWest");
+            CreateSnowCloud(decorationRoot, new Vector3(maxX - 0.4f, 1.25f, minZ + 0.05f), "SnowCloud_SouthEast");
+        }
+
+        /// <summary>
+        /// Purpose: Creates a frosty fence line that frames the Snowfield map without blocking gameplay.
+        /// Inputs: parent stores the object; center, lengthCells, and horizontal define placement.
+        /// Output: no return value; creates a decorative rail and posts.
+        /// </summary>
+        /// <param name="parent">Parent transform for the fence line.</param>
+        /// <param name="center">World position for the fence line root.</param>
+        /// <param name="lengthCells">Length measured in grid cells.</param>
+        /// <param name="horizontal">True for an X-axis fence; false for a Z-axis fence.</param>
+        /// <param name="objectName">Generated object name.</param>
+        private void CreateSnowFenceLine(Transform parent, Vector3 center, int lengthCells, bool horizontal, string objectName)
+        {
+            GameObject root = new GameObject(objectName);
+            root.transform.SetParent(parent);
+            root.transform.position = center;
+
+            float length = Mathf.Max(1, lengthCells - 1) * cellSize;
+            Vector3 railScale = horizontal ? new Vector3(length, 0.08f, 0.08f) : new Vector3(0.08f, 0.08f, length);
+            Vector3 postStep = horizontal ? Vector3.right * cellSize * 2f : Vector3.forward * cellSize * 2f;
+            int postCount = Mathf.Max(2, Mathf.CeilToInt(lengthCells / 2f) + 1);
+            Vector3 start = -postStep * ((postCount - 1) * 0.5f);
+
+            CreatePrimitiveChild(root.transform, "Rail_IceTop", PrimitiveType.Cube, new Vector3(0f, 0.58f, 0f), railScale, GetSnowIceMaterial());
+            CreatePrimitiveChild(root.transform, "Rail_WoodBase", PrimitiveType.Cube, new Vector3(0f, 0.34f, 0f), railScale * 1.08f, GetSnowWoodMaterial());
+
+            for (int i = 0; i < postCount; i++)
+            {
+                Vector3 localPosition = start + postStep * i + Vector3.up * 0.38f;
+                CreatePrimitiveChild(root.transform, $"Post_Wood_{i:00}", PrimitiveType.Cube, localPosition, new Vector3(0.16f, 0.68f, 0.16f), GetSnowWoodMaterial());
+                CreatePrimitiveChild(root.transform, $"Post_SnowCap_{i:00}", PrimitiveType.Sphere, localPosition + Vector3.up * 0.38f, new Vector3(0.22f, 0.12f, 0.22f), GetSnowFloorMaterial());
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Creates a simple chibi pine tree with snow caps.
+        /// Inputs: parent, position, objectName, and accentMaterial define the tree.
+        /// Output: no return value; creates a visual-only tree object.
+        /// </summary>
+        /// <param name="parent">Parent transform for the tree.</param>
+        /// <param name="position">World position outside the grid.</param>
+        /// <param name="objectName">Generated object name.</param>
+        /// <param name="accentMaterial">Color accent for ornaments.</param>
+        private void CreateSnowPineTree(Transform parent, Vector3 position, string objectName, Material accentMaterial)
+        {
+            GameObject root = new GameObject(objectName);
+            root.transform.SetParent(parent);
+            root.transform.position = position;
+
+            CreatePrimitiveChild(root.transform, "Trunk", PrimitiveType.Cylinder, new Vector3(0f, 0.34f, 0f), new Vector3(0.16f, 0.34f, 0.16f), GetSnowWoodMaterial());
+            CreatePrimitiveChild(root.transform, "Pine_Lower", PrimitiveType.Cylinder, new Vector3(0f, 0.72f, 0f), new Vector3(0.52f, 0.28f, 0.52f), GetSnowPropBlueMaterial());
+            CreatePrimitiveChild(root.transform, "Pine_Middle", PrimitiveType.Cylinder, new Vector3(0f, 0.98f, 0f), new Vector3(0.4f, 0.24f, 0.4f), GetSnowIceMaterial());
+            CreatePrimitiveChild(root.transform, "Pine_Top", PrimitiveType.Cylinder, new Vector3(0f, 1.2f, 0f), new Vector3(0.28f, 0.22f, 0.28f), GetSnowPropBlueMaterial());
+            CreatePrimitiveChild(root.transform, "SnowCap", PrimitiveType.Sphere, new Vector3(0f, 1.35f, 0f), new Vector3(0.28f, 0.1f, 0.28f), GetSnowFloorMaterial());
+            CreatePrimitiveChild(root.transform, "TinyOrnament", PrimitiveType.Sphere, new Vector3(0.18f, 1.02f, -0.2f), new Vector3(0.12f, 0.12f, 0.12f), accentMaterial);
+        }
+
+        /// <summary>
+        /// Purpose: Creates a readable snowman decoration.
+        /// Inputs: parent, position, and objectName define placement and naming.
+        /// Output: no return value; creates a visual-only snowman.
+        /// </summary>
+        /// <param name="parent">Parent transform for the snowman.</param>
+        /// <param name="position">World position outside the grid.</param>
+        /// <param name="objectName">Generated object name.</param>
+        private void CreateSnowman(Transform parent, Vector3 position, string objectName)
+        {
+            GameObject root = new GameObject(objectName);
+            root.transform.SetParent(parent);
+            root.transform.position = position;
+
+            CreatePrimitiveChild(root.transform, "Body", PrimitiveType.Sphere, new Vector3(0f, 0.42f, 0f), new Vector3(0.5f, 0.42f, 0.5f), GetSnowFloorMaterial());
+            CreatePrimitiveChild(root.transform, "Head", PrimitiveType.Sphere, new Vector3(0f, 0.88f, 0f), new Vector3(0.34f, 0.34f, 0.34f), GetSnowFloorMaterial());
+            CreatePrimitiveChild(root.transform, "Scarf", PrimitiveType.Cube, new Vector3(0f, 0.7f, -0.27f), new Vector3(0.48f, 0.08f, 0.04f), GetSnowPropPinkMaterial());
+            CreatePrimitiveChild(root.transform, "Nose", PrimitiveType.Cube, new Vector3(0f, 0.88f, -0.32f), new Vector3(0.08f, 0.06f, 0.14f), GetPropYellowMaterial());
+            AddDecorationAnimation(root, root.transform, true, 0.025f, 1.6f, new Vector3(0f, 8f, 0f), false, 0f, 1f);
+        }
+
+        /// <summary>
+        /// Purpose: Creates a gift-style crate decoration that matches the snowfield soft wall language.
+        /// Inputs: parent, position, objectName, and ribbonMaterial define the crate.
+        /// Output: no return value; creates a decorative gift crate.
+        /// </summary>
+        /// <param name="parent">Parent transform for the gift crate.</param>
+        /// <param name="position">World position outside the grid.</param>
+        /// <param name="objectName">Generated object name.</param>
+        /// <param name="ribbonMaterial">Ribbon material color.</param>
+        private void CreateGiftCrate(Transform parent, Vector3 position, string objectName, Material ribbonMaterial)
+        {
+            GameObject root = new GameObject(objectName);
+            root.transform.SetParent(parent);
+            root.transform.position = position;
+
+            CreatePrimitiveChild(root.transform, "GiftBody", PrimitiveType.Cube, new Vector3(0f, 0.32f, 0f), new Vector3(0.56f, 0.5f, 0.56f), GetSnowSoftWallMaterial());
+            CreatePrimitiveChild(root.transform, "Ribbon_X", PrimitiveType.Cube, new Vector3(0f, 0.34f, -0.29f), new Vector3(0.12f, 0.48f, 0.04f), ribbonMaterial);
+            CreatePrimitiveChild(root.transform, "Ribbon_Z", PrimitiveType.Cube, new Vector3(-0.29f, 0.34f, 0f), new Vector3(0.04f, 0.48f, 0.12f), ribbonMaterial);
+            CreatePrimitiveChild(root.transform, "Bow_Left", PrimitiveType.Sphere, new Vector3(-0.12f, 0.64f, -0.18f), new Vector3(0.16f, 0.08f, 0.12f), ribbonMaterial);
+            CreatePrimitiveChild(root.transform, "Bow_Right", PrimitiveType.Sphere, new Vector3(0.12f, 0.64f, -0.18f), new Vector3(0.16f, 0.08f, 0.12f), ribbonMaterial);
+        }
+
+        /// <summary>
+        /// Purpose: Creates a glowing ice lamp decoration.
+        /// Inputs: parent, position, and objectName define the lamp.
+        /// Output: no return value; creates a gently animated visual-only lamp.
+        /// </summary>
+        /// <param name="parent">Parent transform for the lamp.</param>
+        /// <param name="position">World position outside the grid.</param>
+        /// <param name="objectName">Generated object name.</param>
+        private void CreateIceLamp(Transform parent, Vector3 position, string objectName)
+        {
+            GameObject root = new GameObject(objectName);
+            root.transform.SetParent(parent);
+            root.transform.position = position;
+
+            CreatePrimitiveChild(root.transform, "LampBase", PrimitiveType.Cylinder, new Vector3(0f, 0.14f, 0f), new Vector3(0.22f, 0.08f, 0.22f), GetSnowWoodMaterial());
+            CreatePrimitiveChild(root.transform, "LampPost", PrimitiveType.Cylinder, new Vector3(0f, 0.48f, 0f), new Vector3(0.08f, 0.46f, 0.08f), GetSnowWoodMaterial());
+            GameObject lampHead = CreatePrimitiveChild(root.transform, "IceGlow", PrimitiveType.Sphere, new Vector3(0f, 0.96f, 0f), new Vector3(0.32f, 0.32f, 0.32f), GetSnowIceMaterial());
+            CreatePrimitiveChild(lampHead.transform, "GlowHighlight", PrimitiveType.Sphere, new Vector3(-0.16f, 0.1f, -0.16f), new Vector3(0.14f, 0.14f, 0.14f), GetCreamMaterial());
+            AddDecorationAnimation(root, lampHead.transform, true, 0.03f, 2.2f, Vector3.zero, true, 0.07f, 3.5f);
+        }
+
+        /// <summary>
+        /// Purpose: Creates a soft floating snow cloud.
+        /// Inputs: parent, position, and objectName define placement and naming.
+        /// Output: no return value; creates an animated cloud outside the grid.
+        /// </summary>
+        /// <param name="parent">Parent transform for the snow cloud.</param>
+        /// <param name="position">World position outside the grid.</param>
+        /// <param name="objectName">Generated object name.</param>
+        private void CreateSnowCloud(Transform parent, Vector3 position, string objectName)
+        {
+            GameObject root = new GameObject(objectName);
+            root.transform.SetParent(parent);
+            root.transform.position = position;
+
+            CreatePrimitiveChild(root.transform, "Cloud_Left", PrimitiveType.Sphere, new Vector3(-0.34f, 0f, 0f), new Vector3(0.5f, 0.28f, 0.26f), GetSnowFloorMaterial());
+            CreatePrimitiveChild(root.transform, "Cloud_Center", PrimitiveType.Sphere, new Vector3(0.04f, 0.08f, 0f), new Vector3(0.68f, 0.36f, 0.3f), GetSnowFloorMaterial());
+            CreatePrimitiveChild(root.transform, "Cloud_Right", PrimitiveType.Sphere, new Vector3(0.46f, -0.02f, 0f), new Vector3(0.44f, 0.26f, 0.24f), GetSnowTileInsetMaterial());
+            CreatePrimitiveChild(root.transform, "SnowDot", PrimitiveType.Sphere, new Vector3(0.02f, -0.24f, 0f), new Vector3(0.08f, 0.08f, 0.08f), GetSnowIceMaterial());
+            AddDecorationAnimation(root, root.transform, true, 0.07f, 0.9f, new Vector3(0f, 5f, 0f), false, 0f, 1f);
         }
 
         /// <summary>
@@ -867,9 +1054,15 @@ namespace BubbleTown.Map
         /// <returns>a `GameObject` value.</returns>
         private GameObject CreateFallbackGroundTile(string objectName, MapVisualTheme visualTheme)
         {
-            return visualTheme == MapVisualTheme.JellyMaze
-                ? CreateJellyMazeGroundTile(objectName)
-                : CreateCandyParkGroundTile(objectName);
+            switch (visualTheme)
+            {
+                case MapVisualTheme.SnowfieldPlayground:
+                    return CreateSnowfieldGroundTile(objectName);
+                case MapVisualTheme.JellyMaze:
+                    return CreateJellyMazeGroundTile(objectName);
+                default:
+                    return CreateCandyParkGroundTile(objectName);
+            }
         }
 
         /// <summary>
@@ -904,6 +1097,22 @@ namespace BubbleTown.Map
         }
 
         /// <summary>
+        /// Purpose: Creates a snow-and-ice floor tile for the Snowfield Playground theme.
+        /// Inputs: `objectName` names the generated tile.
+        /// Output: a new themed tile GameObject with no gameplay collider.
+        /// </summary>
+        /// <param name="objectName">Name assigned to the generated floor tile.</param>
+        /// <returns>A Snowfield floor tile GameObject.</returns>
+        private GameObject CreateSnowfieldGroundTile(string objectName)
+        {
+            GameObject root = new GameObject(objectName);
+            CreatePrimitiveChild(root.transform, "TileBase_Snow", PrimitiveType.Cube, new Vector3(0f, -0.05f, 0f), new Vector3(0.98f, 0.07f, 0.98f), GetSnowFloorMaterial());
+            CreatePrimitiveChild(root.transform, "TileInset_IcePatch", PrimitiveType.Cube, new Vector3(0f, -0.002f, 0f), new Vector3(0.68f, 0.018f, 0.68f), GetSnowTileInsetMaterial());
+            CreatePrimitiveChild(root.transform, "TinySnowSparkle", PrimitiveType.Sphere, new Vector3(-0.22f, 0.02f, -0.2f), new Vector3(0.07f, 0.018f, 0.07f), GetSnowIceMaterial());
+            return root;
+        }
+
+        /// <summary>
         /// Purpose: Creates fallback hard wall.
         /// Inputs: `objectName`, `visualTheme`; may also read serialized fields and current runtime state.
         /// Output: a `GameObject` value.
@@ -913,9 +1122,15 @@ namespace BubbleTown.Map
         /// <returns>a `GameObject` value.</returns>
         private GameObject CreateFallbackHardWall(string objectName, MapVisualTheme visualTheme)
         {
-            return visualTheme == MapVisualTheme.JellyMaze
-                ? CreateJellyMazeHardWall(objectName)
-                : CreateCandyParkHardWall(objectName);
+            switch (visualTheme)
+            {
+                case MapVisualTheme.SnowfieldPlayground:
+                    return CreateSnowfieldHardWall(objectName);
+                case MapVisualTheme.JellyMaze:
+                    return CreateJellyMazeHardWall(objectName);
+                default:
+                    return CreateCandyParkHardWall(objectName);
+            }
         }
 
         /// <summary>
@@ -962,6 +1177,30 @@ namespace BubbleTown.Map
         }
 
         /// <summary>
+        /// Purpose: Creates an icy packed-snow hard wall for the Snowfield Playground theme.
+        /// Inputs: `objectName` names the generated wall.
+        /// Output: a hard wall GameObject with a collider and blocked-hit feedback support.
+        /// </summary>
+        /// <param name="objectName">Name assigned to the generated hard wall.</param>
+        /// <returns>A Snowfield hard wall GameObject.</returns>
+        private GameObject CreateSnowfieldHardWall(string objectName)
+        {
+            GameObject root = new GameObject(objectName);
+            BoxCollider collider = root.AddComponent<BoxCollider>();
+            collider.size = new Vector3(0.92f, 1.02f, 0.92f);
+            collider.center = new Vector3(0f, 0.51f, 0f);
+
+            Transform visualRoot = CreateVisualRoot(root.transform);
+            CreatePrimitiveChild(visualRoot, "BottomShadow", PrimitiveType.Cube, new Vector3(0f, 0.06f, 0f), new Vector3(0.98f, 0.12f, 0.98f), GetShadowMaterial());
+            CreatePrimitiveChild(visualRoot, "PackedSnowBlock", PrimitiveType.Cube, new Vector3(0f, 0.48f, 0f), new Vector3(0.88f, 0.86f, 0.88f), GetSnowHardWallMaterial());
+            CreatePrimitiveChild(visualRoot, "IceCap", PrimitiveType.Cube, new Vector3(0f, 0.94f, 0f), new Vector3(0.7f, 0.08f, 0.7f), GetSnowHardWallHighlightMaterial());
+            CreatePrimitiveChild(visualRoot, "FrozenCorner", PrimitiveType.Sphere, new Vector3(-0.28f, 0.76f, -0.28f), new Vector3(0.16f, 0.16f, 0.16f), GetSnowIceMaterial());
+            CreatePrimitiveChild(visualRoot, "WoodenBrace", PrimitiveType.Cube, new Vector3(0.42f, 0.42f, 0f), new Vector3(0.05f, 0.62f, 0.62f), GetSnowWoodMaterial());
+            ConfigureGeneratedWallFeedback(root, visualRoot);
+            return root;
+        }
+
+        /// <summary>
         /// Purpose: Creates fallback soft wall.
         /// Inputs: `objectName`, `visualTheme`; may also read serialized fields and current runtime state.
         /// Output: a `GameObject` value.
@@ -971,9 +1210,15 @@ namespace BubbleTown.Map
         /// <returns>a `GameObject` value.</returns>
         private GameObject CreateFallbackSoftWall(string objectName, MapVisualTheme visualTheme)
         {
-            return visualTheme == MapVisualTheme.JellyMaze
-                ? CreateJellyMazeSoftWall(objectName)
-                : CreateCandyParkSoftWall(objectName);
+            switch (visualTheme)
+            {
+                case MapVisualTheme.SnowfieldPlayground:
+                    return CreateSnowfieldSoftWall(objectName);
+                case MapVisualTheme.JellyMaze:
+                    return CreateJellyMazeSoftWall(objectName);
+                default:
+                    return CreateCandyParkSoftWall(objectName);
+            }
         }
 
         /// <summary>
@@ -1014,6 +1259,29 @@ namespace BubbleTown.Map
             CreatePrimitiveChild(visualRoot, "GlowStripe_X", PrimitiveType.Cube, new Vector3(0f, 0.58f, -0.42f), new Vector3(0.62f, 0.08f, 0.04f), GetJellyGlowMaterial());
             CreatePrimitiveChild(visualRoot, "GlowStripe_Z", PrimitiveType.Cube, new Vector3(-0.42f, 0.34f, 0f), new Vector3(0.04f, 0.08f, 0.62f), GetJellyPropCyanMaterial());
             CreatePrimitiveChild(visualRoot, "BubbleShine", PrimitiveType.Sphere, new Vector3(-0.24f, 0.66f, -0.24f), new Vector3(0.2f, 0.08f, 0.2f), GetJellyHardWallHighlightMaterial());
+            ConfigureGeneratedWallFeedback(root, visualRoot);
+            return root;
+        }
+
+        /// <summary>
+        /// Purpose: Creates a gift-crate soft wall for the Snowfield Playground theme.
+        /// Inputs: `objectName` names the generated wall.
+        /// Output: a breakable soft wall GameObject with a collider and destruction feedback support.
+        /// </summary>
+        /// <param name="objectName">Name assigned to the generated soft wall.</param>
+        /// <returns>A Snowfield soft wall GameObject.</returns>
+        private GameObject CreateSnowfieldSoftWall(string objectName)
+        {
+            GameObject root = new GameObject(objectName);
+            BoxCollider collider = root.AddComponent<BoxCollider>();
+            collider.size = new Vector3(0.82f, 0.78f, 0.82f);
+            collider.center = new Vector3(0f, 0.39f, 0f);
+
+            Transform visualRoot = CreateVisualRoot(root.transform);
+            CreatePrimitiveChild(visualRoot, "GiftBody", PrimitiveType.Cube, new Vector3(0f, 0.39f, 0f), new Vector3(0.82f, 0.76f, 0.82f), GetSnowSoftWallMaterial());
+            CreatePrimitiveChild(visualRoot, "RibbonFront", PrimitiveType.Cube, new Vector3(0f, 0.42f, -0.43f), new Vector3(0.15f, 0.62f, 0.04f), GetSnowSoftWallRibbonMaterial());
+            CreatePrimitiveChild(visualRoot, "RibbonSide", PrimitiveType.Cube, new Vector3(-0.43f, 0.42f, 0f), new Vector3(0.04f, 0.62f, 0.15f), GetSnowPropPinkMaterial());
+            CreatePrimitiveChild(visualRoot, "SnowDust", PrimitiveType.Sphere, new Vector3(-0.22f, 0.7f, -0.24f), new Vector3(0.18f, 0.08f, 0.18f), GetSnowFloorMaterial());
             ConfigureGeneratedWallFeedback(root, visualRoot);
             return root;
         }
@@ -1164,6 +1432,66 @@ namespace BubbleTown.Map
         }
 
         /// <summary>
+        /// Purpose: Chooses the base material for the SinglePlayer exit goal.
+        /// Inputs: `visualTheme` identifies the active map theme.
+        /// Output: a themed Material used by the large goal pad.
+        /// </summary>
+        /// <param name="visualTheme">Active map visual theme.</param>
+        /// <returns>The base material for the goal visual.</returns>
+        private Material ResolveGoalBaseMaterial(MapVisualTheme visualTheme)
+        {
+            switch (visualTheme)
+            {
+                case MapVisualTheme.SnowfieldPlayground:
+                    return GetSnowTileInsetMaterial();
+                case MapVisualTheme.JellyMaze:
+                    return GetJellyTileInsetMaterial();
+                default:
+                    return GetPropMintMaterial();
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Chooses the accent material for the SinglePlayer exit goal.
+        /// Inputs: `visualTheme` identifies the active map theme.
+        /// Output: a themed Material used by rings, arrows, and the beacon orb.
+        /// </summary>
+        /// <param name="visualTheme">Active map visual theme.</param>
+        /// <returns>The accent material for the goal visual.</returns>
+        private Material ResolveGoalAccentMaterial(MapVisualTheme visualTheme)
+        {
+            switch (visualTheme)
+            {
+                case MapVisualTheme.SnowfieldPlayground:
+                    return GetSnowIceMaterial();
+                case MapVisualTheme.JellyMaze:
+                    return GetJellyGlowMaterial();
+                default:
+                    return GetPropYellowMaterial();
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Chooses the flag material for the SinglePlayer exit goal.
+        /// Inputs: `visualTheme` identifies the active map theme.
+        /// Output: a themed Material used by the small goal flags.
+        /// </summary>
+        /// <param name="visualTheme">Active map visual theme.</param>
+        /// <returns>The flag material for the goal visual.</returns>
+        private Material ResolveGoalFlagMaterial(MapVisualTheme visualTheme)
+        {
+            switch (visualTheme)
+            {
+                case MapVisualTheme.SnowfieldPlayground:
+                    return GetSnowPropPinkMaterial();
+                case MapVisualTheme.JellyMaze:
+                    return GetJellyPropPinkMaterial();
+                default:
+                    return GetPropPinkMaterial();
+            }
+        }
+
+        /// <summary>
         /// Purpose: Resolves visual theme from the current runtime state.
         /// Inputs: `mapType`; may also read serialized fields and current runtime state.
         /// Output: a `MapVisualTheme` value.
@@ -1172,7 +1500,15 @@ namespace BubbleTown.Map
         /// <returns>a `MapVisualTheme` value.</returns>
         private MapVisualTheme ResolveVisualTheme(BattleMapType mapType)
         {
-            return mapType == BattleMapType.Maze ? MapVisualTheme.JellyMaze : MapVisualTheme.CandyPark;
+            switch (mapType)
+            {
+                case BattleMapType.OpenField:
+                    return MapVisualTheme.SnowfieldPlayground;
+                case BattleMapType.Maze:
+                    return MapVisualTheme.JellyMaze;
+                default:
+                    return MapVisualTheme.CandyPark;
+            }
         }
 
         /// <summary>
@@ -1196,7 +1532,15 @@ namespace BubbleTown.Map
         /// <returns>a `string` value.</returns>
         private string GetVisualThemeKey(MapVisualTheme visualTheme)
         {
-            return visualTheme == MapVisualTheme.JellyMaze ? "JellyMaze" : "CandyPark";
+            switch (visualTheme)
+            {
+                case MapVisualTheme.SnowfieldPlayground:
+                    return "SnowfieldPlayground";
+                case MapVisualTheme.JellyMaze:
+                    return "JellyMaze";
+                default:
+                    return "CandyPark";
+            }
         }
 
         /// <summary>
@@ -1208,7 +1552,15 @@ namespace BubbleTown.Map
         /// <returns>a `string` value.</returns>
         private string GetVisualThemeDisplayName(MapVisualTheme visualTheme)
         {
-            return visualTheme == MapVisualTheme.JellyMaze ? "Jelly Maze" : "Candy Park";
+            switch (visualTheme)
+            {
+                case MapVisualTheme.SnowfieldPlayground:
+                    return "Snowfield Playground";
+                case MapVisualTheme.JellyMaze:
+                    return "Jelly Maze";
+                default:
+                    return "Candy Park";
+            }
         }
 
         /// <summary>
@@ -1224,7 +1576,7 @@ namespace BubbleTown.Map
             switch (mapType)
             {
                 case BattleMapType.OpenField:
-                    return index % 2 == 0 ? new Color(0.5f, 0.95f, 0.42f) : new Color(0.38f, 0.88f, 1f);
+                    return index % 2 == 0 ? new Color(0.38f, 0.88f, 1f) : new Color(1f, 0.58f, 0.82f);
                 case BattleMapType.Maze:
                     return index % 2 == 0 ? new Color(0.75f, 0.55f, 1f) : new Color(1f, 0.52f, 0.78f);
                 default:
@@ -1502,6 +1854,166 @@ namespace BubbleTown.Map
             }
 
             return jellyPropPinkMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets the soft snow material used by Snowfield floor and snow caps.
+        /// Inputs: no direct parameters; creates the material lazily on first use.
+        /// Output: a cached Material instance.
+        /// </summary>
+        /// <returns>The Snowfield floor material.</returns>
+        private Material GetSnowFloorMaterial()
+        {
+            if (snowFloorMaterial == null)
+            {
+                snowFloorMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_SnowFloor", new Color(0.9f, 0.98f, 1f));
+            }
+
+            return snowFloorMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets the pale ice inset material used on Snowfield floor tiles.
+        /// Inputs: no direct parameters; creates the material lazily on first use.
+        /// Output: a cached Material instance.
+        /// </summary>
+        /// <returns>The Snowfield tile inset material.</returns>
+        private Material GetSnowTileInsetMaterial()
+        {
+            if (snowTileInsetMaterial == null)
+            {
+                snowTileInsetMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_IceTile", new Color(0.58f, 0.9f, 1f), true, 0.32f);
+            }
+
+            return snowTileInsetMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets the main packed-snow hard wall material.
+        /// Inputs: no direct parameters; creates the material lazily on first use.
+        /// Output: a cached Material instance.
+        /// </summary>
+        /// <returns>The Snowfield hard wall material.</returns>
+        private Material GetSnowHardWallMaterial()
+        {
+            if (snowHardWallMaterial == null)
+            {
+                snowHardWallMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_HardWallPackedSnow", new Color(0.78f, 0.92f, 1f), true, 0.12f);
+            }
+
+            return snowHardWallMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets the bright cap material for Snowfield hard walls.
+        /// Inputs: no direct parameters; creates the material lazily on first use.
+        /// Output: a cached Material instance.
+        /// </summary>
+        /// <returns>The Snowfield hard wall highlight material.</returns>
+        private Material GetSnowHardWallHighlightMaterial()
+        {
+            if (snowHardWallHighlightMaterial == null)
+            {
+                snowHardWallHighlightMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_HardWallHighlight", new Color(1f, 1f, 0.92f), true, 0.28f);
+            }
+
+            return snowHardWallHighlightMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets the warm gift-crate body material used by Snowfield soft walls.
+        /// Inputs: no direct parameters; creates the material lazily on first use.
+        /// Output: a cached Material instance.
+        /// </summary>
+        /// <returns>The Snowfield soft wall material.</returns>
+        private Material GetSnowSoftWallMaterial()
+        {
+            if (snowSoftWallMaterial == null)
+            {
+                snowSoftWallMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_SoftWallGift", new Color(0.98f, 0.72f, 0.42f));
+            }
+
+            return snowSoftWallMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets the blue ribbon material used by Snowfield gift-style soft walls.
+        /// Inputs: no direct parameters; creates the material lazily on first use.
+        /// Output: a cached Material instance.
+        /// </summary>
+        /// <returns>The Snowfield soft wall ribbon material.</returns>
+        private Material GetSnowSoftWallRibbonMaterial()
+        {
+            if (snowSoftWallRibbonMaterial == null)
+            {
+                snowSoftWallRibbonMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_SoftWallRibbonBlue", new Color(0.3f, 0.78f, 1f), true, 0.18f);
+            }
+
+            return snowSoftWallRibbonMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets the glowing ice material shared by Snowfield props, goals, and highlights.
+        /// Inputs: no direct parameters; creates the material lazily on first use.
+        /// Output: a cached Material instance.
+        /// </summary>
+        /// <returns>The Snowfield ice material.</returns>
+        private Material GetSnowIceMaterial()
+        {
+            if (snowIceMaterial == null)
+            {
+                snowIceMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_GlowIce", new Color(0.42f, 0.88f, 1f), true, 0.55f);
+            }
+
+            return snowIceMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets the warm wood material for Snowfield fences and braces.
+        /// Inputs: no direct parameters; creates the material lazily on first use.
+        /// Output: a cached Material instance.
+        /// </summary>
+        /// <returns>The Snowfield wood material.</returns>
+        private Material GetSnowWoodMaterial()
+        {
+            if (snowWoodMaterial == null)
+            {
+                snowWoodMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_WarmWood", new Color(0.52f, 0.38f, 0.24f));
+            }
+
+            return snowWoodMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets the blue accent material for Snowfield environment props.
+        /// Inputs: no direct parameters; creates the material lazily on first use.
+        /// Output: a cached Material instance.
+        /// </summary>
+        /// <returns>The Snowfield blue prop material.</returns>
+        private Material GetSnowPropBlueMaterial()
+        {
+            if (snowPropBlueMaterial == null)
+            {
+                snowPropBlueMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_PropBlue", new Color(0.28f, 0.72f, 1f), true, 0.25f);
+            }
+
+            return snowPropBlueMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets the pink accent material for Snowfield props and goal flags.
+        /// Inputs: no direct parameters; creates the material lazily on first use.
+        /// Output: a cached Material instance.
+        /// </summary>
+        /// <returns>The Snowfield pink prop material.</returns>
+        private Material GetSnowPropPinkMaterial()
+        {
+            if (snowPropPinkMaterial == null)
+            {
+                snowPropPinkMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_PropPink", new Color(1f, 0.54f, 0.78f), true, 0.22f);
+            }
+
+            return snowPropPinkMaterial;
         }
 
         /// <summary>
