@@ -7,7 +7,7 @@ namespace BubbleTown.Visuals
 {
     /// <summary>
     /// Applies the shared Phase 2 toy-board lighting style at runtime.
-    /// This keeps Battle readable while allowing Candy Park and Jelly Maze to use different mood colors.
+    /// This keeps Battle readable while allowing Candy Park, Snowfield, and Jelly Maze to use different mood colors.
     /// </summary>
     public class BattleVisualStyleController : MonoBehaviour
     {
@@ -33,6 +33,12 @@ namespace BubbleTown.Visuals
         [SerializeField] private Color jellyAmbientSky = new Color(0.35f, 0.38f, 0.72f);
         [SerializeField] private Color jellyAmbientEquator = new Color(0.28f, 0.62f, 0.78f);
         [SerializeField] private Color jellyAmbientGround = new Color(0.15f, 0.12f, 0.26f);
+
+        [Header("Snowfield Mood")]
+        [SerializeField] private Color snowSkyColor = new Color(0.7f, 0.94f, 1f);
+        [SerializeField] private Color snowAmbientSky = new Color(0.86f, 0.98f, 1f);
+        [SerializeField] private Color snowAmbientEquator = new Color(0.76f, 0.9f, 1f);
+        [SerializeField] private Color snowAmbientGround = new Color(0.72f, 0.82f, 0.9f);
 
         private BattleMapType lastAppliedMapType = (BattleMapType)(-1);
 
@@ -141,12 +147,27 @@ namespace BubbleTown.Visuals
         /// <param name="mapType">Input value used by this method.</param>
         private void ApplyLighting(BattleMapType mapType)
         {
-            bool useJellyMood = mapType == BattleMapType.Maze;
+            Color skyAmbient = candyAmbientSky;
+            Color equatorAmbient = candyAmbientEquator;
+            Color groundAmbient = candyAmbientGround;
+
+            if (mapType == BattleMapType.OpenField)
+            {
+                skyAmbient = snowAmbientSky;
+                equatorAmbient = snowAmbientEquator;
+                groundAmbient = snowAmbientGround;
+            }
+            else if (mapType == BattleMapType.Maze)
+            {
+                skyAmbient = jellyAmbientSky;
+                equatorAmbient = jellyAmbientEquator;
+                groundAmbient = jellyAmbientGround;
+            }
 
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = useJellyMood ? jellyAmbientSky : candyAmbientSky;
-            RenderSettings.ambientEquatorColor = useJellyMood ? jellyAmbientEquator : candyAmbientEquator;
-            RenderSettings.ambientGroundColor = useJellyMood ? jellyAmbientGround : candyAmbientGround;
+            RenderSettings.ambientSkyColor = skyAmbient;
+            RenderSettings.ambientEquatorColor = equatorAmbient;
+            RenderSettings.ambientGroundColor = groundAmbient;
             RenderSettings.ambientIntensity = 1f;
 
             if (directionalLight == null)
@@ -177,7 +198,18 @@ namespace BubbleTown.Visuals
             }
 
             targetCamera.clearFlags = CameraClearFlags.SolidColor;
-            targetCamera.backgroundColor = mapType == BattleMapType.Maze ? jellySkyColor : candySkyColor;
+            if (mapType == BattleMapType.OpenField)
+            {
+                targetCamera.backgroundColor = snowSkyColor;
+            }
+            else if (mapType == BattleMapType.Maze)
+            {
+                targetCamera.backgroundColor = jellySkyColor;
+            }
+            else
+            {
+                targetCamera.backgroundColor = candySkyColor;
+            }
         }
     }
 }

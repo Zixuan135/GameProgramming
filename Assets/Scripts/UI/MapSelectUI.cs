@@ -14,7 +14,7 @@ namespace BubbleTown.UI
         private Vector2 mapScrollPosition;
 
         private readonly Color defaultAccent = new Color(0.1f, 0.72f, 1f, 1f);
-        private readonly Color openFieldAccent = new Color(0.45f, 0.9f, 0.34f, 1f);
+        private readonly Color snowfieldAccent = new Color(0.32f, 0.78f, 1f, 1f);
         private readonly Color mazeAccent = new Color(0.66f, 0.48f, 1f, 1f);
 
         /// <summary>
@@ -157,13 +157,13 @@ namespace BubbleTown.UI
         private void DrawOpenFieldMapCard()
         {
             if (SimpleUIFactory.MapCard(
-                "Open Field",
-                "OPEN",
-                "Wide lanes with wall islands.",
-                openFieldAccent,
-                new Color(0.62f, 0.96f, 0.58f, 1f),
-                new Color(0.95f, 0.78f, 0.34f, 1f),
-                new Color(0.78f, 1f, 0.74f, 1f),
+                "Snowfield",
+                "SNOW",
+                "Open icy lanes.",
+                snowfieldAccent,
+                new Color(0.88f, 0.98f, 1f, 1f),
+                new Color(0.42f, 0.88f, 1f, 1f),
+                new Color(1f, 0.56f, 0.78f, 1f),
                 selectedMapType == BattleMapType.OpenField,
                 SimpleUIFactory.MapPreviewPattern.Open))
             {
@@ -260,7 +260,7 @@ namespace BubbleTown.UI
             switch (mapType)
             {
                 case BattleMapType.OpenField:
-                    return "Open Field";
+                    return "Snowfield";
                 case BattleMapType.Maze:
                     return "Jelly Maze";
                 default:
