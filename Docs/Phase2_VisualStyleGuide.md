@@ -25,6 +25,9 @@ Theme accents:
 
 - Candy Park grass: `#91E8A6`
 - Candy Park sky/tile blue: `#7EDBFF`
+- Snowfield snow: `#E6FAFF`
+- Snowfield ice: `#6BE0FF`
+- Snowfield ribbon pink: `#FF8AC7`
 - Jelly Maze violet: `#3D2E6B`
 - Jelly Maze cyan glow: `#2EEAFF`
 - Jelly Maze magenta jelly: `#FF54D1`
@@ -54,6 +57,7 @@ Assets/Materials/Gameplay/Bombs
 Assets/Materials/Gameplay/Explosions
 Assets/Materials/Gameplay/Items
 Assets/Materials/Map/CandyPark
+Assets/Materials/Map/SnowfieldPlayground
 Assets/Materials/Map/JellyMaze
 Assets/Materials/Map/Shared
 Assets/Materials/UI
@@ -67,7 +71,7 @@ Assets/Materials/UI
 - Player2: coral body with gold accent
 - AI: violet body with pink accent
 
-Characters should remain readable against both Candy Park and Jelly Maze.
+Characters should remain readable against Candy Park, Snowfield, and Jelly Maze.
 
 ## Map Materials
 
@@ -77,6 +81,13 @@ Candy Park:
 - Cream hard walls
 - Blue jelly soft walls
 - Soft shadows, not realistic grime
+
+Snowfield:
+
+- Pale snow floor base
+- Icy blue lane accents
+- Packed snow hard walls
+- Gift-style soft walls with bright ribbons
 
 Jelly Maze:
 

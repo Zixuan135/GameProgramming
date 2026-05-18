@@ -55,7 +55,7 @@ The characters are currently built from Unity primitives as readable placeholder
 ## Maps
 
 - `Candy Park`: balanced candy-themed paths and colorful soft blocks
-- `Open Field`: wider lanes with a few hard-wall islands for blast blocking
+- `Snowfield`: open snowy lanes with icy walls and gift-style soft blocks
 - `Jelly Maze`: tighter routes with a more maze-like feel
 
 ## Power-Ups
@@ -112,6 +112,7 @@ Docs/                    Art direction, map themes, and visual style notes
 - `Docs/Phase2_ArtDirection.md`: visual direction and asset guidelines
 - `Docs/Phase2_VisualStyleGuide.md`: palette, material, lighting, and readability notes
 - `Docs/CandyPark_MapTheme.md`: Candy Park theme reference
+- `Docs/SnowfieldPlayground_MapTheme.md`: Snowfield theme reference
 - `Docs/JellyMaze_MapTheme.md`: Jelly Maze theme reference
 - `Docs/EnvironmentDecorationGuide.md`: decoration placement and readability notes
 

@@ -1473,7 +1473,7 @@ namespace BubbleTown.UI
             switch (mapType)
             {
                 case BattleMapType.OpenField:
-                    return "Open Field";
+                    return "Snowfield";
                 case BattleMapType.Maze:
                     return "Jelly Maze";
                 default:

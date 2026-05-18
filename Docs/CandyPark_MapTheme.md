@@ -4,7 +4,7 @@ Candy Park is BubbleTown's bright outdoor toy-board theme. It should read as fri
 
 ## Current Status
 
-Candy Park is generated at runtime in `Battle` for `BattleMapType.Default` and `BattleMapType.OpenField`.
+Candy Park is generated at runtime in `Battle` for `BattleMapType.Default`.
 
 Runtime hierarchy:
 
