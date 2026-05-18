@@ -10,7 +10,7 @@ namespace BubbleTown.Core.Enums
         /// <summary>Balanced candy park map used as the default arena.</summary>
         Default = 0,
 
-        /// <summary>More open arena with wider movement lanes.</summary>
+        /// <summary>Open snowy arena with wider movement lanes and icy visual props.</summary>
         OpenField = 1,
 
         /// <summary>Tighter maze-like arena with more route planning.</summary>

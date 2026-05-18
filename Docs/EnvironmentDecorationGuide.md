@@ -55,6 +55,10 @@ MapRoot
     DecorationRoot
 
 MapRoot
+  GeneratedMap_SnowfieldPlayground
+    DecorationRoot
+
+MapRoot
   GeneratedMap_JellyMaze
     DecorationRoot
 ```
@@ -69,6 +73,12 @@ Assets/Prefabs/Environment/CandyPark
   Prop_CandyPark_ToyBarrel.prefab
   Prop_CandyPark_CandyLamp.prefab
   Prop_CandyPark_BackgroundCloud.prefab
+
+Assets/Prefabs/Environment/SnowfieldPlayground
+  Prop_SnowfieldPlayground_Snowman.prefab
+  Prop_SnowfieldPlayground_IceLamp.prefab
+  Prop_SnowfieldPlayground_GiftCrate.prefab
+  Prop_SnowfieldPlayground_SnowFence.prefab
 
 Assets/Prefabs/Environment/JellyMaze
   Prop_JellyMaze_EnergyBarrel.prefab
