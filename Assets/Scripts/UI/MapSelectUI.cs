@@ -99,6 +99,17 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
+        /// Purpose: Checks whether the current session is selecting a map for AI Battle.
+        /// Inputs: no direct parameters; reads GameManager when available.
+        /// Output: returns true when the AI difficulty selector should be visible.
+        /// </summary>
+        /// <returns>True when current mode is AI Battle; otherwise false.</returns>
+        private bool IsAIBattleMode()
+        {
+            return GameManager.Instance != null && GameManager.Instance.CurrentGameMode == GameMode.AIBattle;
+        }
+
+        /// <summary>
         /// Purpose: Draws map cards horizontal in the current GUI or scene context.
         /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
         /// Output: no return value; updates component, scene, or game state as needed.
@@ -234,6 +245,13 @@ namespace BubbleTown.UI
         {
             AudioManager.Instance?.PlayButtonClickSFX();
             GameManager.Instance?.SetMapType(selectedMapType);
+
+            if (IsAIBattleMode())
+            {
+                SceneFlowManager.Instance?.LoadDifficultySelect();
+                return;
+            }
+
             SceneFlowManager.Instance?.LoadBattle();
         }
 

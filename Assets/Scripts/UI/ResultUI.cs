@@ -410,11 +410,33 @@ namespace BubbleTown.UI
             switch (mode)
             {
                 case GameMode.AIBattle:
-                    return "AI Battle";
+                    return "AI Battle " + FormatAIDifficultyName(GameManager.Instance != null
+                        ? GameManager.Instance.CurrentAIDifficulty
+                        : AIDifficulty.Normal);
                 case GameMode.LocalVS:
                     return "Local VS";
                 default:
                     return "Single Player";
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Formats AI difficulty for result screen mode details.
+        /// Inputs: difficulty is the AI preset stored by GameManager.
+        /// Output: returns a short player-facing difficulty name.
+        /// </summary>
+        /// <param name="difficulty">Current AI difficulty.</param>
+        /// <returns>AI difficulty display label.</returns>
+        private string FormatAIDifficultyName(AIDifficulty difficulty)
+        {
+            switch (difficulty)
+            {
+                case AIDifficulty.Easy:
+                    return "Easy";
+                case AIDifficulty.Hard:
+                    return "Hard";
+                default:
+                    return "Normal";
             }
         }
 

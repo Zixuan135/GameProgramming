@@ -47,6 +47,7 @@ namespace BubbleTown.Managers
         [Header("Session")]
         [SerializeField] private GameMode currentGameMode = GameMode.SinglePlayer;
         [SerializeField] private BattleMapType currentMapType = BattleMapType.Default;
+        [SerializeField] private AIDifficulty currentAIDifficulty = AIDifficulty.Normal;
         [SerializeField] private GameState currentGameState = GameState.None;
         [SerializeField] private bool isBattlePaused;
 
@@ -99,10 +100,12 @@ namespace BubbleTown.Managers
         private int lastBattleSetupSceneHandle;
         private GameMode lastBattleSetupMode;
         private BattleMapType lastBattleSetupMapType;
+        private AIDifficulty lastBattleSetupAIDifficulty;
         private MapManager subscribedSinglePlayerObjectiveMapManager;
 
         public GameMode CurrentGameMode => currentGameMode;
         public BattleMapType CurrentMapType => currentMapType;
+        public AIDifficulty CurrentAIDifficulty => currentAIDifficulty;
         public GameState CurrentGameState => currentGameState;
         public bool IsBattlePaused => isBattlePaused;
         public bool HasBattleResult => hasBattleResult;
@@ -245,6 +248,17 @@ namespace BubbleTown.Managers
         }
 
         /// <summary>
+        /// Purpose: Stores the AI difficulty selected before entering AI Battle.
+        /// Inputs: difficulty is the chosen AI preset from MapSelect or another menu.
+        /// Output: no return value; the selected difficulty is kept in the session and applied during AI setup.
+        /// </summary>
+        /// <param name="difficulty">AI difficulty preset to use for the next AI Battle.</param>
+        public void SetAIDifficulty(AIDifficulty difficulty)
+        {
+            currentAIDifficulty = difficulty;
+        }
+
+        /// <summary>
         /// Purpose: Sets player1 character.
         /// Inputs: `characterData`; may also read serialized fields and current runtime state.
         /// Output: no return value; updates component, scene, or game state as needed.
@@ -372,6 +386,7 @@ namespace BubbleTown.Managers
         {
             currentGameMode = GameMode.SinglePlayer;
             currentMapType = BattleMapType.Default;
+            currentAIDifficulty = AIDifficulty.Normal;
             currentGameState = GameState.None;
             isBattlePaused = false;
             activeMapManager = null;
@@ -737,7 +752,8 @@ namespace BubbleTown.Managers
                    hasBattleSetupSnapshot &&
                    lastBattleSetupSceneHandle == SceneManager.GetActiveScene().handle &&
                    lastBattleSetupMode == currentGameMode &&
-                   lastBattleSetupMapType == currentMapType;
+                   lastBattleSetupMapType == currentMapType &&
+                   lastBattleSetupAIDifficulty == currentAIDifficulty;
         }
 
         /// <summary>
@@ -751,6 +767,7 @@ namespace BubbleTown.Managers
             lastBattleSetupSceneHandle = SceneManager.GetActiveScene().handle;
             lastBattleSetupMode = currentGameMode;
             lastBattleSetupMapType = currentMapType;
+            lastBattleSetupAIDifficulty = currentAIDifficulty;
         }
 
         /// <summary>
@@ -977,6 +994,7 @@ namespace BubbleTown.Managers
             }
 
             ApplyCharacterSelection(aiPlayer, selectedAICharacter, AIObjectName);
+            aiPlayer.ConfigureDifficulty(currentAIDifficulty);
             aiPlayer.ConfigureForBattle(
                 activeMapManager,
                 activeMapManager.GetAISpawnGrid(),
