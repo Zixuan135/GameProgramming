@@ -299,6 +299,25 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
+        /// Purpose: Draws a compact selectable pill for option groups such as AI difficulty.
+        /// Inputs: rect defines the button position, text is shown to the player, isSelected controls highlight state, and accentColor tints the option.
+        /// Output: returns true only on the frame the player clicks the pill.
+        /// </summary>
+        /// <param name="rect">Screen-space area for the selectable pill.</param>
+        /// <param name="text">Button label shown to the player.</param>
+        /// <param name="isSelected">Whether this option is currently selected.</param>
+        /// <param name="accentColor">Color used to brand this option.</param>
+        /// <returns>True when the pill is clicked; otherwise false.</returns>
+        public static bool ChoicePill(Rect rect, string text, bool isSelected, Color accentColor)
+        {
+            Color normal = isSelected ? accentColor : Color.Lerp(PanelFill, accentColor, 0.42f);
+            Color hover = Color.Lerp(normal, Color.white, 0.16f);
+            Color active = Color.Lerp(accentColor, Color.black, 0.16f);
+            Color textColor = isSelected ? Color.white : TextPrimary;
+            return CartoonButton(rect, text, normal, hover, active, textColor);
+        }
+
+        /// <summary>
         /// Purpose: Returns menu tile button for the current state.
         /// Inputs: `text`, `icon`, `accentColor`; may also read serialized fields and current runtime state.
         /// Output: a `bool` value.
@@ -696,7 +715,38 @@ namespace BubbleTown.UI
         {
             EnsureStyles();
             Rect rect = GUILayoutUtility.GetRect(190f, 170f, GUILayout.ExpandWidth(true));
-            return DrawMapCard(rect, title, tag, description, accentColor, groundColor, blockColor, pathColor, isSelected, previewPattern);
+            return DrawMapCard(rect, title, tag, description, accentColor, groundColor, blockColor, pathColor, isSelected, previewPattern, false);
+        }
+
+        /// <summary>
+        /// Purpose: Returns a shorter map card for screens that need extra controls below the map choices.
+        /// Inputs: same visual data as MapCard; isSelected controls the READY badge and highlight.
+        /// Output: returns true only on the frame the card is clicked.
+        /// </summary>
+        /// <param name="title">Map display name.</param>
+        /// <param name="tag">Short map style tag.</param>
+        /// <param name="description">One-line map description.</param>
+        /// <param name="accentColor">Theme color for borders and tag.</param>
+        /// <param name="groundColor">Preview ground color.</param>
+        /// <param name="blockColor">Preview block color.</param>
+        /// <param name="pathColor">Preview path color.</param>
+        /// <param name="isSelected">True when this map is currently selected.</param>
+        /// <param name="previewPattern">Preview pattern used by the mini-map art.</param>
+        /// <returns>True when the card is clicked; otherwise false.</returns>
+        public static bool CompactMapCard(
+            string title,
+            string tag,
+            string description,
+            Color accentColor,
+            Color groundColor,
+            Color blockColor,
+            Color pathColor,
+            bool isSelected,
+            MapPreviewPattern previewPattern = MapPreviewPattern.Balanced)
+        {
+            EnsureStyles();
+            Rect rect = GUILayoutUtility.GetRect(190f, 134f, GUILayout.ExpandWidth(true));
+            return DrawMapCard(rect, title, tag, description, accentColor, groundColor, blockColor, pathColor, isSelected, previewPattern, true);
         }
 
         /// <summary>
@@ -836,7 +886,8 @@ namespace BubbleTown.UI
             Color blockColor,
             Color pathColor,
             bool isSelected,
-            MapPreviewPattern previewPattern)
+            MapPreviewPattern previewPattern,
+            bool compact)
         {
             bool isHovering = rect.Contains(Event.current.mousePosition);
             Color cardFill = isSelected
@@ -853,22 +904,30 @@ namespace BubbleTown.UI
             DrawRoundedRect(new Rect(rect.x + 5f, rect.y + 8f, rect.width, rect.height), PanelShadow, PanelShadow, 20, 0);
             DrawRoundedRect(rect, cardFill, border, 20, borderSize);
 
-            Rect previewRect = new Rect(rect.x + 16f, rect.y + 12f, rect.width - 32f, 60f);
+            float previewHeight = compact ? 38f : 60f;
+            float previewY = compact ? 10f : 12f;
+            float titleY = compact ? 51f : 76f;
+            float tagY = compact ? 80f : 106f;
+            float descriptionY = compact ? 108f : 135f;
+            float descriptionHeight = compact ? 18f : 24f;
+            Rect previewRect = new Rect(rect.x + 16f, rect.y + previewY, rect.width - 32f, previewHeight);
             DrawMapPreview(previewRect, groundColor, blockColor, pathColor, accentColor, previewPattern);
 
             if (isSelected)
             {
-                Rect readyRect = new Rect(previewRect.x + previewRect.width - 64f, previewRect.y + 6f, 54f, 20f);
+                float readyY = compact ? previewRect.y + 5f : previewRect.y + 6f;
+                Rect readyRect = new Rect(previewRect.x + previewRect.width - 64f, readyY, 54f, 20f);
                 DrawRoundedRect(readyRect, accentColor, Color.white, 11, 2);
                 GUI.Label(readyRect, "READY", pillStyle);
             }
 
-            GUI.Label(new Rect(rect.x + 16f, rect.y + 76f, rect.width - 32f, 28f), title, cardTitleStyle);
+            GUI.Label(new Rect(rect.x + 16f, rect.y + titleY, rect.width - 32f, 25f), title, cardTitleStyle);
             float tagWidth = Mathf.Min(rect.width - 42f, Mathf.Max(92f, 58f + tag.Length * 8f));
-            Rect tagRect = new Rect(rect.x + rect.width * 0.5f - tagWidth * 0.5f, rect.y + 106f, tagWidth, 25f);
+            Rect tagRect = new Rect(rect.x + rect.width * 0.5f - tagWidth * 0.5f, rect.y + tagY, tagWidth, 23f);
             DrawRoundedRect(tagRect, accentColor, Color.white, 12, 2);
             GUI.Label(tagRect, tag, cardTagStyle);
-            GUI.Label(new Rect(rect.x + 18f, rect.y + 135f, rect.width - 36f, 24f), description, cardBodyStyle);
+
+            GUI.Label(new Rect(rect.x + 18f, rect.y + descriptionY, rect.width - 36f, descriptionHeight), description, cardBodyStyle);
 
             GUI.matrix = previousMatrix;
             return GUI.Button(rect, GUIContent.none, invisibleButtonStyle);
