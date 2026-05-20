@@ -68,7 +68,7 @@ namespace BubbleTown.UI
             if (SimpleUIFactory.CompactModeCard(
                 "AI Battle",
                 "AI",
-                "Fight a simple toy opponent that can move, dodge, and bomb.",
+                "Fight a toy opponent and pick its difficulty before battle.",
                 aiBattleColor))
             {
                 OnSelectAIBattle();
@@ -107,7 +107,7 @@ namespace BubbleTown.UI
             if (SimpleUIFactory.CompactModeCard(
                 "AI Battle",
                 "AI",
-                "Fight a simple toy opponent that can move, dodge, and bomb.",
+                "Fight a toy opponent and pick its difficulty before battle.",
                 aiBattleColor))
             {
                 OnSelectAIBattle();

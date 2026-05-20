@@ -60,6 +60,9 @@ namespace BubbleTown.AI
         [SerializeField] private bool requireEscapeRouteBeforeBomb = true;
         [SerializeField, Min(1)] private int bombEscapeSearchDepth = 6;
 
+        [Header("AI Difficulty")]
+        [SerializeField] private AIDifficulty currentDifficulty = AIDifficulty.Normal;
+
         [Header("AI Runtime")]
         [SerializeField] private Vector2Int currentMoveDirection = Vector2Int.zero;
         [SerializeField] private int failedMoveAttempts;
@@ -76,6 +79,74 @@ namespace BubbleTown.AI
 
         public string CurrentIntent => currentIntent;
         public Vector2Int CurrentStrategicTarget => currentStrategicTarget;
+        public AIDifficulty CurrentDifficulty => currentDifficulty;
+
+        private struct DifficultyPreset
+        {
+            public float MoveDecisionInterval;
+            public float FailedMoveRetryDelay;
+            public float IdleChance;
+            public float AvoidReverseChance;
+            public int EscapeSearchDepth;
+            public int PlayerChaseDistance;
+            public int SoftWallSearchDepth;
+            public float StrategicRetryDelay;
+            public float PostBombEscapeSeconds;
+            public float BombDecisionInterval;
+            public float UrgentBombDecisionDelay;
+            public float BombPlacementChance;
+            public float SoftWallBombChance;
+            public float AdjacentSoftWallBombChance;
+            public float PlayerAttackBombChance;
+            public int SoftWallCheckDistance;
+            public int BombEscapeSearchDepth;
+            public int MinimumSafeNeighbors;
+
+            /// <summary>
+            /// Purpose: Packages all tunable AI behavior numbers for one difficulty preset.
+            /// Inputs: every argument maps directly to a serialized AIController behavior field.
+            /// Output: returns a DifficultyPreset value that can be applied to the controller.
+            /// </summary>
+            public DifficultyPreset(
+                float moveDecisionInterval,
+                float failedMoveRetryDelay,
+                float idleChance,
+                float avoidReverseChance,
+                int escapeSearchDepth,
+                int playerChaseDistance,
+                int softWallSearchDepth,
+                float strategicRetryDelay,
+                float postBombEscapeSeconds,
+                float bombDecisionInterval,
+                float urgentBombDecisionDelay,
+                float bombPlacementChance,
+                float softWallBombChance,
+                float adjacentSoftWallBombChance,
+                float playerAttackBombChance,
+                int softWallCheckDistance,
+                int bombEscapeSearchDepth,
+                int minimumSafeNeighbors)
+            {
+                MoveDecisionInterval = moveDecisionInterval;
+                FailedMoveRetryDelay = failedMoveRetryDelay;
+                IdleChance = idleChance;
+                AvoidReverseChance = avoidReverseChance;
+                EscapeSearchDepth = escapeSearchDepth;
+                PlayerChaseDistance = playerChaseDistance;
+                SoftWallSearchDepth = softWallSearchDepth;
+                StrategicRetryDelay = strategicRetryDelay;
+                PostBombEscapeSeconds = postBombEscapeSeconds;
+                BombDecisionInterval = bombDecisionInterval;
+                UrgentBombDecisionDelay = urgentBombDecisionDelay;
+                BombPlacementChance = bombPlacementChance;
+                SoftWallBombChance = softWallBombChance;
+                AdjacentSoftWallBombChance = adjacentSoftWallBombChance;
+                PlayerAttackBombChance = playerAttackBombChance;
+                SoftWallCheckDistance = softWallCheckDistance;
+                BombEscapeSearchDepth = bombEscapeSearchDepth;
+                MinimumSafeNeighbors = minimumSafeNeighbors;
+            }
+        }
 
         private struct EscapeSearchNode
         {
@@ -138,7 +209,21 @@ namespace BubbleTown.AI
             Transform newBombSpawnRoot,
             BombController newBombPrefab = null)
         {
+            ApplyDifficultyPreset(currentDifficulty);
             base.ConfigureForBattle(newMapManager, spawnGridPosition, newBombSpawnRoot, newBombPrefab);
+            ResetAIState();
+        }
+
+        /// <summary>
+        /// Purpose: Applies the selected AI difficulty to movement, attack, and escape settings.
+        /// Inputs: difficulty is the preset chosen by the player before AI Battle.
+        /// Output: no return value; updates AI tuning fields and refreshes runtime decision timers.
+        /// </summary>
+        /// <param name="difficulty">AI difficulty preset to apply.</param>
+        public void ConfigureDifficulty(AIDifficulty difficulty)
+        {
+            currentDifficulty = difficulty;
+            ApplyDifficultyPreset(currentDifficulty);
             ResetAIState();
         }
 
@@ -1252,6 +1337,110 @@ namespace BubbleTown.AI
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Purpose: Copies one difficulty preset into the AI's live behavior fields.
+        /// Inputs: difficulty selects Easy, Normal, or Hard tuning values.
+        /// Output: no return value; movement, bomb, chase, and escape settings are updated in-place.
+        /// </summary>
+        /// <param name="difficulty">Difficulty preset that should drive this AI instance.</param>
+        private void ApplyDifficultyPreset(AIDifficulty difficulty)
+        {
+            DifficultyPreset preset = GetDifficultyPreset(difficulty);
+
+            moveDecisionInterval = preset.MoveDecisionInterval;
+            failedMoveRetryDelay = preset.FailedMoveRetryDelay;
+            idleChance = preset.IdleChance;
+            avoidImmediateReverseChance = preset.AvoidReverseChance;
+            escapeSearchDepth = preset.EscapeSearchDepth;
+            playerChaseDistance = preset.PlayerChaseDistance;
+            softWallTargetSearchDepth = preset.SoftWallSearchDepth;
+            strategicMoveRetryDelay = preset.StrategicRetryDelay;
+            postBombEscapeSeconds = preset.PostBombEscapeSeconds;
+            bombDecisionInterval = preset.BombDecisionInterval;
+            urgentBombDecisionDelay = preset.UrgentBombDecisionDelay;
+            bombPlacementChance = preset.BombPlacementChance;
+            softWallBombPlacementChance = preset.SoftWallBombChance;
+            adjacentSoftWallBombPlacementChance = preset.AdjacentSoftWallBombChance;
+            playerAttackBombPlacementChance = preset.PlayerAttackBombChance;
+            softWallCheckDistance = preset.SoftWallCheckDistance;
+            bombEscapeSearchDepth = preset.BombEscapeSearchDepth;
+            minimumSafeNeighborsAfterBomb = preset.MinimumSafeNeighbors;
+        }
+
+        /// <summary>
+        /// Purpose: Returns the numeric AI behavior preset for a selected difficulty.
+        /// Inputs: difficulty is the selected AI difficulty enum.
+        /// Output: returns a DifficultyPreset struct containing movement, attack, and escape parameters.
+        /// </summary>
+        /// <param name="difficulty">AI difficulty to resolve.</param>
+        /// <returns>Resolved behavior preset.</returns>
+        private DifficultyPreset GetDifficultyPreset(AIDifficulty difficulty)
+        {
+            switch (difficulty)
+            {
+                case AIDifficulty.Easy:
+                    return new DifficultyPreset(
+                        0.56f,
+                        0.22f,
+                        0.24f,
+                        0.45f,
+                        4,
+                        4,
+                        5,
+                        0.26f,
+                        1.15f,
+                        3.05f,
+                        0.35f,
+                        0.18f,
+                        0.34f,
+                        0.52f,
+                        0.42f,
+                        1,
+                        4,
+                        1);
+                case AIDifficulty.Hard:
+                    return new DifficultyPreset(
+                        0.23f,
+                        0.08f,
+                        0.04f,
+                        0.88f,
+                        8,
+                        10,
+                        11,
+                        0.09f,
+                        1.75f,
+                        0.95f,
+                        0.05f,
+                        0.68f,
+                        0.92f,
+                        1f,
+                        0.95f,
+                        2,
+                        8,
+                        2);
+                default:
+                    return new DifficultyPreset(
+                        0.35f,
+                        0.15f,
+                        0.12f,
+                        0.7f,
+                        6,
+                        7,
+                        8,
+                        0.18f,
+                        1.4f,
+                        2f,
+                        0.12f,
+                        0.45f,
+                        0.72f,
+                        0.9f,
+                        0.85f,
+                        1,
+                        6,
+                        1);
+            }
         }
 
         /// <summary>

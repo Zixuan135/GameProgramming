@@ -72,6 +72,9 @@ namespace BubbleTown.Core
         /// <summary>Unity scene name for the map selection screen.</summary>
         public const string SceneMapSelect = "MapSelect";
 
+        /// <summary>Unity scene name for choosing AI behavior before AI Battle starts.</summary>
+        public const string SceneDifficultySelect = "DifficultySelect";
+
         /// <summary>Unity scene name for the battle scene.</summary>
         public const string SceneBattle = "Battle";
 

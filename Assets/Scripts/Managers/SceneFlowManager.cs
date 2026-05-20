@@ -6,7 +6,7 @@ namespace BubbleTown.Managers
 {
     /// <summary>
     /// Handles scene transitions for the fixed flow:
-    /// The scene path is MainMenu, ModeSelect, CharacterSelect, MapSelect, Battle, then Result.
+    /// The scene path is MainMenu, ModeSelect, CharacterSelect, MapSelect, optional DifficultySelect, Battle, then Result.
     /// </summary>
     public class SceneFlowManager : MonoBehaviour
     {
@@ -85,6 +85,12 @@ namespace BubbleTown.Managers
         /// Output: no return value; updates component, scene, or game state as needed.
         /// </summary>
         public void LoadMapSelect() => LoadScene(GameConstants.SceneMapSelect);
+        /// <summary>
+        /// Purpose: Loads difficulty select for AI Battle.
+        /// Inputs: no direct parameters; reads the shared scene name constant.
+        /// Output: no return value; Unity loads the difficulty selection scene.
+        /// </summary>
+        public void LoadDifficultySelect() => LoadScene(GameConstants.SceneDifficultySelect);
         /// <summary>
         /// Purpose: Loads battle.
         /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
