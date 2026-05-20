@@ -1123,7 +1123,7 @@ namespace BubbleTown.UI
                     color = player2Color;
                     return gameManager.Player2;
                 case GameMode.AIBattle:
-                    label = "AI RIVAL";
+                    label = "AI " + FormatAIDifficultyName(gameManager.CurrentAIDifficulty).ToUpperInvariant();
                     color = aiColor;
                     return gameManager.AIPlayer;
                 default:
@@ -1941,11 +1941,53 @@ namespace BubbleTown.UI
             switch (gameMode)
             {
                 case GameMode.AIBattle:
-                    return "AI";
+                    return "AI " + FormatAIDifficultyInitial(GameManager.Instance != null
+                        ? GameManager.Instance.CurrentAIDifficulty
+                        : AIDifficulty.Normal);
                 case GameMode.LocalVS:
                     return "VS";
                 default:
                     return "Solo";
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Formats AI difficulty for opponent labels in the legacy IMGUI HUD.
+        /// Inputs: difficulty is the selected AI preset stored in GameManager.
+        /// Output: returns Easy, Normal, or Hard.
+        /// </summary>
+        /// <param name="difficulty">Current AI difficulty.</param>
+        /// <returns>Readable AI difficulty label.</returns>
+        private string FormatAIDifficultyName(AIDifficulty difficulty)
+        {
+            switch (difficulty)
+            {
+                case AIDifficulty.Easy:
+                    return "Easy";
+                case AIDifficulty.Hard:
+                    return "Hard";
+                default:
+                    return "Normal";
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Formats AI difficulty as a one-letter suffix for the small mode pill.
+        /// Inputs: difficulty is the selected AI preset stored in GameManager.
+        /// Output: returns E, N, or H.
+        /// </summary>
+        /// <param name="difficulty">Current AI difficulty.</param>
+        /// <returns>One-letter AI difficulty label.</returns>
+        private string FormatAIDifficultyInitial(AIDifficulty difficulty)
+        {
+            switch (difficulty)
+            {
+                case AIDifficulty.Easy:
+                    return "E";
+                case AIDifficulty.Hard:
+                    return "H";
+                default:
+                    return "N";
             }
         }
 
