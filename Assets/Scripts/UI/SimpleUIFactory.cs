@@ -26,6 +26,10 @@ namespace BubbleTown.UI
         }
 
         private const int TextureSize = 64;
+        private const string GuideModalResourcePath = "UI/Guide/GuideUI";
+        private const string GuideCloseButtonResourcePath = "UI/Guide/Close";
+        private const float GuideCloseButtonFloatSpeed = 2.8f;
+        private const float GuideCloseButtonFloatAmount = 0.006f;
 
         private static GUIStyle titleStyle;
         private static GUIStyle titleShadowStyle;
@@ -66,6 +70,9 @@ namespace BubbleTown.UI
         private static readonly Dictionary<string, Texture2D> CircleTextureCache = new Dictionary<string, Texture2D>();
         private static readonly Dictionary<string, Texture2D> SolidTextureCache = new Dictionary<string, Texture2D>();
         private static readonly Dictionary<string, GUIStyle> ButtonStyleCache = new Dictionary<string, GUIStyle>();
+        private static Texture2D guideModalTexture;
+        private static Texture2D guideCloseButtonTexture;
+        private static bool guideTexturesLoaded;
 
         private static readonly Color PanelFill = new Color(1f, 0.96f, 0.72f, 0.96f);
         private static readonly Color PanelBorder = new Color(0.2f, 0.58f, 0.82f, 1f);
@@ -610,6 +617,13 @@ namespace BubbleTown.UI
         public static bool GuideModal()
         {
             EnsureStyles();
+            EnsureGuideTexturesLoaded();
+
+            if (HasGuideModalAssets())
+            {
+                return DrawImageGuideModal();
+            }
+
             GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), GetSolidTexture(new Color(0.02f, 0.09f, 0.14f, 0.42f)));
 
             Rect rect = CenteredRect(560f, 340f);
@@ -634,6 +648,89 @@ namespace BubbleTown.UI
                 Color.white);
             GUILayout.EndArea();
             return shouldClose;
+        }
+
+        /// <summary>
+        /// Purpose: Loads the guide modal art from Resources the first time the guide popup is opened.
+        /// Inputs: no direct parameters; uses Resources paths without file extensions.
+        /// Output: no return value; caches Texture2D references for the image-based guide popup.
+        /// </summary>
+        private static void EnsureGuideTexturesLoaded()
+        {
+            if (guideTexturesLoaded)
+            {
+                return;
+            }
+
+            guideModalTexture = Resources.Load<Texture2D>(GuideModalResourcePath);
+            guideCloseButtonTexture = Resources.Load<Texture2D>(GuideCloseButtonResourcePath);
+            guideTexturesLoaded = true;
+        }
+
+        /// <summary>
+        /// Purpose: Checks whether the new illustrated guide popup can be drawn.
+        /// Inputs: no direct parameters; reads cached Texture2D fields.
+        /// Output: true when the full guide background is available, otherwise false.
+        /// </summary>
+        /// <returns>True if the guide image asset is loaded; otherwise false.</returns>
+        private static bool HasGuideModalAssets()
+        {
+            return guideModalTexture != null;
+        }
+
+        /// <summary>
+        /// Purpose: Draws the full illustrated guide popup and handles its close button hitbox.
+        /// Inputs: no direct parameters; reads cached guide textures and current mouse state.
+        /// Output: true when the player clicks Close, otherwise false.
+        /// </summary>
+        /// <returns>True when the guide should close; otherwise false.</returns>
+        private static bool DrawImageGuideModal()
+        {
+            GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), GetSolidTexture(new Color(0.02f, 0.09f, 0.14f, 0.48f)));
+
+            Rect screenRect = new Rect(0f, 0f, Screen.width, Screen.height);
+            Rect modalBounds = new Rect(
+                screenRect.x + 18f,
+                screenRect.y + 14f,
+                Mathf.Max(1f, screenRect.width - 36f),
+                Mathf.Max(1f, screenRect.height - 28f));
+            Rect guideRect = CalculateAspectFitRect(guideModalTexture, modalBounds);
+
+            GUI.DrawTexture(guideRect, guideModalTexture, ScaleMode.StretchToFill, false);
+
+            Rect closeSlot = GetNormalizedRect(guideRect, 0.314f, 0.81f, 0.372f, 0.126f);
+            DrawGuideCloseButton(closeSlot);
+            return GUI.Button(closeSlot, GUIContent.none, invisibleButtonStyle);
+        }
+
+        /// <summary>
+        /// Purpose: Draws the animated close button art in the empty lower area of the guide panel.
+        /// Inputs: closeSlot is the clickable area reserved for the Close action in GuideUI.png.
+        /// Output: no return value; renders only visual feedback, while DrawImageGuideModal owns the click.
+        /// </summary>
+        /// <param name="closeSlot">Screen-space rectangle for the guide close button.</param>
+        private static void DrawGuideCloseButton(Rect closeSlot)
+        {
+            if (guideCloseButtonTexture == null)
+            {
+                return;
+            }
+
+            bool isHovered = Event.current != null && closeSlot.Contains(Event.current.mousePosition);
+            bool isPressed = isHovered && Event.current.type == EventType.MouseDown && Event.current.button == 0;
+            float idleOffset = Mathf.Sin(Time.realtimeSinceStartup * GuideCloseButtonFloatSpeed) * closeSlot.height * GuideCloseButtonFloatAmount;
+
+            Rect drawRect = CalculateAspectFitRect(guideCloseButtonTexture, closeSlot);
+            drawRect = ScaleRectAroundCenter(drawRect, isHovered ? 1.04f : 1f, isHovered ? 1.04f : 1f);
+            drawRect.y += idleOffset;
+
+            if (isPressed)
+            {
+                drawRect = ScaleRectAroundCenter(drawRect, 0.97f, 0.97f);
+                drawRect.y += closeSlot.height * 0.02f;
+            }
+
+            GUI.DrawTexture(drawRect, guideCloseButtonTexture, ScaleMode.ScaleToFit, true);
         }
 
         /// <summary>
@@ -976,6 +1073,82 @@ namespace BubbleTown.UI
             }
 
             GUIUtility.ScaleAroundPivot(new Vector2(scale, scale), rect.center);
+        }
+
+        /// <summary>
+        /// Purpose: Fits a texture inside a target rectangle without changing the texture aspect ratio.
+        /// Inputs: texture is the image to draw; targetRect is the largest allowed screen-space area.
+        /// Output: a centered Rect that preserves the source texture proportions.
+        /// </summary>
+        /// <param name="texture">Texture whose width and height define the desired aspect ratio.</param>
+        /// <param name="targetRect">Maximum screen-space rectangle available for drawing.</param>
+        /// <returns>A centered rectangle that fits inside targetRect.</returns>
+        private static Rect CalculateAspectFitRect(Texture2D texture, Rect targetRect)
+        {
+            if (texture == null || texture.height == 0 || targetRect.height <= 0f || targetRect.width <= 0f)
+            {
+                return targetRect;
+            }
+
+            float textureAspect = (float)texture.width / texture.height;
+            float targetAspect = targetRect.width / targetRect.height;
+
+            if (targetAspect > textureAspect)
+            {
+                float fittedWidth = targetRect.height * textureAspect;
+                return new Rect(
+                    targetRect.x + (targetRect.width - fittedWidth) * 0.5f,
+                    targetRect.y,
+                    fittedWidth,
+                    targetRect.height);
+            }
+
+            float fittedHeight = targetRect.width / textureAspect;
+            return new Rect(
+                targetRect.x,
+                targetRect.y + (targetRect.height - fittedHeight) * 0.5f,
+                targetRect.width,
+                fittedHeight);
+        }
+
+        /// <summary>
+        /// Purpose: Converts normalized coordinates within a parent rectangle into screen-space pixels.
+        /// Inputs: parent is the reference rectangle; x, y, width, and height are values from 0 to 1.
+        /// Output: a Rect positioned and sized relative to parent.
+        /// </summary>
+        /// <param name="parent">Screen-space rectangle used as the coordinate reference.</param>
+        /// <param name="x">Normalized horizontal position inside parent.</param>
+        /// <param name="y">Normalized vertical position inside parent.</param>
+        /// <param name="width">Normalized width inside parent.</param>
+        /// <param name="height">Normalized height inside parent.</param>
+        /// <returns>A screen-space rectangle based on the normalized input values.</returns>
+        private static Rect GetNormalizedRect(Rect parent, float x, float y, float width, float height)
+        {
+            return new Rect(
+                parent.x + parent.width * x,
+                parent.y + parent.height * y,
+                parent.width * width,
+                parent.height * height);
+        }
+
+        /// <summary>
+        /// Purpose: Scales a rectangle around its center point without moving the center.
+        /// Inputs: rect is the source rectangle; scaleX and scaleY are independent width/height multipliers.
+        /// Output: a new Rect with the requested scale applied.
+        /// </summary>
+        /// <param name="rect">Source rectangle to scale.</param>
+        /// <param name="scaleX">Width multiplier.</param>
+        /// <param name="scaleY">Height multiplier.</param>
+        /// <returns>A scaled rectangle that keeps the same center as rect.</returns>
+        private static Rect ScaleRectAroundCenter(Rect rect, float scaleX, float scaleY)
+        {
+            float scaledWidth = rect.width * scaleX;
+            float scaledHeight = rect.height * scaleY;
+            return new Rect(
+                rect.center.x - scaledWidth * 0.5f,
+                rect.center.y - scaledHeight * 0.5f,
+                scaledWidth,
+                scaledHeight);
         }
 
         /// <summary>
