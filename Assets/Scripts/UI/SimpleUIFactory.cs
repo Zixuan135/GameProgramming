@@ -28,8 +28,15 @@ namespace BubbleTown.UI
         private const int TextureSize = 64;
         private const string GuideModalResourcePath = "UI/Guide/GuideUI";
         private const string GuideCloseButtonResourcePath = "UI/Guide/Close";
+        private const string SettingsModalResourcePath = "UI/Settings/SettingUI";
+        private const string SettingsCloseButtonResourcePath = "UI/Settings/Close2";
+        private const string SettingsMusicPreviewButtonResourcePath = "UI/Settings/MusicPreview";
+        private const string SettingsRestoreDefaultsButtonResourcePath = "UI/Settings/RestoreDefaults";
+        private const string SettingsSfxPreviewButtonResourcePath = "UI/Settings/SFXPreview";
         private const float GuideCloseButtonFloatSpeed = 2.8f;
         private const float GuideCloseButtonFloatAmount = 0.006f;
+        private const float SettingsImageButtonFloatSpeed = 2.8f;
+        private const float SettingsImageButtonFloatAmount = 0.006f;
 
         private static GUIStyle titleStyle;
         private static GUIStyle titleShadowStyle;
@@ -73,6 +80,12 @@ namespace BubbleTown.UI
         private static Texture2D guideModalTexture;
         private static Texture2D guideCloseButtonTexture;
         private static bool guideTexturesLoaded;
+        private static Texture2D settingsModalTexture;
+        private static Texture2D settingsCloseButtonTexture;
+        private static Texture2D settingsMusicPreviewButtonTexture;
+        private static Texture2D settingsRestoreDefaultsButtonTexture;
+        private static Texture2D settingsSfxPreviewButtonTexture;
+        private static bool settingsTexturesLoaded;
 
         private static readonly Color PanelFill = new Color(1f, 0.96f, 0.72f, 0.96f);
         private static readonly Color PanelBorder = new Color(0.2f, 0.58f, 0.82f, 1f);
@@ -538,9 +551,15 @@ namespace BubbleTown.UI
         public static bool SettingsModal(AudioManager audioManager)
         {
             EnsureStyles();
+            EnsureSettingsTexturesLoaded();
             if (audioManager == null)
             {
                 audioManager = AudioManager.Instance;
+            }
+
+            if (HasSettingsModalAssets())
+            {
+                return DrawImageSettingsModal(audioManager);
             }
 
             GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), GetSolidTexture(new Color(0.02f, 0.09f, 0.14f, 0.42f)));
@@ -606,6 +625,347 @@ namespace BubbleTown.UI
             }
 
             return shouldClose;
+        }
+
+        /// <summary>
+        /// Purpose: Loads the illustrated settings panel and button textures from Resources once.
+        /// Inputs: no direct parameters; uses Resources paths without file extensions.
+        /// Output: no return value; caches Texture2D references for the image-based settings popup.
+        /// </summary>
+        private static void EnsureSettingsTexturesLoaded()
+        {
+            if (settingsTexturesLoaded)
+            {
+                return;
+            }
+
+            settingsModalTexture = Resources.Load<Texture2D>(SettingsModalResourcePath);
+            settingsCloseButtonTexture = Resources.Load<Texture2D>(SettingsCloseButtonResourcePath);
+            settingsMusicPreviewButtonTexture = Resources.Load<Texture2D>(SettingsMusicPreviewButtonResourcePath);
+            settingsRestoreDefaultsButtonTexture = Resources.Load<Texture2D>(SettingsRestoreDefaultsButtonResourcePath);
+            settingsSfxPreviewButtonTexture = Resources.Load<Texture2D>(SettingsSfxPreviewButtonResourcePath);
+
+            ApplyCrispUiTextureSettings(settingsModalTexture);
+            ApplyCrispUiTextureSettings(settingsCloseButtonTexture);
+            ApplyCrispUiTextureSettings(settingsMusicPreviewButtonTexture);
+            ApplyCrispUiTextureSettings(settingsRestoreDefaultsButtonTexture);
+            ApplyCrispUiTextureSettings(settingsSfxPreviewButtonTexture);
+            settingsTexturesLoaded = true;
+        }
+
+        /// <summary>
+        /// Purpose: Forces imported UI art to draw with sharper sampling inside IMGUI.
+        /// Inputs: texture is the loaded UI image that may otherwise use soft bilinear filtering.
+        /// Output: no return value; updates runtime texture sampling settings only.
+        /// </summary>
+        /// <param name="texture">Loaded UI texture that should look crisp on screen.</param>
+        private static void ApplyCrispUiTextureSettings(Texture2D texture)
+        {
+            if (texture == null)
+            {
+                return;
+            }
+
+            // Point filtering avoids Unity softening rasterized UI text when the IMGUI panel is scaled.
+            texture.filterMode = FilterMode.Point;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.anisoLevel = 0;
+        }
+
+        /// <summary>
+        /// Purpose: Checks whether the illustrated settings popup can be drawn.
+        /// Inputs: no direct parameters; reads cached Texture2D fields.
+        /// Output: true when the full settings background is available, otherwise false.
+        /// </summary>
+        /// <returns>True if the settings background texture is loaded; otherwise false.</returns>
+        private static bool HasSettingsModalAssets()
+        {
+            return settingsModalTexture != null;
+        }
+
+        /// <summary>
+        /// Purpose: Draws the illustrated settings popup while preserving all existing settings behavior.
+        /// Inputs: audioManager provides live audio values and preview playback.
+        /// Output: true when the player clicks the Close button, otherwise false.
+        /// </summary>
+        /// <param name="audioManager">Audio manager used to read/apply audio settings and play previews.</param>
+        /// <returns>True when the settings popup should close; otherwise false.</returns>
+        private static bool DrawImageSettingsModal(AudioManager audioManager)
+        {
+            GUI.DrawTexture(new Rect(0f, 0f, Screen.width, Screen.height), GetSolidTexture(new Color(0.02f, 0.09f, 0.14f, 0.48f)));
+
+            Rect screenRect = new Rect(0f, 0f, Screen.width, Screen.height);
+            Rect modalBounds = new Rect(
+                screenRect.x + 18f,
+                screenRect.y + 10f,
+                Mathf.Max(1f, screenRect.width - 36f),
+                Mathf.Max(1f, screenRect.height - 20f));
+            Rect settingsRect = CalculateAspectFitRect(settingsModalTexture, modalBounds);
+            settingsRect = PixelSnapRect(settingsRect);
+
+            GUI.DrawTexture(settingsRect, settingsModalTexture, ScaleMode.StretchToFill, false);
+
+            Rect feedbackRect = GetNormalizedRect(settingsRect, 0.164f, 0.214f, 0.668f, 0.067f);
+            DrawSettingsFeedback(feedbackRect);
+            DrawImageSettingsControls(settingsRect, audioManager);
+
+            Rect sfxPreviewRect = GetNormalizedRect(settingsRect, 0.175f, 0.748f, 0.305f, 0.074f);
+            Rect musicPreviewRect = GetNormalizedRect(settingsRect, 0.520f, 0.748f, 0.305f, 0.074f);
+            Rect restoreDefaultsRect = GetNormalizedRect(settingsRect, 0.175f, 0.846f, 0.305f, 0.074f);
+            Rect closeRect = GetNormalizedRect(settingsRect, 0.520f, 0.846f, 0.305f, 0.074f);
+
+            if (DrawSettingsImageButton(
+                sfxPreviewRect,
+                settingsSfxPreviewButtonTexture,
+                "SFX PREVIEW",
+                new Color(1f, 0.62f, 0.22f, 1f),
+                0.35f))
+            {
+                audioManager?.PlaySettingsPreviewSFX();
+                ShowSettingsFeedback("Playing SFX preview", new Color(1f, 0.62f, 0.22f, 1f));
+            }
+
+            if (DrawSettingsImageButton(
+                musicPreviewRect,
+                settingsMusicPreviewButtonTexture,
+                "MUSIC PREVIEW",
+                new Color(0.42f, 0.88f, 0.38f, 1f),
+                1.15f))
+            {
+                AudioManager.Instance?.PlayButtonClickSFX();
+                audioManager?.PlayCurrentSceneBGMPreview();
+                ShowSettingsFeedback("Playing music preview", new Color(0.42f, 0.88f, 0.38f, 1f));
+            }
+
+            if (DrawSettingsImageButton(
+                restoreDefaultsRect,
+                settingsRestoreDefaultsButtonTexture,
+                "RESTORE DEFAULTS",
+                new Color(1f, 0.62f, 0.22f, 1f),
+                1.85f))
+            {
+                AudioManager.Instance?.PlayButtonClickSFX();
+                GameSettings.ResetToDefaults();
+                audioManager?.ReloadFromGameSettings();
+                ShowSettingsFeedback("Defaults restored and saved", new Color(1f, 0.62f, 0.22f, 1f));
+            }
+
+            return DrawSettingsImageButton(
+                closeRect,
+                settingsCloseButtonTexture,
+                "CLOSE",
+                new Color(0.09f, 0.72f, 1f, 1f),
+                2.55f);
+        }
+
+        /// <summary>
+        /// Purpose: Draws interactive overlays on top of the illustrated settings rows.
+        /// Inputs: settingsRect is the full popup rectangle and audioManager reads/applies audio values.
+        /// Output: no return value; updates GameSettings and AudioManager when the player changes a control.
+        /// </summary>
+        /// <param name="settingsRect">Screen-space rectangle of the illustrated settings popup.</param>
+        /// <param name="audioManager">Audio manager used to read and apply audio settings.</param>
+        private static void DrawImageSettingsControls(Rect settingsRect, AudioManager audioManager)
+        {
+            Color blue = new Color(0.1f, 0.72f, 1f, 1f);
+            Color green = new Color(0.42f, 0.88f, 0.38f, 1f);
+            Color orange = new Color(1f, 0.62f, 0.22f, 1f);
+
+            float masterVolume = audioManager != null ? audioManager.MasterVolume : GameSettings.MasterVolume;
+            float bgmVolume = audioManager != null ? audioManager.BgmVolume : GameSettings.BgmVolume;
+            float sfxVolume = audioManager != null ? audioManager.SfxVolume : GameSettings.SfxVolume;
+            bool muteBGM = audioManager != null ? audioManager.MuteBGM : GameSettings.MuteBGM;
+            bool muteSFX = audioManager != null ? audioManager.MuteSFX : GameSettings.MuteSFX;
+
+            float newMasterVolume = DrawImageSettingsSlider(settingsRect, 0.300f, masterVolume, blue);
+            if (!Mathf.Approximately(newMasterVolume, masterVolume))
+            {
+                audioManager?.SetMasterVolume(newMasterVolume);
+                audioManager?.PlaySettingsPreviewSFX();
+                ShowSettingsFeedback($"Saved Master Volume {Mathf.RoundToInt(newMasterVolume * 100f)}%", blue);
+            }
+
+            float newBgmVolume = DrawImageSettingsSlider(settingsRect, 0.376f, bgmVolume, green);
+            if (!Mathf.Approximately(newBgmVolume, bgmVolume))
+            {
+                audioManager?.SetBgmVolume(newBgmVolume);
+                ShowSettingsFeedback($"Saved BGM Volume {Mathf.RoundToInt(newBgmVolume * 100f)}%", green);
+            }
+
+            float newSfxVolume = DrawImageSettingsSlider(settingsRect, 0.452f, sfxVolume, orange);
+            if (!Mathf.Approximately(newSfxVolume, sfxVolume))
+            {
+                audioManager?.SetSfxVolume(newSfxVolume);
+                audioManager?.PlaySettingsPreviewSFX();
+                ShowSettingsFeedback($"Saved SFX Volume {Mathf.RoundToInt(newSfxVolume * 100f)}%", orange);
+            }
+
+            bool newMuteBGM = DrawImageSettingsToggle(settingsRect, 0.527f, muteBGM, green);
+            if (newMuteBGM != muteBGM)
+            {
+                audioManager?.SetBgmMuted(newMuteBGM);
+                AudioManager.Instance?.PlayButtonClickSFX();
+                ShowSettingsFeedback(newMuteBGM ? "BGM muted and saved" : "BGM unmuted and saved", green);
+            }
+
+            bool newMuteSFX = DrawImageSettingsToggle(settingsRect, 0.602f, muteSFX, orange);
+            if (newMuteSFX != muteSFX)
+            {
+                audioManager?.SetSfxMuted(newMuteSFX);
+                if (!newMuteSFX)
+                {
+                    AudioManager.Instance?.PlayButtonClickSFX();
+                }
+
+                ShowSettingsFeedback(newMuteSFX ? "SFX muted and saved" : "SFX unmuted and saved", orange);
+            }
+
+            bool shakeEnabled = GameSettings.ScreenShakeEnabled;
+            bool newShakeEnabled = DrawImageSettingsToggle(settingsRect, 0.677f, shakeEnabled, blue);
+            if (newShakeEnabled != shakeEnabled)
+            {
+                AudioManager.Instance?.PlayButtonClickSFX();
+                GameSettings.SetScreenShakeEnabled(newShakeEnabled);
+                ShowSettingsFeedback(newShakeEnabled ? "Screen shake enabled" : "Screen shake disabled", blue);
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Draws a clickable slider on top of the illustrated settings art.
+        /// Inputs: settingsRect is the popup, rowYNormalized locates the row, value is 0-1, and accentColor themes the slider.
+        /// Output: returns the updated 0-1 value after mouse input.
+        /// </summary>
+        /// <param name="settingsRect">Screen-space rectangle of the settings popup.</param>
+        /// <param name="rowYNormalized">Normalized Y position of the source row inside the settings art.</param>
+        /// <param name="value">Current setting value in the 0-1 range.</param>
+        /// <param name="accentColor">Theme color for the slider fill and knob.</param>
+        /// <returns>The clamped slider value after processing the current mouse event.</returns>
+        private static float DrawImageSettingsSlider(Rect settingsRect, float rowYNormalized, float value, Color accentColor)
+        {
+            float resolvedValue = Mathf.Clamp01(value);
+            Rect trackRect = GetNormalizedRect(settingsRect, 0.374f, rowYNormalized + 0.020f, 0.376f, 0.020f);
+            Rect valueRect = GetNormalizedRect(settingsRect, 0.760f, rowYNormalized + 0.006f, 0.070f, 0.048f);
+
+            // The background art already contains labels; this small overlay only updates the live track and percentage.
+            Rect trackCoverRect = new Rect(
+                trackRect.x - settingsRect.width * 0.006f,
+                trackRect.y - settingsRect.height * 0.004f,
+                trackRect.width + settingsRect.width * 0.012f,
+                trackRect.height + settingsRect.height * 0.008f);
+            DrawRoundedRect(trackCoverRect, new Color(1f, 0.95f, 0.76f, 0.92f), new Color(1f, 1f, 1f, 0.58f), 9, 1);
+            DrawRoundedRect(trackRect, new Color(0.94f, 0.9f, 0.68f, 1f), new Color(1f, 1f, 1f, 0.65f), 7, 1);
+            DrawRoundedRect(new Rect(trackRect.x, trackRect.y, trackRect.width * resolvedValue, trackRect.height), accentColor, Color.clear, 7, 0);
+
+            float knobSize = Mathf.Max(20f, settingsRect.height * 0.038f);
+            Rect knobRect = new Rect(
+                trackRect.x + trackRect.width * resolvedValue - knobSize * 0.5f,
+                trackRect.center.y - knobSize * 0.5f,
+                knobSize,
+                knobSize);
+            DrawBubble(knobRect, Color.Lerp(accentColor, Color.white, 0.16f));
+
+            DrawRoundedRect(valueRect, new Color(1f, 0.96f, 0.74f, 0.88f), Color.clear, 12, 0);
+            GUI.Label(valueRect, $"{Mathf.RoundToInt(resolvedValue * 100f)}%", settingsValueStyle);
+
+            Event currentEvent = Event.current;
+            Rect hitRect = new Rect(
+                trackRect.x - knobSize * 0.5f,
+                trackRect.y - knobSize * 0.45f,
+                trackRect.width + knobSize,
+                trackRect.height + knobSize * 0.9f);
+            if (currentEvent != null &&
+                (currentEvent.type == EventType.MouseDown || currentEvent.type == EventType.MouseDrag) &&
+                hitRect.Contains(currentEvent.mousePosition))
+            {
+                resolvedValue = Mathf.Clamp01(Mathf.InverseLerp(trackRect.x, trackRect.xMax, currentEvent.mousePosition.x));
+                currentEvent.Use();
+            }
+
+            return resolvedValue;
+        }
+
+        /// <summary>
+        /// Purpose: Draws an interactive ON/OFF switch on top of the illustrated settings art.
+        /// Inputs: settingsRect is the popup, rowYNormalized locates the row, value is the current state, and accentColor themes ON.
+        /// Output: returns the toggled value when the player clicks the row; otherwise returns the original value.
+        /// </summary>
+        /// <param name="settingsRect">Screen-space rectangle of the settings popup.</param>
+        /// <param name="rowYNormalized">Normalized Y position of the source row inside the settings art.</param>
+        /// <param name="value">Current toggle state.</param>
+        /// <param name="accentColor">Theme color used when the toggle is enabled.</param>
+        /// <returns>The updated toggle state after processing button input.</returns>
+        private static bool DrawImageSettingsToggle(Rect settingsRect, float rowYNormalized, bool value, Color accentColor)
+        {
+            Rect hitRect = GetNormalizedRect(settingsRect, 0.137f, rowYNormalized, 0.724f, 0.061f);
+            Rect toggleRect = GetNormalizedRect(settingsRect, 0.728f, rowYNormalized + 0.008f, 0.098f, 0.044f);
+
+            Color fill = value ? accentColor : new Color(0.76f, 0.8f, 0.83f, 1f);
+            DrawRoundedRect(toggleRect, fill, Color.white, 18, 2);
+
+            float knobSize = toggleRect.height * 0.86f;
+            Rect knobRect = value
+                ? new Rect(toggleRect.xMax - knobSize - toggleRect.height * 0.07f, toggleRect.y + toggleRect.height * 0.07f, knobSize, knobSize)
+                : new Rect(toggleRect.x + toggleRect.height * 0.07f, toggleRect.y + toggleRect.height * 0.07f, knobSize, knobSize);
+            DrawBubble(knobRect, Color.white);
+            GUI.Label(toggleRect, value ? "ON" : "OFF", settingsValueStyle);
+
+            // The whole illustrated row is clickable so players do not need pixel-perfect switch clicks.
+            if (GUI.Button(hitRect, GUIContent.none, invisibleButtonStyle))
+            {
+                return !value;
+            }
+
+            return value;
+        }
+
+        /// <summary>
+        /// Purpose: Draws one of the imported settings button images with hover, press, and idle motion.
+        /// Inputs: slot defines the clickable area, texture is the imported art, fallbackText is used if art is missing, and accentColor themes fallback art.
+        /// Output: true when the player clicks the button; otherwise false.
+        /// </summary>
+        /// <param name="slot">Screen-space rectangle reserved for the button.</param>
+        /// <param name="texture">Imported button image to draw.</param>
+        /// <param name="fallbackText">Text drawn by the generated fallback button if texture is missing.</param>
+        /// <param name="accentColor">Fallback button color.</param>
+        /// <param name="phaseOffset">Animation phase offset so multiple buttons do not float identically.</param>
+        /// <returns>True if the button was clicked; otherwise false.</returns>
+        private static bool DrawSettingsImageButton(Rect slot, Texture2D texture, string fallbackText, Color accentColor, float phaseOffset)
+        {
+            if (texture == null)
+            {
+                return CartoonButton(
+                    slot,
+                    fallbackText,
+                    accentColor,
+                    Color.Lerp(accentColor, Color.white, 0.18f),
+                    Color.Lerp(accentColor, Color.black, 0.16f),
+                    Color.white);
+            }
+
+            Event currentEvent = Event.current;
+            bool isHovered = currentEvent != null && slot.Contains(currentEvent.mousePosition);
+            bool isPressed = isHovered &&
+                (currentEvent.type == EventType.MouseDown || currentEvent.type == EventType.MouseDrag) &&
+                currentEvent.button == 0;
+            float idleOffset = Mathf.Sin(Time.realtimeSinceStartup * SettingsImageButtonFloatSpeed + phaseOffset) *
+                slot.height *
+                SettingsImageButtonFloatAmount;
+
+            Rect drawSlot = slot;
+            drawSlot.y += idleOffset;
+            Rect drawRect = CalculateAspectFitRect(texture, drawSlot);
+            drawRect = ScaleRectAroundCenter(drawRect, isHovered ? 1.035f : 1f, isHovered ? 1.035f : 1f);
+            drawRect = PixelSnapRect(drawRect);
+
+            if (isPressed)
+            {
+                drawRect = ScaleRectAroundCenter(drawRect, 0.97f, 0.97f);
+                drawRect.y += slot.height * 0.02f;
+                drawRect = PixelSnapRect(drawRect);
+            }
+
+            GUI.DrawTexture(drawRect, texture, ScaleMode.ScaleToFit, true);
+            return GUI.Button(slot, GUIContent.none, invisibleButtonStyle);
         }
 
         /// <summary>
@@ -1129,6 +1489,22 @@ namespace BubbleTown.UI
                 parent.y + parent.height * y,
                 parent.width * width,
                 parent.height * height);
+        }
+
+        /// <summary>
+        /// Purpose: Aligns a rectangle to whole screen pixels before drawing imported UI art.
+        /// Inputs: rect is the floating-point IMGUI rectangle produced by aspect fitting or animation.
+        /// Output: a Rect with rounded position and size to reduce sub-pixel texture blur.
+        /// </summary>
+        /// <param name="rect">Source rectangle in screen-space pixels.</param>
+        /// <returns>A pixel-aligned rectangle with the same approximate bounds.</returns>
+        private static Rect PixelSnapRect(Rect rect)
+        {
+            return new Rect(
+                Mathf.Round(rect.x),
+                Mathf.Round(rect.y),
+                Mathf.Round(rect.width),
+                Mathf.Round(rect.height));
         }
 
         /// <summary>
