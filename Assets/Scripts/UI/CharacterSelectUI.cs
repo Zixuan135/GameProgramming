@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using BubbleTown.Characters;
 using BubbleTown.Core.Enums;
@@ -13,9 +14,29 @@ namespace BubbleTown.UI
     /// </summary>
     public class CharacterSelectUI : MonoBehaviour
     {
+        private const string BackgroundResourcePath = "UI/CharacterSelect/CharacterSelect";
+        private const string BackButtonResourcePath = "UI/CharacterSelect/Back2";
+        private const string ContinueButtonResourcePath = "UI/CharacterSelect/Continue";
+        private const string ReadyBadgeResourcePath = "UI/CharacterSelect/Ready";
+        private const string RoleResourcePrefix = "UI/CharacterSelect/Role";
         private const int Player1Slot = 1;
         private const int Player2Slot = 2;
+        private const int RoleTextureCount = 6;
         private const int TextureSize = 64;
+        private const float CardFloatSpeed = 2.1f;
+        private const float CardFloatAmount = 0.005f;
+        private const float ButtonFloatSpeed = 2.8f;
+        private const float ButtonFloatAmount = 0.004f;
+
+        private static readonly string[] ImageRoleCharacterIds =
+        {
+            "bubble_ranger",
+            "star_mage",
+            "frog_hopper",
+            "bear_blaster",
+            "gear_kid",
+            "bunny_pop"
+        };
 
         private CharacterData[] roster = new CharacterData[0];
         private CharacterData selectedPlayer1;
@@ -28,9 +49,28 @@ namespace BubbleTown.UI
         private GUIStyle slotStyle;
         private GUIStyle smallPillStyle;
         private GUIStyle lockedLabelStyle;
+        private GUIStyle imageBannerStyle;
+        private GUIStyle imageSubtleBannerStyle;
+        private GUIStyle transparentButtonStyle;
+        private Texture2D backgroundTexture;
+        private Texture2D backButtonTexture;
+        private Texture2D continueButtonTexture;
+        private Texture2D readyBadgeTexture;
         private Texture2D whiteTexture;
+        private readonly Texture2D[] roleTextures = new Texture2D[RoleTextureCount];
+        private readonly Dictionary<string, Texture2D> roleTexturesByCharacterId = new Dictionary<string, Texture2D>();
 
         private readonly Dictionary<string, Texture2D> roundedTextureCache = new Dictionary<string, Texture2D>();
+
+        /// <summary>
+        /// Purpose: Loads imported character-select textures before the first IMGUI draw pass.
+        /// Inputs: no direct parameters; reads Texture2D assets from Resources/UI/CharacterSelect.
+        /// Output: no return value; caches textures for the image-based character select screen.
+        /// </summary>
+        private void Awake()
+        {
+            LoadCharacterSelectTextures();
+        }
 
         /// <summary>
         /// Purpose: Subscribes or refreshes runtime state when this component becomes active.
@@ -39,6 +79,7 @@ namespace BubbleTown.UI
         /// </summary>
         private void OnEnable()
         {
+            LoadCharacterSelectTextures();
             LoadRosterAndSelections();
         }
 
@@ -55,6 +96,12 @@ namespace BubbleTown.UI
             GameMode mode = GameManager.Instance != null
                 ? GameManager.Instance.CurrentGameMode
                 : GameMode.SinglePlayer;
+
+            if (HasImageCharacterSelectAssets())
+            {
+                DrawImageCharacterSelect(mode);
+                return;
+            }
 
             SimpleUIFactory.DrawCandyBackground();
 
@@ -97,6 +144,523 @@ namespace BubbleTown.UI
             {
                 selectedPlayer2 = CharacterRoster.GetNextDifferent(selectedPlayer1);
             }
+        }
+
+        /// <summary>
+        /// Purpose: Loads all imported textures used by the new art-driven character select screen.
+        /// Inputs: no direct parameters; uses Resources.Load paths without file extensions.
+        /// Output: no return value; assigns cached Texture2D references or keeps them null if missing.
+        /// </summary>
+        private void LoadCharacterSelectTextures()
+        {
+            backgroundTexture = Resources.Load<Texture2D>(BackgroundResourcePath);
+            backButtonTexture = Resources.Load<Texture2D>(BackButtonResourcePath);
+            continueButtonTexture = Resources.Load<Texture2D>(ContinueButtonResourcePath);
+            readyBadgeTexture = Resources.Load<Texture2D>(ReadyBadgeResourcePath);
+
+            roleTexturesByCharacterId.Clear();
+            for (int i = 0; i < roleTextures.Length; i++)
+            {
+                Texture2D roleTexture = Resources.Load<Texture2D>($"{RoleResourcePrefix}{i + 1}");
+                roleTextures[i] = roleTexture;
+                ApplyCharacterSelectTextureSettings(roleTexture);
+
+                // The imported role images follow the visual card order, not CharacterRoster order.
+                // Binding each texture to a stable characterId prevents clicked art and selected name from drifting apart.
+                if (i < ImageRoleCharacterIds.Length && roleTexture != null)
+                {
+                    roleTexturesByCharacterId[ImageRoleCharacterIds[i]] = roleTexture;
+                }
+            }
+
+            ApplyCharacterSelectTextureSettings(backgroundTexture);
+            ApplyCharacterSelectTextureSettings(backButtonTexture);
+            ApplyCharacterSelectTextureSettings(continueButtonTexture);
+            ApplyCharacterSelectTextureSettings(readyBadgeTexture);
+        }
+
+        /// <summary>
+        /// Purpose: Checks whether every required imported character-select image is available.
+        /// Inputs: no direct parameters; reads cached Texture2D fields.
+        /// Output: true when the image-based layout can be drawn; otherwise false so the old fallback remains usable.
+        /// </summary>
+        /// <returns>True if all required character select textures are loaded; otherwise false.</returns>
+        private bool HasImageCharacterSelectAssets()
+        {
+            if (backgroundTexture == null || backButtonTexture == null || continueButtonTexture == null || readyBadgeTexture == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < roleTextures.Length; i++)
+            {
+                if (roleTextures[i] == null)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Purpose: Draws the imported character select background, character cards, ready badge, and navigation buttons.
+        /// Inputs: mode is the current game mode, which decides whether P2 can choose a separate character.
+        /// Output: no return value; updates selected character data or scene flow when the player clicks controls.
+        /// </summary>
+        /// <param name="mode">Current game mode used to choose Single/AIBattle/LocalVS selection behavior.</param>
+        private void DrawImageCharacterSelect(GameMode mode)
+        {
+            SimpleUIFactory.DrawCandyBackground();
+
+            Rect screenRect = new Rect(0f, 0f, Screen.width, Screen.height);
+            Rect backgroundRect = PixelSnapRect(CalculateAspectFitRect(backgroundTexture, screenRect));
+            GUI.DrawTexture(backgroundRect, backgroundTexture, ScaleMode.StretchToFill, false);
+
+            DrawImageSlotBanner(backgroundRect, mode);
+            DrawImageRoster(backgroundRect, mode);
+            DrawImageBottomButtons(backgroundRect);
+        }
+
+        /// <summary>
+        /// Purpose: Draws the active player selection banner over the blue slot baked into CharacterSelect.png.
+        /// Inputs: backgroundRect is the screen-space area where the imported background is drawn; mode controls one-slot vs two-slot behavior.
+        /// Output: no return value; may switch the active LocalVS player slot when clicked.
+        /// </summary>
+        /// <param name="backgroundRect">Screen-space rectangle containing the imported character-select background.</param>
+        /// <param name="mode">Current game mode.</param>
+        private void DrawImageSlotBanner(Rect backgroundRect, GameMode mode)
+        {
+            // The imported background already contains the blue selection bar.
+            // This rectangle is tuned to sit inside that art instead of floating above it.
+            Rect bannerRect = PixelSnapRect(GetNormalizedRect(backgroundRect, 0.255f, 0.194f, 0.490f, 0.060f));
+
+            if (mode != GameMode.LocalVS)
+            {
+                string label = $"Player 1: {(selectedPlayer1 != null ? selectedPlayer1.DisplayName : "Choose Hero")}";
+                GUI.Label(bannerRect, label, imageBannerStyle);
+                return;
+            }
+
+            float gap = bannerRect.width * 0.018f;
+            float slotWidth = (bannerRect.width - gap) * 0.5f;
+            Rect player1Rect = new Rect(bannerRect.x, bannerRect.y, slotWidth, bannerRect.height);
+            Rect player2Rect = new Rect(bannerRect.x + slotWidth + gap, bannerRect.y, slotWidth, bannerRect.height);
+
+            DrawImageSlotToggle(player1Rect, Player1Slot, selectedPlayer1);
+            DrawImageSlotToggle(player2Rect, Player2Slot, selectedPlayer2);
+        }
+
+        /// <summary>
+        /// Purpose: Draws one selectable P1/P2 slot inside the LocalVS banner.
+        /// Inputs: rect is the clickable slot area, slot is Player1Slot or Player2Slot, and character is the current selection.
+        /// Output: no return value; updates activeSlot when the player clicks this slot.
+        /// </summary>
+        /// <param name="rect">Screen-space slot rectangle.</param>
+        /// <param name="slot">Player slot identifier.</param>
+        /// <param name="character">Currently selected character for this slot.</param>
+        private void DrawImageSlotToggle(Rect rect, int slot, CharacterData character)
+        {
+            bool isActive = activeSlot == slot;
+            if (isActive)
+            {
+                DrawRoundedRect(new Rect(rect.x + 5f, rect.y + 6f, rect.width - 10f, rect.height - 12f), new Color(1f, 1f, 1f, 0.18f), Color.white, 18, 2);
+            }
+
+            string playerLabel = slot == Player1Slot ? "P1" : "P2";
+            string characterName = character != null ? character.DisplayName : "Choose Hero";
+            GUI.Label(rect, $"{playerLabel}: {characterName}", imageSubtleBannerStyle);
+
+            if (GUI.Button(rect, GUIContent.none, GetTransparentButtonStyle()))
+            {
+                AudioManager.Instance?.PlayButtonClickSFX();
+                activeSlot = slot;
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Draws the six imported role cards and wires each card to the existing character selection logic.
+        /// Inputs: backgroundRect is the screen-space area where the imported background is drawn; mode controls LocalVS duplicate prevention.
+        /// Output: no return value; calls HandleCharacterClicked when a role card is selected.
+        /// </summary>
+        /// <param name="backgroundRect">Screen-space rectangle containing the imported character-select background.</param>
+        /// <param name="mode">Current game mode.</param>
+        private void DrawImageRoster(Rect backgroundRect, GameMode mode)
+        {
+            if (roster == null || roster.Length == 0)
+            {
+                Rect messageRect = GetNormalizedRect(backgroundRect, 0.25f, 0.42f, 0.5f, 0.12f);
+                GUI.Label(messageRect, "No CharacterData assets found in Resources/Characters.", lockedLabelStyle);
+                return;
+            }
+
+            // Card centers are tuned to the six empty card wells baked into CharacterSelect.png.
+            float[] centerXs = { 0.272f, 0.500f, 0.728f };
+            float[] centerYs = { 0.426f, 0.654f };
+            float cardSize = Mathf.Min(backgroundRect.width * 0.165f, backgroundRect.height * 0.245f);
+            int visibleCount = Mathf.Min(ImageRoleCharacterIds.Length, RoleTextureCount);
+
+            for (int i = 0; i < visibleCount; i++)
+            {
+                CharacterData character = FindRosterCharacterById(ImageRoleCharacterIds[i]);
+                Texture2D roleTexture = GetRoleTextureForCharacterId(ImageRoleCharacterIds[i]);
+                if (character == null || roleTexture == null)
+                {
+                    continue;
+                }
+
+                int column = i % 3;
+                int row = i / 3;
+                Vector2 center = new Vector2(
+                    backgroundRect.x + backgroundRect.width * centerXs[column],
+                    backgroundRect.y + backgroundRect.height * centerYs[row]);
+                Rect cardRect = new Rect(center.x - cardSize * 0.5f, center.y - cardSize * 0.5f, cardSize, cardSize);
+
+                bool isSelectedByActiveSlot = IsSelectedByActiveSlot(character);
+                bool isTakenByOtherLocalPlayer = mode == GameMode.LocalVS && IsTakenByOtherLocalPlayer(character);
+                DrawImageCharacterCard(PixelSnapRect(cardRect), character, roleTexture, isSelectedByActiveSlot, isTakenByOtherLocalPlayer, i * 0.55f);
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Finds the CharacterData that belongs to a specific imported role image slot.
+        /// Inputs: characterId is the stable id expected by the role texture mapping.
+        /// Output: the matching CharacterData from the loaded roster, or null when the data asset is missing.
+        /// </summary>
+        /// <param name="characterId">Stable character id, such as "bubble_ranger" or "star_mage".</param>
+        /// <returns>The matching CharacterData asset, or null if none exists.</returns>
+        private CharacterData FindRosterCharacterById(string characterId)
+        {
+            if (string.IsNullOrWhiteSpace(characterId))
+            {
+                return null;
+            }
+
+            // Search the currently loaded roster first so this screen uses the same data source as its selection state.
+            for (int i = 0; i < roster.Length; i++)
+            {
+                CharacterData character = roster[i];
+                if (character != null &&
+                    string.Equals(character.CharacterId, characterId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return character;
+                }
+            }
+
+            return CharacterRoster.FindById(characterId);
+        }
+
+        /// <summary>
+        /// Purpose: Gets the imported role card texture that visually represents a character id.
+        /// Inputs: characterId is the stable id used by CharacterData.
+        /// Output: the matching Texture2D, or null when the image is missing.
+        /// </summary>
+        /// <param name="characterId">Stable character id used to look up the role art.</param>
+        /// <returns>The imported role texture for this character id, or null if not loaded.</returns>
+        private Texture2D GetRoleTextureForCharacterId(string characterId)
+        {
+            if (string.IsNullOrWhiteSpace(characterId))
+            {
+                return null;
+            }
+
+            return roleTexturesByCharacterId.TryGetValue(characterId, out Texture2D texture)
+                ? texture
+                : null;
+        }
+
+        /// <summary>
+        /// Purpose: Draws one imported character card with selection feedback and an invisible click target.
+        /// Inputs: rect is the card slot, character is the backing data, texture is the imported role art, selection flags describe current state, and animationPhase offsets idle motion.
+        /// Output: no return value; updates selected character data when clicked.
+        /// </summary>
+        /// <param name="rect">Screen-space card rectangle.</param>
+        /// <param name="character">CharacterData represented by this card.</param>
+        /// <param name="texture">Imported role card image.</param>
+        /// <param name="isSelected">True when this card is selected by the active player slot.</param>
+        /// <param name="isTaken">True when the other LocalVS player already picked this card.</param>
+        /// <param name="animationPhase">Idle animation offset used so cards do not move in perfect sync.</param>
+        private void DrawImageCharacterCard(Rect rect, CharacterData character, Texture2D texture, bool isSelected, bool isTaken, float animationPhase)
+        {
+            if (character == null || texture == null)
+            {
+                return;
+            }
+
+            bool isHovered = Event.current != null && rect.Contains(Event.current.mousePosition);
+            bool isPressed = isHovered &&
+                (Event.current.type == EventType.MouseDown || Event.current.type == EventType.MouseDrag) &&
+                Event.current.button == 0;
+            float idleOffset = Mathf.Sin(Time.realtimeSinceStartup * CardFloatSpeed + animationPhase) * rect.height * CardFloatAmount;
+
+            Rect drawRect = rect;
+            drawRect.y += idleOffset;
+
+            if (isHovered && !isTaken)
+            {
+                drawRect = ScaleRectAroundCenter(drawRect, 1.025f, 1.025f);
+            }
+
+            if (isPressed && !isTaken)
+            {
+                drawRect = ScaleRectAroundCenter(drawRect, 0.975f, 0.975f);
+                drawRect.y += rect.height * 0.018f;
+            }
+
+            if (isSelected)
+            {
+                DrawRoundedRect(new Rect(drawRect.x - 6f, drawRect.y - 6f, drawRect.width + 12f, drawRect.height + 12f), new Color(1f, 1f, 1f, 0.18f), character.ThemeColor, 18, 3);
+            }
+
+            Color previousColor = GUI.color;
+            GUI.color = isTaken ? new Color(1f, 1f, 1f, 0.48f) : Color.white;
+            GUI.DrawTexture(PixelSnapRect(drawRect), texture, ScaleMode.ScaleToFit, true);
+            GUI.color = previousColor;
+
+            if (isSelected)
+            {
+                Rect readyRect = new Rect(drawRect.xMax - drawRect.width * 0.39f, drawRect.y + drawRect.height * 0.045f, drawRect.width * 0.34f, drawRect.height * 0.18f);
+                GUI.DrawTexture(PixelSnapRect(readyRect), readyBadgeTexture, ScaleMode.ScaleToFit, true);
+            }
+            else if (isTaken)
+            {
+                Rect pickedRect = new Rect(drawRect.x + drawRect.width * 0.18f, drawRect.y + drawRect.height * 0.42f, drawRect.width * 0.64f, drawRect.height * 0.15f);
+                DrawRoundedRect(pickedRect, new Color(0.42f, 0.47f, 0.5f, 0.82f), Color.white, 14, 2);
+                GUI.Label(pickedRect, "PICKED", smallPillStyle);
+            }
+
+            if (GUI.Button(rect, GUIContent.none, GetTransparentButtonStyle()))
+            {
+                HandleCharacterClicked(character, isTaken);
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Draws Back and Continue with imported button art while preserving the original navigation behavior.
+        /// Inputs: backgroundRect is the screen-space area where CharacterSelect.png was drawn.
+        /// Output: no return value; loads ModeSelect or MapSelect when clicked.
+        /// </summary>
+        /// <param name="backgroundRect">Screen-space rectangle containing the imported character-select background.</param>
+        private void DrawImageBottomButtons(Rect backgroundRect)
+        {
+            Rect backRect = PixelSnapRect(GetNormalizedRect(backgroundRect, 0.135f, 0.788f, 0.348f, 0.105f));
+            Rect continueRect = PixelSnapRect(GetNormalizedRect(backgroundRect, 0.518f, 0.788f, 0.348f, 0.105f));
+
+            if (DrawImagePillButton(backRect, backButtonTexture, 0f))
+            {
+                OnClickBack();
+            }
+
+            if (DrawImagePillButton(continueRect, continueButtonTexture, 0.7f))
+            {
+                OnClickContinue();
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Draws an imported pill button with subtle idle, hover, and pressed feedback.
+        /// Inputs: clickRect is the clickable area, texture is the button art, and animationPhase offsets idle motion.
+        /// Output: true when clicked; otherwise false.
+        /// </summary>
+        /// <param name="clickRect">Screen-space clickable button rectangle.</param>
+        /// <param name="texture">Imported button texture.</param>
+        /// <param name="animationPhase">Time offset for idle floating motion.</param>
+        /// <returns>True when the player clicks this button; otherwise false.</returns>
+        private bool DrawImagePillButton(Rect clickRect, Texture2D texture, float animationPhase)
+        {
+            if (texture == null)
+            {
+                return false;
+            }
+
+            bool isHovered = Event.current != null && clickRect.Contains(Event.current.mousePosition);
+            bool isPressed = isHovered &&
+                (Event.current.type == EventType.MouseDown || Event.current.type == EventType.MouseDrag) &&
+                Event.current.button == 0;
+            float idleOffset = Mathf.Sin(Time.realtimeSinceStartup * ButtonFloatSpeed + animationPhase) * clickRect.height * ButtonFloatAmount;
+
+            Rect drawRect = CalculateAspectFitRect(texture, clickRect);
+            drawRect.y += idleOffset;
+
+            if (isHovered)
+            {
+                drawRect = ScaleRectAroundCenter(drawRect, 1.025f, 1.025f);
+            }
+
+            if (isPressed)
+            {
+                drawRect = ScaleRectAroundCenter(drawRect, 0.975f, 0.975f);
+                drawRect.y += clickRect.height * 0.02f;
+            }
+
+            GUI.DrawTexture(PixelSnapRect(drawRect), texture, ScaleMode.ScaleToFit, true);
+            return GUI.Button(clickRect, GUIContent.none, GetTransparentButtonStyle());
+        }
+
+        /// <summary>
+        /// Purpose: Handles the Back action shared by the fallback and imported-image layouts.
+        /// Inputs: no direct parameters; uses SceneFlowManager to leave character select.
+        /// Output: no return value; loads the mode select scene.
+        /// </summary>
+        private void OnClickBack()
+        {
+            AudioManager.Instance?.PlayButtonClickSFX();
+            SceneFlowManager.Instance?.LoadModeSelect();
+        }
+
+        /// <summary>
+        /// Purpose: Handles the Continue action shared by the fallback and imported-image layouts.
+        /// Inputs: no direct parameters; reads current selections and current game mode from GameManager.
+        /// Output: no return value; stores selected characters and loads the map select scene.
+        /// </summary>
+        private void OnClickContinue()
+        {
+            AudioManager.Instance?.PlayButtonClickSFX();
+            GameManager.Instance?.SetPlayer1Character(selectedPlayer1);
+            GameManager.Instance?.SetPlayer2Character(selectedPlayer2);
+            if (GameManager.Instance != null && GameManager.Instance.CurrentGameMode == GameMode.AIBattle)
+            {
+                GameManager.Instance.RandomizeAICharacter();
+            }
+
+            SceneFlowManager.Instance?.LoadMapSelect();
+        }
+
+        /// <summary>
+        /// Purpose: Applies stable runtime sampling for imported character-select art.
+        /// Inputs: texture is a loaded UI texture that may be null while assets are missing.
+        /// Output: no return value; updates runtime texture sampling settings only.
+        /// </summary>
+        /// <param name="texture">Texture to prepare for IMGUI drawing.</param>
+        private void ApplyCharacterSelectTextureSettings(Texture2D texture)
+        {
+            if (texture == null)
+            {
+                return;
+            }
+
+            // Bilinear sampling keeps the high-resolution PNGs smooth while pixel snapping avoids sub-pixel blur.
+            texture.filterMode = FilterMode.Bilinear;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.anisoLevel = 0;
+        }
+
+        /// <summary>
+        /// Purpose: Creates or returns the invisible style used for image button hitboxes.
+        /// Inputs: no direct parameters.
+        /// Output: a GUIStyle with no visible normal, hover, active, or focused state.
+        /// </summary>
+        /// <returns>A transparent GUIStyle used by image-backed buttons and cards.</returns>
+        private GUIStyle GetTransparentButtonStyle()
+        {
+            if (transparentButtonStyle == null)
+            {
+                transparentButtonStyle = new GUIStyle(GUIStyle.none)
+                {
+                    normal = { background = null },
+                    hover = { background = null },
+                    active = { background = null },
+                    focused = { background = null },
+                    onNormal = { background = null },
+                    onHover = { background = null },
+                    onActive = { background = null },
+                    onFocused = { background = null }
+                };
+            }
+
+            return transparentButtonStyle;
+        }
+
+        /// <summary>
+        /// Purpose: Converts normalized coordinates into a screen rectangle inside a parent rectangle.
+        /// Inputs: parent is the containing rectangle; x, y, width, and height are normalized from 0 to 1.
+        /// Output: a Rect in screen pixels.
+        /// </summary>
+        /// <param name="parent">Screen-space parent rectangle.</param>
+        /// <param name="x">Normalized horizontal offset from the parent left edge.</param>
+        /// <param name="y">Normalized vertical offset from the parent top edge.</param>
+        /// <param name="width">Normalized width relative to the parent width.</param>
+        /// <param name="height">Normalized height relative to the parent height.</param>
+        /// <returns>A screen-space rectangle based on normalized input values.</returns>
+        private Rect GetNormalizedRect(Rect parent, float x, float y, float width, float height)
+        {
+            return new Rect(
+                parent.x + parent.width * x,
+                parent.y + parent.height * y,
+                parent.width * width,
+                parent.height * height);
+        }
+
+        /// <summary>
+        /// Purpose: Fits a texture into a target rectangle without stretching its aspect ratio.
+        /// Inputs: texture is the source image; targetRect is the maximum available drawing area.
+        /// Output: a centered Rect that preserves the texture aspect ratio.
+        /// </summary>
+        /// <param name="texture">Texture whose dimensions define the desired aspect ratio.</param>
+        /// <param name="targetRect">Maximum screen-space rectangle available for drawing.</param>
+        /// <returns>A centered rectangle that fits inside targetRect.</returns>
+        private Rect CalculateAspectFitRect(Texture2D texture, Rect targetRect)
+        {
+            if (texture == null || texture.height == 0 || targetRect.height <= 0f || targetRect.width <= 0f)
+            {
+                return targetRect;
+            }
+
+            float textureAspect = (float)texture.width / texture.height;
+            float targetAspect = targetRect.width / targetRect.height;
+
+            if (targetAspect > textureAspect)
+            {
+                float fittedWidth = targetRect.height * textureAspect;
+                return new Rect(
+                    targetRect.x + (targetRect.width - fittedWidth) * 0.5f,
+                    targetRect.y,
+                    fittedWidth,
+                    targetRect.height);
+            }
+
+            float fittedHeight = targetRect.width / textureAspect;
+            return new Rect(
+                targetRect.x,
+                targetRect.y + (targetRect.height - fittedHeight) * 0.5f,
+                targetRect.width,
+                fittedHeight);
+        }
+
+        /// <summary>
+        /// Purpose: Scales a rectangle around its center point.
+        /// Inputs: rect is the source rectangle; scaleX and scaleY are horizontal and vertical multipliers.
+        /// Output: a new Rect with the same center and scaled size.
+        /// </summary>
+        /// <param name="rect">Source rectangle to scale.</param>
+        /// <param name="scaleX">Horizontal scale multiplier.</param>
+        /// <param name="scaleY">Vertical scale multiplier.</param>
+        /// <returns>A scaled rectangle that keeps the same center as rect.</returns>
+        private Rect ScaleRectAroundCenter(Rect rect, float scaleX, float scaleY)
+        {
+            float scaledWidth = rect.width * scaleX;
+            float scaledHeight = rect.height * scaleY;
+            return new Rect(
+                rect.center.x - scaledWidth * 0.5f,
+                rect.center.y - scaledHeight * 0.5f,
+                scaledWidth,
+                scaledHeight);
+        }
+
+        /// <summary>
+        /// Purpose: Aligns a rectangle to whole screen pixels before drawing imported UI art.
+        /// Inputs: rect is the floating-point IMGUI rectangle produced by layout or animation.
+        /// Output: a Rect with rounded position and size to reduce sub-pixel texture blur.
+        /// </summary>
+        /// <param name="rect">Source rectangle in screen-space pixels.</param>
+        /// <returns>A pixel-aligned rectangle with the same approximate bounds.</returns>
+        private Rect PixelSnapRect(Rect rect)
+        {
+            return new Rect(
+                Mathf.Round(rect.x),
+                Mathf.Round(rect.y),
+                Mathf.Round(rect.width),
+                Mathf.Round(rect.height));
         }
 
         /// <summary>
@@ -413,21 +977,12 @@ namespace BubbleTown.UI
 
             if (SimpleUIFactory.FixedSecondaryButton(backRect, "BACK"))
             {
-                AudioManager.Instance?.PlayButtonClickSFX();
-                SceneFlowManager.Instance?.LoadModeSelect();
+                OnClickBack();
             }
 
             if (SimpleUIFactory.FixedPrimaryButton(continueRect, "CONTINUE"))
             {
-                AudioManager.Instance?.PlayButtonClickSFX();
-                GameManager.Instance?.SetPlayer1Character(selectedPlayer1);
-                GameManager.Instance?.SetPlayer2Character(selectedPlayer2);
-                if (GameManager.Instance != null && GameManager.Instance.CurrentGameMode == GameMode.AIBattle)
-                {
-                    GameManager.Instance.RandomizeAICharacter();
-                }
-
-                SceneFlowManager.Instance?.LoadMapSelect();
+                OnClickContinue();
             }
         }
 
@@ -766,6 +1321,24 @@ namespace BubbleTown.UI
                 fontStyle = FontStyle.Bold
             };
             LockTextColor(lockedLabelStyle, new Color(0.11f, 0.28f, 0.42f, 1f));
+
+            imageBannerStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 22,
+                fontStyle = FontStyle.Bold,
+                clipping = TextClipping.Clip
+            };
+            LockTextColor(imageBannerStyle, new Color(0.08f, 0.28f, 0.45f, 1f));
+
+            imageSubtleBannerStyle = new GUIStyle(GUI.skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontSize = 18,
+                fontStyle = FontStyle.Bold,
+                clipping = TextClipping.Clip
+            };
+            LockTextColor(imageSubtleBannerStyle, new Color(0.08f, 0.28f, 0.45f, 1f));
         }
 
         /// <summary>
