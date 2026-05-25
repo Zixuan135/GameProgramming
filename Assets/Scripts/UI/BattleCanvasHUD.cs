@@ -15,22 +15,21 @@ namespace BubbleTown.UI
     /// </summary>
     public class BattleCanvasHUD : MonoBehaviour
     {
+        private const string BattleHudTexturePath = "UI/BattleHUD/BattleHUD";
+        private const string BattleItemGuideTexturePath = "UI/BattleHUD/BattleItemGuide";
+        private const string BattlePlayerTexturePath = "UI/BattleHUD/Cropped/BattlePlayer";
+        private const string PauseTexturePath = "UI/BattleHUD/Pause";
+        private const float HudArtworkWidth = 1024f;
+        private const float HudArtworkHeight = 1536f;
         private const float LeftHudX = 14f;
         private const float LeftHudWidth = 286f;
-        private const float ObjectivePanelBottom = 144f;
-        private const float CharacterAreaTop = ObjectivePanelBottom + 14f;
-        private const float CharacterSectionGap = 14f;
-        private const float BottomHudMargin = 26f;
-        private const float BottomControlsPanelHeight = 46f;
 
         private readonly Color safeAreaFill = new Color(0.74f, 0.93f, 1f, 1f);
-        private readonly Color panelFill = new Color(1f, 0.96f, 0.72f, 0.9f);
         private readonly Color textPrimary = new Color(0.11f, 0.28f, 0.42f, 1f);
         private readonly Color textSecondary = new Color(0.22f, 0.45f, 0.55f, 1f);
         private readonly Color creamText = new Color(1f, 0.98f, 0.8f, 1f);
         private readonly Color player1Color = new Color(0.12f, 0.72f, 1f, 1f);
         private readonly Color player2Color = new Color(1f, 0.45f, 0.26f, 1f);
-        private readonly Color aiColor = new Color(0.64f, 0.46f, 1f, 1f);
         private readonly Color neutralColor = new Color(1f, 0.82f, 0.32f, 1f);
         private readonly Color orangeColor = new Color(1f, 0.58f, 0.18f, 1f);
         private readonly Color greenColor = new Color(0.48f, 0.9f, 0.34f, 1f);
@@ -42,6 +41,10 @@ namespace BubbleTown.UI
         private bool suppressSettingsCallbacks;
         private string settingsFeedbackText = "Saved automatically";
         private float settingsFeedbackVisibleUntil;
+        private Texture2D battleHudTexture;
+        private Texture2D battleItemGuideTexture;
+        private Texture2D battlePlayerTexture;
+        private Texture2D pauseTexture;
 
         private RectTransform safeAreaPanel;
         private RectTransform topStatusPanel;
@@ -63,7 +66,6 @@ namespace BubbleTown.UI
         private CharacterPanelViews opponentViews;
         private Button pauseButton;
         private Button guideButton;
-        private Text guideButtonText;
 
         private RectTransform overlayRoot;
         private RectTransform overlayDimmer;
@@ -73,6 +75,7 @@ namespace BubbleTown.UI
         private RectTransform openingPromptPanel;
         private RectTransform resultPromptPanel;
         private RectTransform pickupToastPanel;
+        private RawImage hudBackdropImage;
         private Text openingTitleText;
         private Text openingBodyText;
         private Image openingAccentImage;
@@ -153,6 +156,7 @@ namespace BubbleTown.UI
 
             uiFont = ResolveFont();
             EnsureEventSystemExists();
+            LoadHudTextures();
             BuildCanvas();
             BuildHudHierarchy();
             BuildOverlayHierarchy();
@@ -222,6 +226,7 @@ namespace BubbleTown.UI
             Canvas canvas = gameObject.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 25;
+            canvas.pixelPerfect = true;
 
             CanvasScaler scaler = gameObject.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
@@ -238,18 +243,20 @@ namespace BubbleTown.UI
         private void BuildHudHierarchy()
         {
             safeAreaPanel = CreatePanel("SafeAreaPanel", transform, safeAreaFill, Color.clear);
-            topStatusPanel = CreatePanel("TopStatusPanel", safeAreaPanel, panelFill, player1Color);
-            objectivePanel = CreatePanel("ObjectivePanel", safeAreaPanel, panelFill, orangeColor);
-            localVsPanel = CreatePanel("LocalVSPanel", safeAreaPanel, panelFill, greenColor);
-            player1Panel = CreatePanel("Player1Panel", safeAreaPanel, panelFill, player1Color);
-            opponentPanel = CreatePanel("OpponentPanel", safeAreaPanel, panelFill, aiColor);
-            bottomControlsPanel = CreatePanel("BottomControlsPanel", safeAreaPanel, panelFill, player1Color);
+            hudBackdropImage = CreateTextureImage("HudBackdrop", safeAreaPanel, battleHudTexture);
+
+            topStatusPanel = CreatePanel("TopStatusPanel", safeAreaPanel, Color.clear, Color.clear);
+            objectivePanel = CreatePanel("ObjectivePanel", safeAreaPanel, Color.clear, Color.clear);
+            localVsPanel = CreatePanel("LocalVSPanel", safeAreaPanel, Color.clear, Color.clear);
+            player1Panel = CreatePanel("Player1Panel", safeAreaPanel, Color.clear, Color.clear);
+            opponentPanel = CreatePanel("OpponentPanel", safeAreaPanel, Color.clear, Color.clear);
+            bottomControlsPanel = CreatePanel("BottomControlsPanel", safeAreaPanel, Color.clear, Color.clear);
 
             BuildTopStatusPanel();
             BuildObjectivePanel();
             BuildLocalVsPanel();
-            player1Views = BuildCharacterPanel(player1Panel, player1Color);
-            opponentViews = BuildCharacterPanel(opponentPanel, aiColor);
+            player1Views = BuildCharacterPanel(player1Panel);
+            opponentViews = BuildCharacterPanel(opponentPanel);
             BuildBottomControls();
         }
 
@@ -285,10 +292,10 @@ namespace BubbleTown.UI
         /// </summary>
         private void BuildTopStatusPanel()
         {
-            modeValueText = CreateStatusPill(topStatusPanel, "MODE", 10f, 9f, player1Color);
-            mapValueText = CreateStatusPill(topStatusPanel, "MAP", 146f, 9f, greenColor);
-            timeValueText = CreateStatusPill(topStatusPanel, "TIME", 10f, 42f, orangeColor);
-            stateValueText = CreateStatusPill(topStatusPanel, "STATE", 146f, 42f, neutralColor);
+            modeValueText = CreateStatusText(topStatusPanel, "MODE", 0.02f, 0.03f, player1Color);
+            mapValueText = CreateStatusText(topStatusPanel, "MAP", 0.52f, 0.03f, greenColor);
+            timeValueText = CreateStatusText(topStatusPanel, "TIME", 0.02f, 0.53f, orangeColor);
+            stateValueText = CreateStatusText(topStatusPanel, "STATE", 0.52f, 0.53f, neutralColor);
         }
 
         /// <summary>
@@ -298,17 +305,17 @@ namespace BubbleTown.UI
         /// </summary>
         private void BuildObjectivePanel()
         {
-            objectiveTitleText = CreateText("ObjectiveTitle", objectivePanel, "Reach Exit", 14, FontStyle.Bold, creamText, TextAnchor.MiddleLeft);
-            SetTopLeft(objectiveTitleText.rectTransform, 12f, 5f, 130f, 18f);
+            objectiveTitleText = CreateText("ObjectiveTitle", objectivePanel, "Reach Exit", 14, FontStyle.Bold, textPrimary, TextAnchor.MiddleLeft);
+            SetRelativeRect(objectiveTitleText.rectTransform, 0.05f, 0.16f, 0.44f, 0.3f);
 
             objectiveValueText = CreateText("ObjectiveValue", objectivePanel, "0 tiles", 13, FontStyle.Bold, textPrimary, TextAnchor.MiddleRight);
-            SetTopLeft(objectiveValueText.rectTransform, 146f, 5f, 126f, 18f);
+            SetRelativeRect(objectiveValueText.rectTransform, 0.52f, 0.16f, 0.42f, 0.3f);
 
-            RectTransform progressBack = CreatePanel("ObjectiveProgressBack", objectivePanel, new Color(0.16f, 0.34f, 0.44f, 0.24f), Color.clear);
-            SetTopLeft(progressBack, 16f, 34f, 254f, 6f);
+            RectTransform progressBack = CreatePanel("ObjectiveProgressBack", objectivePanel, new Color(0.16f, 0.34f, 0.44f, 0.12f), Color.clear);
+            SetRelativeRect(progressBack, 0.06f, 0.64f, 0.88f, 0.12f);
 
             objectiveProgressFill = CreateImage("ObjectiveProgressFill", progressBack, new Color(1f, 0.62f, 0.16f, 0.96f));
-            SetTopLeft(objectiveProgressFill.rectTransform, 0f, 0f, 254f, 6f);
+            SetStretch(objectiveProgressFill.rectTransform);
         }
 
         /// <summary>
@@ -319,37 +326,38 @@ namespace BubbleTown.UI
         private void BuildLocalVsPanel()
         {
             localVsRoundText = CreateText("RoundLabel", localVsPanel, "ROUND 1", 12, FontStyle.Bold, textPrimary, TextAnchor.MiddleCenter);
-            SetTopLeft(localVsRoundText.rectTransform, 12f, 5f, 262f, 18f);
+            SetRelativeRect(localVsRoundText.rectTransform, 0.04f, 0.14f, 0.92f, 0.3f);
 
-            localVsScoreText = CreateText("ScoreLabel", localVsPanel, "0 - 0", 15, FontStyle.Bold, creamText, TextAnchor.MiddleCenter);
-            SetTopLeft(localVsScoreText.rectTransform, 12f, 22f, 262f, 20f);
+            localVsScoreText = CreateText("ScoreLabel", localVsPanel, "0 - 0", 15, FontStyle.Bold, textPrimary, TextAnchor.MiddleCenter);
+            SetRelativeRect(localVsScoreText.rectTransform, 0.04f, 0.5f, 0.92f, 0.3f);
         }
 
         /// <summary>
         /// Purpose: Builds a character stats panel.
-        /// Inputs: parent is the panel root; accentColor styles the header and bomb box.
+        /// Inputs: parent is the panel root.
         /// Output: returns Text references used for live stat updates.
         /// </summary>
         /// <param name="parent">Character panel root.</param>
-        /// <param name="accentColor">Accent color for this character.</param>
         /// <returns>Text references for one character panel.</returns>
-        private CharacterPanelViews BuildCharacterPanel(RectTransform parent, Color accentColor)
+        private CharacterPanelViews BuildCharacterPanel(RectTransform parent)
         {
-            RectTransform header = CreatePanel("Header", parent, accentColor, Color.white);
-            SetTopLeft(header, 10f, 8f, 266f, 26f);
+            RawImage playerBack = CreateTextureImage("PlayerBack", parent, battlePlayerTexture);
+            SetStretch(playerBack.rectTransform);
+            RectTransform header = CreatePanel("Header", parent, Color.clear, Color.clear);
+            SetRelativeRect(header, 0.05f, 0.06f, 0.9f, 0.32f);
 
             CharacterPanelViews views = new CharacterPanelViews
             {
-                HeaderLabel = CreateText("HeaderLabel", header, "PLAYER", 12, FontStyle.Bold, textPrimary, TextAnchor.MiddleLeft),
-                HeaderValue = CreateText("HeaderValue", header, "ALIVE", 12, FontStyle.Bold, creamText, TextAnchor.MiddleRight)
+                HeaderLabel = CreateText("HeaderLabel", header, "P1", 9, FontStyle.Bold, creamText, TextAnchor.MiddleCenter),
+                HeaderValue = CreateText("HeaderValue", header, "ALIVE", 9, FontStyle.Bold, creamText, TextAnchor.MiddleCenter)
             };
-            SetTopLeft(views.HeaderLabel.rectTransform, 12f, 4f, 116f, 18f);
-            SetTopLeft(views.HeaderValue.rectTransform, 138f, 4f, 116f, 18f);
+            SetRelativeRect(views.HeaderLabel.rectTransform, 0.34f, 0.2f, 0.14f, 0.58f);
+            SetRelativeRect(views.HeaderValue.rectTransform, 0.48f, 0.2f, 0.2f, 0.58f);
 
-            views.BombsValue = BuildAbilityBox(parent, "Bombs", 10f, accentColor);
-            views.RangeValue = BuildAbilityBox(parent, "Range", 77f, orangeColor);
-            views.SpeedValue = BuildAbilityBox(parent, "Speed", 144f, greenColor);
-            views.GuardValue = BuildAbilityBox(parent, "Guard", 211f, new Color(0.35f, 0.78f, 1f, 1f));
+            views.BombsValue = BuildAbilityBox(parent, 0.04f);
+            views.RangeValue = BuildAbilityBox(parent, 0.275f);
+            views.SpeedValue = BuildAbilityBox(parent, 0.51f);
+            views.GuardValue = BuildAbilityBox(parent, 0.745f);
             return views;
         }
 
@@ -360,11 +368,12 @@ namespace BubbleTown.UI
         /// </summary>
         private void BuildBottomControls()
         {
-            pauseButton = CreateButton("PauseButton", bottomControlsPanel, "Pause", 10f, 10f, 128f, 26f, player1Color);
+            pauseButton = CreateTextureButton("PauseButton", bottomControlsPanel, pauseTexture, new Rect(0.0875f, 0.12f, 0.825f, 0.72f));
+            SetRelativeRect(pauseButton.transform as RectTransform, 0f, 0f, 0.48f, 1f);
             pauseButton.onClick.AddListener(() => owner?.OnCanvasPauseRequested());
 
-            guideButton = CreateButton("ItemGuideButton", bottomControlsPanel, "Item Guide", 148f, 10f, 128f, 26f, greenColor);
-            guideButtonText = guideButton.GetComponentInChildren<Text>();
+            guideButton = CreateTextureButton("ItemGuideButton", bottomControlsPanel, battleItemGuideTexture, new Rect(0.04f, 0.09f, 0.92f, 0.8f));
+            SetRelativeRect(guideButton.transform as RectTransform, 0.52f, 0f, 0.48f, 1f);
             guideButton.onClick.AddListener(() => owner?.OnCanvasItemGuideRequested());
         }
 
@@ -536,7 +545,7 @@ namespace BubbleTown.UI
                 SetText(mapValueText, "...");
                 SetText(timeValueText, FormatTime(elapsedSeconds));
                 SetText(stateValueText, "WAIT");
-                RefreshCharacterPanel(player1Views, "PLAYER 1", null);
+                RefreshCharacterPanel(player1Views, "P1", null);
                 SetPanelActive(opponentPanel, false);
                 SetPanelActive(objectivePanel, false);
                 SetPanelActive(localVsPanel, false);
@@ -589,23 +598,21 @@ namespace BubbleTown.UI
         {
             float safeWidth = Mathf.Max(LeftHudWidth + LeftHudX * 2f, Screen.width * 0.32f);
             SetTopLeft(safeAreaPanel, 0f, 0f, safeWidth, Screen.height);
-            SetTopLeft(topStatusPanel, LeftHudX, 14f, LeftHudWidth, 76f);
-            SetTopLeft(objectivePanel, LeftHudX, 98f, LeftHudWidth, 46f);
-            SetTopLeft(localVsPanel, LeftHudX, 98f, LeftHudWidth, 46f);
+            float hudWidth = Mathf.Min(safeWidth - 12f, (Screen.height - 16f) * HudArtworkWidth / HudArtworkHeight);
+            float hudHeight = hudWidth * HudArtworkHeight / HudArtworkWidth;
+            float hudX = Mathf.Max(4f, (safeWidth - hudWidth) * 0.5f);
+            float hudY = Mathf.Max(4f, (Screen.height - hudHeight) * 0.5f);
+            if (hudBackdropImage != null)
+            {
+                SetTopLeft(hudBackdropImage.rectTransform, hudX, hudY, hudWidth, hudHeight);
+            }
 
-            bool hasOpponent = HasVisibleOpponent(gameManager);
-            float characterPanelHeight = hasOpponent ? 104f : 116f;
-            float characterPanelGap = 10f;
-            float totalCharacterHeight = hasOpponent
-                ? characterPanelHeight * 2f + characterPanelGap
-                : characterPanelHeight;
-            float characterAreaBottom = ResolveBottomControlsPanelY() - CharacterSectionGap;
-            float characterAreaHeight = Mathf.Max(totalCharacterHeight, characterAreaBottom - CharacterAreaTop);
-            float characterPanelY = CharacterAreaTop + Mathf.Max(0f, (characterAreaHeight - totalCharacterHeight) * 0.5f);
-
-            SetTopLeft(player1Panel, LeftHudX, characterPanelY, LeftHudWidth, characterPanelHeight);
-            SetTopLeft(opponentPanel, LeftHudX, characterPanelY + characterPanelHeight + characterPanelGap, LeftHudWidth, characterPanelHeight);
-            SetTopLeft(bottomControlsPanel, LeftHudX, ResolveBottomControlsPanelY(), LeftHudWidth, BottomControlsPanelHeight);
+            SetHudArtworkRect(topStatusPanel, hudX, hudY, hudWidth, hudHeight, 82f, 76f, 860f, 292f);
+            SetHudArtworkRect(objectivePanel, hudX, hudY, hudWidth, hudHeight, 82f, 415f, 860f, 108f);
+            SetHudArtworkRect(localVsPanel, hudX, hudY, hudWidth, hudHeight, 82f, 415f, 860f, 108f);
+            SetHudArtworkRect(player1Panel, hudX, hudY, hudWidth, hudHeight, 90f, 570f, 844f, 330f);
+            SetHudArtworkRect(opponentPanel, hudX, hudY, hudWidth, hudHeight, 90f, 957f, 844f, 330f);
+            SetHudArtworkRect(bottomControlsPanel, hudX, hudY, hudWidth, hudHeight, 82f, 1332f, 860f, 120f);
         }
 
         /// <summary>
@@ -625,7 +632,7 @@ namespace BubbleTown.UI
 
             SetText(objectiveTitleText, gameManager.SinglePlayerObjectiveLabel);
             SetText(objectiveValueText, gameManager.SinglePlayerObjectiveProgressLabel);
-            objectiveProgressFill.rectTransform.sizeDelta = new Vector2(254f * Mathf.Clamp01(gameManager.SinglePlayerRouteProgress), 6f);
+            objectiveProgressFill.rectTransform.anchorMax = new Vector2(Mathf.Clamp01(gameManager.SinglePlayerRouteProgress), 1f);
         }
 
         /// <summary>
@@ -655,7 +662,7 @@ namespace BubbleTown.UI
         /// <param name="gameManager">Current game state source.</param>
         private void RefreshCharacterPanels(GameManager gameManager)
         {
-            RefreshCharacterPanel(player1Views, "PLAYER 1", gameManager.Player1);
+            RefreshCharacterPanel(player1Views, "P1", gameManager.Player1);
 
             CharacterBase opponent = ResolveOpponent(gameManager, out string opponentLabel);
             bool hasOpponent = opponent != null && opponent.gameObject.activeInHierarchy;
@@ -702,7 +709,6 @@ namespace BubbleTown.UI
         private void RefreshButtons()
         {
             bool overlayOpen = owner != null && (owner.IsItemGuideOpen || owner.IsBattlePaused);
-            SetText(guideButtonText, owner != null && owner.IsItemGuideOpen ? "Hide Guide" : "Item Guide");
             if (pauseButton != null)
             {
                 pauseButton.interactable = !overlayOpen;
@@ -1036,49 +1042,44 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
-        /// Purpose: Creates a compact status pill and returns its value text.
-        /// Inputs: parent is the top status panel; label is fixed caption; x/y place the pill; accentColor is fill.
+        /// Purpose: Creates one live status label within a pre-drawn HUD artwork slot.
+        /// Inputs: parent is the top status group; label and normalized position select one slot.
         /// Output: returns the dynamic value Text.
         /// </summary>
         /// <param name="parent">Parent transform.</param>
         /// <param name="label">Fixed label.</param>
-        /// <param name="x">Local x position.</param>
-        /// <param name="y">Local y position from top.</param>
-        /// <param name="accentColor">Pill fill color.</param>
+        /// <param name="x">Normalized x position.</param>
+        /// <param name="y">Normalized y position from top.</param>
+        /// <param name="accentColor">Caption color.</param>
         /// <returns>Dynamic value text.</returns>
-        private Text CreateStatusPill(RectTransform parent, string label, float x, float y, Color accentColor)
+        private Text CreateStatusText(RectTransform parent, string label, float x, float y, Color accentColor)
         {
-            RectTransform pill = CreatePanel(label + "Pill", parent, accentColor, Color.white);
-            SetTopLeft(pill, x, y, 130f, 25f);
+            RectTransform slot = CreatePanel(label + "Slot", parent, Color.clear, Color.clear);
+            SetRelativeRect(slot, x, y, 0.46f, 0.43f);
 
-            Text labelText = CreateText("Label", pill, label, 12, FontStyle.Bold, textPrimary, TextAnchor.MiddleLeft);
-            SetTopLeft(labelText.rectTransform, 8f, 5f, 40f, 15f);
+            Text labelText = CreateText("Label", slot, label, 11, FontStyle.Bold, accentColor, TextAnchor.MiddleLeft);
+            SetRelativeRect(labelText.rectTransform, 0.1f, 0.23f, 0.34f, 0.54f);
 
-            Text valueText = CreateText("Value", pill, "...", 13, FontStyle.Bold, creamText, TextAnchor.MiddleLeft);
-            SetTopLeft(valueText.rectTransform, 54f, 4f, 68f, 17f);
+            Text valueText = CreateText("Value", slot, "...", 12, FontStyle.Bold, textPrimary, TextAnchor.MiddleCenter);
+            SetRelativeRect(valueText.rectTransform, 0.5f, 0.22f, 0.42f, 0.56f);
             return valueText;
         }
 
         /// <summary>
         /// Purpose: Creates a compact ability box.
-        /// Inputs: parent is a character panel; label names the stat; x places the box; accentColor styles the border.
+        /// Inputs: parent is a character panel; x places the value over a pre-drawn stat box.
         /// Output: returns the value Text inside the box.
         /// </summary>
         /// <param name="parent">Character panel.</param>
-        /// <param name="label">Stat name.</param>
-        /// <param name="x">Local x position.</param>
-        /// <param name="accentColor">Border color.</param>
+        /// <param name="x">Normalized x position.</param>
         /// <returns>Dynamic value Text.</returns>
-        private Text BuildAbilityBox(RectTransform parent, string label, float x, Color accentColor)
+        private Text BuildAbilityBox(RectTransform parent, float x)
         {
-            RectTransform box = CreatePanel(label + "Box", parent, new Color(1f, 0.98f, 0.86f, 0.92f), accentColor);
-            SetTopLeft(box, x, 46f, 58f, 44f);
+            RectTransform box = CreatePanel("AbilityValue", parent, Color.clear, Color.clear);
+            SetRelativeRect(box, x, 0.56f, 0.215f, 0.3f);
 
-            Text labelText = CreateText("Label", box, label, 9, FontStyle.Bold, textPrimary, TextAnchor.MiddleCenter);
-            SetTopLeft(labelText.rectTransform, 4f, 4f, 50f, 15f);
-
-            Text valueText = CreateText("Value", box, "0", 12, FontStyle.Bold, textPrimary, TextAnchor.MiddleCenter);
-            SetTopLeft(valueText.rectTransform, 4f, 20f, 50f, 20f);
+            Text valueText = CreateText("Value", box, "0", 13, FontStyle.Bold, textPrimary, TextAnchor.MiddleCenter);
+            SetStretch(valueText.rectTransform);
             return valueText;
         }
 
@@ -1201,6 +1202,40 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
+        /// Purpose: Creates a button that uses supplied HUD artwork as its visible plate.
+        /// Inputs: texture defines the button art and textureUv selects its complete button area.
+        /// Output: returns the Button component for callback wiring.
+        /// </summary>
+        /// <param name="name">Button GameObject name.</param>
+        /// <param name="parent">Parent panel.</param>
+        /// <param name="texture">Button artwork.</param>
+        /// <param name="textureUv">Normalized crop of the texture used by the visible button.</param>
+        /// <returns>Created Button component.</returns>
+        private Button CreateTextureButton(string name, RectTransform parent, Texture2D texture, Rect textureUv)
+        {
+            RectTransform buttonRect = CreatePanel(name, parent, Color.clear, Color.clear);
+
+            RawImage buttonImage = CreateTextureImage("Background", buttonRect, texture);
+            SetStretch(buttonImage.rectTransform);
+            buttonImage.uvRect = textureUv;
+            buttonImage.raycastTarget = true;
+
+            Button button = buttonRect.gameObject.AddComponent<Button>();
+            button.targetGraphic = buttonImage;
+
+            ColorBlock colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1f, 1f, 1f, 0.96f);
+            colors.pressedColor = new Color(0.92f, 0.92f, 0.92f, 0.92f);
+            colors.selectedColor = colors.highlightedColor;
+            button.colors = colors;
+
+            Text text = CreateText("Label", buttonRect, string.Empty, 10, FontStyle.Bold, Color.white, TextAnchor.MiddleCenter);
+            SetStretch(text.rectTransform);
+            return button;
+        }
+
+        /// <summary>
         /// Purpose: Creates a rectangular panel with optional outline and shadow.
         /// Inputs: name, parent, fill, and border define the new visual element.
         /// Output: returns the RectTransform for later layout updates.
@@ -1253,6 +1288,27 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
+        /// Purpose: Creates a RawImage child for one runtime-loaded HUD texture.
+        /// Inputs: name identifies the object and texture defines the visual content.
+        /// Output: returns the RawImage component.
+        /// </summary>
+        /// <param name="name">GameObject name.</param>
+        /// <param name="parent">Parent transform.</param>
+        /// <param name="texture">Texture drawn by the RawImage.</param>
+        /// <returns>Created RawImage component.</returns>
+        private RawImage CreateTextureImage(string name, Transform parent, Texture2D texture)
+        {
+            GameObject imageObject = new GameObject(name, typeof(RectTransform));
+            imageObject.transform.SetParent(parent, false);
+
+            RawImage image = imageObject.AddComponent<RawImage>();
+            image.texture = texture;
+            image.color = Color.white;
+            image.raycastTarget = false;
+            return image;
+        }
+
+        /// <summary>
         /// Purpose: Creates a Text child.
         /// Inputs: label settings define content, color, and alignment.
         /// Output: returns the Text component.
@@ -1284,6 +1340,40 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
+        /// Purpose: Loads battle HUD textures from Resources and configures them for UI use.
+        /// Inputs: no direct parameters; reads Resources paths declared at the top of this class.
+        /// Output: no return value; caches Texture2D references for later UI building.
+        /// </summary>
+        private void LoadHudTextures()
+        {
+            battleHudTexture = LoadHudTexture(BattleHudTexturePath);
+            battleItemGuideTexture = LoadHudTexture(BattleItemGuideTexturePath);
+            battlePlayerTexture = LoadHudTexture(BattlePlayerTexturePath);
+            pauseTexture = LoadHudTexture(PauseTexturePath);
+        }
+
+        /// <summary>
+        /// Purpose: Loads one HUD texture and applies stable UI sampling settings.
+        /// Inputs: resourcePath points to a Resources texture without file extension.
+        /// Output: returns the loaded texture, or null if missing.
+        /// </summary>
+        /// <param name="resourcePath">Resources path without file extension.</param>
+        /// <returns>Configured Texture2D or null.</returns>
+        private Texture2D LoadHudTexture(string resourcePath)
+        {
+            Texture2D texture = Resources.Load<Texture2D>(resourcePath);
+            if (texture == null)
+            {
+                return null;
+            }
+
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.filterMode = FilterMode.Bilinear;
+            texture.anisoLevel = 0;
+            return texture;
+        }
+
+        /// <summary>
         /// Purpose: Places a RectTransform using top-left screen-style coordinates.
         /// Inputs: rectTransform is modified; x/y/width/height define its local rectangle.
         /// Output: no return value; updates anchors, pivot, position, and size.
@@ -1305,6 +1395,63 @@ namespace BubbleTown.UI
             rectTransform.pivot = new Vector2(0f, 1f);
             rectTransform.anchoredPosition = new Vector2(x, -y);
             rectTransform.sizeDelta = new Vector2(width, height);
+        }
+
+        /// <summary>
+        /// Purpose: Places a child inside its parent using normalized top-left coordinates.
+        /// Inputs: normalized x, y, width, and height are all measured from 0 to 1.
+        /// Output: no return value; anchors the child to the matching part of its parent.
+        /// </summary>
+        /// <param name="rectTransform">RectTransform to place.</param>
+        /// <param name="x">Normalized distance from the parent's left edge.</param>
+        /// <param name="y">Normalized distance from the parent's top edge.</param>
+        /// <param name="width">Normalized width.</param>
+        /// <param name="height">Normalized height.</param>
+        private void SetRelativeRect(RectTransform rectTransform, float x, float y, float width, float height)
+        {
+            if (rectTransform == null)
+            {
+                return;
+            }
+
+            rectTransform.anchorMin = new Vector2(x, 1f - y - height);
+            rectTransform.anchorMax = new Vector2(x + width, 1f - y);
+            rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            rectTransform.offsetMin = Vector2.zero;
+            rectTransform.offsetMax = Vector2.zero;
+        }
+
+        /// <summary>
+        /// Purpose: Maps one runtime HUD panel into a slot drawn on the BattleHUD artwork.
+        /// Inputs: frame describes the rendered artwork while slot coordinates use the source image pixel space.
+        /// Output: no return value; updates the panel rectangle to match its illustrated slot.
+        /// </summary>
+        /// <param name="rectTransform">Panel placed over the artwork.</param>
+        /// <param name="frameX">Artwork left position in Canvas coordinates.</param>
+        /// <param name="frameY">Artwork top position in Canvas coordinates.</param>
+        /// <param name="frameWidth">Rendered artwork width.</param>
+        /// <param name="frameHeight">Rendered artwork height.</param>
+        /// <param name="x">Slot left position in source artwork pixels.</param>
+        /// <param name="y">Slot top position in source artwork pixels.</param>
+        /// <param name="width">Slot width in source artwork pixels.</param>
+        /// <param name="height">Slot height in source artwork pixels.</param>
+        private void SetHudArtworkRect(
+            RectTransform rectTransform,
+            float frameX,
+            float frameY,
+            float frameWidth,
+            float frameHeight,
+            float x,
+            float y,
+            float width,
+            float height)
+        {
+            SetTopLeft(
+                rectTransform,
+                frameX + x / HudArtworkWidth * frameWidth,
+                frameY + y / HudArtworkHeight * frameHeight,
+                width / HudArtworkWidth * frameWidth,
+                height / HudArtworkHeight * frameHeight);
         }
 
         /// <summary>
@@ -1409,35 +1556,6 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
-        /// Purpose: Returns the top Y of the bottom controls panel.
-        /// Inputs: no direct parameters; reads current Screen height.
-        /// Output: returns the screen-space Y position from the top edge.
-        /// </summary>
-        /// <returns>Bottom controls top Y.</returns>
-        private float ResolveBottomControlsPanelY()
-        {
-            return Screen.height - BottomHudMargin - BottomControlsPanelHeight;
-        }
-
-        /// <summary>
-        /// Purpose: Checks whether the current mode has a visible opponent panel.
-        /// Inputs: gameManager may be null.
-        /// Output: returns true when Player2 or AI should be shown.
-        /// </summary>
-        /// <param name="gameManager">Current game state source.</param>
-        /// <returns>True when an opponent panel is needed.</returns>
-        private bool HasVisibleOpponent(GameManager gameManager)
-        {
-            if (gameManager == null)
-            {
-                return false;
-            }
-
-            CharacterBase opponent = ResolveOpponent(gameManager, out _);
-            return opponent != null && opponent.gameObject.activeInHierarchy;
-        }
-
-        /// <summary>
         /// Purpose: Resolves the opponent character for AI Battle or LocalVS.
         /// Inputs: gameManager supplies current mode and character references; label is an output display name.
         /// Output: returns the opponent character, or null in SinglePlayer.
@@ -1450,10 +1568,10 @@ namespace BubbleTown.UI
             switch (gameManager.CurrentGameMode)
             {
                 case GameMode.LocalVS:
-                    label = "PLAYER 2";
+                    label = "P2";
                     return gameManager.Player2;
                 case GameMode.AIBattle:
-                    label = "AI " + FormatAIDifficultyName(gameManager.CurrentAIDifficulty).ToUpperInvariant();
+                    label = "AI " + FormatAIDifficultyInitial(gameManager.CurrentAIDifficulty);
                     return gameManager.AIPlayer;
                 default:
                     label = "SOLO";
@@ -1500,26 +1618,6 @@ namespace BubbleTown.UI
                     return "VS";
                 default:
                     return "Solo";
-            }
-        }
-
-        /// <summary>
-        /// Purpose: Formats AI difficulty for compact HUD labels.
-        /// Inputs: difficulty is the current AI difficulty selected before battle.
-        /// Output: returns a short readable difficulty name.
-        /// </summary>
-        /// <param name="difficulty">Current AI difficulty.</param>
-        /// <returns>Player-facing difficulty label.</returns>
-        private string FormatAIDifficultyName(AIDifficulty difficulty)
-        {
-            switch (difficulty)
-            {
-                case AIDifficulty.Easy:
-                    return "Easy";
-                case AIDifficulty.Hard:
-                    return "Hard";
-                default:
-                    return "Normal";
             }
         }
 
