@@ -8,7 +8,7 @@ namespace BubbleTown.CameraSystem
 {
     /// <summary>
     /// Battle camera that keeps a readable angled 3D view over the grid.
-    /// It follows Player1 in solo-style modes and frames both players with a shared camera in LocalVS.
+    /// It preserves a HUD-safe arena overview and can frame both active players in versus modes.
     /// </summary>
     public class CameraController : MonoBehaviour
     {
@@ -38,6 +38,10 @@ namespace BubbleTown.CameraSystem
         [SerializeField, Min(0.01f)] private float zoomSmoothTime = 0.18f;
 
         [Header("Framing")]
+        [Tooltip("Keeps the arena at one visual size in every mode instead of zooming with player distance.")]
+        [SerializeField] private bool keepConsistentMapScaleAcrossModes = true;
+        [Tooltip("Extra overview distance applied when consistent map scale is enabled.")]
+        [SerializeField, Min(0f)] private float overviewZoomOut = 0.55f;
         [SerializeField] private bool clampFocusInsideMap = true;
         [SerializeField] private Vector2 soloFocusPaddingCells = new Vector2(1.65f, 1.55f);
         [SerializeField] private Vector2 sharedFocusPaddingCells = new Vector2(1.3f, 1.15f);
@@ -429,24 +433,44 @@ namespace BubbleTown.CameraSystem
         }
 
         /// <summary>
-        /// Purpose: Resolves smoothed zoom out from the current runtime state.
-        /// Inputs: `useSharedView`, `sharedDistance`; may also read serialized fields and current runtime state.
-        /// Output: a `float` value.
+        /// Purpose: Smoothly approaches the requested camera distance for the active battle framing style.
+        /// Inputs: `useSharedView` indicates whether two characters are framed; `sharedDistance` is their XZ distance.
+        /// Output: returns the smoothed extra distance applied behind the normal camera offset.
         /// </summary>
-        /// <param name="useSharedView">Input value used by this method.</param>
-        /// <param name="sharedDistance">Input value used by this method.</param>
-        /// <returns>a `float` value.</returns>
+        /// <param name="useSharedView">True when the camera is framing two active battle characters.</param>
+        /// <param name="sharedDistance">Distance between framed characters in world-space XZ units.</param>
+        /// <returns>Smoothed zoom-out distance in world units.</returns>
         private float ResolveSmoothedZoomOut(bool useSharedView, float sharedDistance)
         {
-            float targetZoomOut = 0f;
-            if (useSharedView)
-            {
-                float zoomDistance = Mathf.Max(0f, sharedDistance - minSharedDistanceForZoom);
-                targetZoomOut = Mathf.Min(zoomDistance * sharedZoomOutPerCell, maxSharedZoomOut);
-            }
-
+            float targetZoomOut = ResolveTargetZoomOut(useSharedView, sharedDistance);
             currentZoomOut = Mathf.SmoothDamp(currentZoomOut, targetZoomOut, ref zoomOutVelocity, zoomSmoothTime);
             return currentZoomOut;
+        }
+
+        /// <summary>
+        /// Purpose: Chooses the desired camera distance before smoothing is applied.
+        /// Inputs: `useSharedView` identifies a two-character view; `sharedDistance` measures target separation.
+        /// Output: returns the requested extra camera distance in world units.
+        /// </summary>
+        /// <param name="useSharedView">True for AI battle or local versus shared-camera framing.</param>
+        /// <param name="sharedDistance">Distance between the two framed targets on the XZ plane.</param>
+        /// <returns>Target zoom-out distance in world units.</returns>
+        private float ResolveTargetZoomOut(bool useSharedView, float sharedDistance)
+        {
+            if (keepConsistentMapScaleAcrossModes)
+            {
+                // One gentle overview offset makes solo slightly smaller and stops versus modes from
+                // shrinking the arena when opponents move apart.
+                return overviewZoomOut;
+            }
+
+            if (!useSharedView)
+            {
+                return 0f;
+            }
+
+            float zoomDistance = Mathf.Max(0f, sharedDistance - minSharedDistanceForZoom);
+            return Mathf.Min(zoomDistance * sharedZoomOutPerCell, maxSharedZoomOut);
         }
 
         /// <summary>
@@ -602,16 +626,29 @@ namespace BubbleTown.CameraSystem
         }
 
         /// <summary>
-        /// Purpose: Updates lens.
-        /// Inputs: `useSharedView`, `sharedDistance`; may also read serialized fields and current runtime state.
-        /// Output: no return value; updates component, scene, or game state as needed.
+        /// Purpose: Applies the current battle mode's desired perspective field of view.
+        /// Inputs: `useSharedView` indicates two-character framing; `sharedDistance` is their XZ distance.
+        /// Output: no return value; updates the controlled camera lens.
         /// </summary>
-        /// <param name="useSharedView">Input value used by this method.</param>
-        /// <param name="sharedDistance">Input value used by this method.</param>
+        /// <param name="useSharedView">True when a versus-mode shared view is active.</param>
+        /// <param name="sharedDistance">Distance between shared-view characters in world units.</param>
         private void UpdateLens(bool useSharedView, float sharedDistance)
         {
+            ApplyLens(ResolveTargetFieldOfView(useSharedView, sharedDistance), false);
+        }
+
+        /// <summary>
+        /// Purpose: Resolves lens zoom while allowing all modes to use one readable arena scale by default.
+        /// Inputs: `useSharedView` indicates two-character framing; `sharedDistance` is their XZ distance.
+        /// Output: returns the requested perspective field of view in degrees.
+        /// </summary>
+        /// <param name="useSharedView">True when the view contains two active battle characters.</param>
+        /// <param name="sharedDistance">Distance between the characters on the XZ plane.</param>
+        /// <returns>Target perspective field of view in degrees.</returns>
+        private float ResolveTargetFieldOfView(bool useSharedView, float sharedDistance)
+        {
             float targetFieldOfView = Mathf.Clamp(defaultFieldOfView, minFieldOfView, maxFieldOfView);
-            if (useSharedView)
+            if (!keepConsistentMapScaleAcrossModes && useSharedView)
             {
                 float fovDistance = Mathf.Max(0f, sharedDistance - minSharedDistanceForZoom);
                 targetFieldOfView = Mathf.Clamp(
@@ -620,7 +657,7 @@ namespace BubbleTown.CameraSystem
                     maxFieldOfView);
             }
 
-            ApplyLens(targetFieldOfView, false);
+            return targetFieldOfView;
         }
 
         /// <summary>
@@ -800,13 +837,14 @@ namespace BubbleTown.CameraSystem
 
             bool useSharedView = ShouldUseSharedView();
             float sharedDistance = useSharedView ? CalculateTargetDistanceXZ() : 0f;
-            float zoomOut = ResolveSmoothedZoomOut(useSharedView, sharedDistance);
+            float zoomOut = ResolveTargetZoomOut(useSharedView, sharedDistance);
+            currentZoomOut = zoomOut;
             Vector3 focusPoint = ResolveFocusPoint(useSharedView);
             smoothedFocusPoint = focusPoint;
             baseCameraPosition = ResolveCameraPosition(focusPoint, zoomOut);
             transform.position = baseCameraPosition;
             transform.LookAt(focusPoint + lookAtOffset);
-            ApplyLens(useSharedView ? defaultFieldOfView + sharedDistance * sharedFieldOfViewBoost : defaultFieldOfView, true);
+            ApplyLens(ResolveTargetFieldOfView(useSharedView, sharedDistance), true);
 
             focusVelocity = Vector3.zero;
             followVelocity = Vector3.zero;
