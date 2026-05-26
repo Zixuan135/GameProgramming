@@ -19,6 +19,11 @@ namespace BubbleTown.UI
         private const string BattleItemGuideTexturePath = "UI/BattleHUD/BattleItemGuide";
         private const string BattlePlayerTexturePath = "UI/BattleHUD/Cropped/BattlePlayer";
         private const string PauseTexturePath = "UI/BattleHUD/Pause";
+        private const string PausePanelTexturePath = "UI/BattleHUD/PausePanel/PauseUI";
+        private const string PauseResumeTexturePath = "UI/BattleHUD/PausePanel/Resume";
+        private const string PauseSettingsTexturePath = "UI/BattleHUD/PausePanel/Settings2";
+        private const string PauseRetryTexturePath = "UI/BattleHUD/PausePanel/Retry";
+        private const string PauseMainMenuTexturePath = "UI/BattleHUD/PausePanel/Mainmenu";
         private const string ItemGuidePanelTexturePath = "UI/BattleHUD/ItemGuide/ItemGuideUI";
         private const string ItemGuideCloseTexturePath = "UI/BattleHUD/ItemGuide/Close3";
         private const string ItemGuideBombTexturePath = "UI/BattleHUD/ItemGuide/Item1";
@@ -28,6 +33,8 @@ namespace BubbleTown.UI
         private const string ItemGuideInvincibleTexturePath = "UI/BattleHUD/ItemGuide/Item5";
         private const float HudArtworkWidth = 1024f;
         private const float HudArtworkHeight = 1536f;
+        private const float PauseArtworkWidth = 1448f;
+        private const float PauseArtworkHeight = 1086f;
         private const float ItemGuideArtworkWidth = 1672f;
         private const float ItemGuideArtworkHeight = 941f;
         private const float LeftHudX = 14f;
@@ -54,6 +61,11 @@ namespace BubbleTown.UI
         private Texture2D battleItemGuideTexture;
         private Texture2D battlePlayerTexture;
         private Texture2D pauseTexture;
+        private Texture2D pausePanelTexture;
+        private Texture2D pauseResumeTexture;
+        private Texture2D pauseSettingsTexture;
+        private Texture2D pauseRetryTexture;
+        private Texture2D pauseMainMenuTexture;
         private Texture2D itemGuidePanelTexture;
         private Texture2D itemGuideCloseTexture;
         private Texture2D itemGuideBombTexture;
@@ -276,7 +288,7 @@ namespace BubbleTown.UI
             overlayRoot = CreatePanel("OverlayRoot", transform, Color.clear, Color.clear);
             SetRaycastTarget(overlayRoot, false);
             overlayDimmer = CreatePanel("OverlayDimmer", overlayRoot, new Color(0.04f, 0.18f, 0.26f, 0.46f), Color.clear);
-            pausePanel = CreatePanel("PausePanel", overlayRoot, new Color(1f, 0.96f, 0.72f, 0.98f), player1Color);
+            pausePanel = CreatePanel("PausePanel", overlayRoot, Color.clear, Color.clear);
             settingsPanel = CreatePanel("SettingsPanel", overlayRoot, new Color(1f, 0.96f, 0.72f, 0.98f), player1Color);
             itemGuidePanel = CreatePanel("ItemGuidePanel", overlayRoot, Color.clear, Color.clear);
             openingPromptPanel = CreatePanel("OpeningPromptPanel", overlayRoot, new Color(1f, 0.96f, 0.72f, 0.98f), neutralColor);
@@ -384,32 +396,32 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
-        /// Purpose: Builds the pause overlay panel and its action buttons.
-        /// Inputs: no direct parameters; writes child objects under pausePanel.
-        /// Output: no return value; connects buttons to BattleUI callbacks.
+        /// Purpose: Builds the pause overlay from supplied panel and button artwork.
+        /// Inputs: no direct parameters; writes fixed elements under pausePanel.
+        /// Output: no return value; connects each artwork button to its existing callback.
         /// </summary>
         private void BuildPausePanel()
         {
-            Text pauseTitle = CreateText("PauseTitle", pausePanel, "PAUSED", 34, FontStyle.Bold, textPrimary, TextAnchor.MiddleCenter);
-            SetTopLeft(pauseTitle.rectTransform, 30f, 24f, 370f, 52f);
+            RawImage backdrop = CreateTextureImage("PauseBackdrop", pausePanel, pausePanelTexture);
+            SetStretch(backdrop.rectTransform);
 
-            Text body = CreateText("PauseBody", pausePanel, "Take a breath. The arena is frozen until you resume.", 14, FontStyle.Normal, textSecondary, TextAnchor.MiddleCenter);
-            SetTopLeft(body.rectTransform, 48f, 84f, 334f, 42f);
-
-            Button resumeButton = CreateButton("ResumeButton", pausePanel, "RESUME", 46f, 146f, 160f, 42f, player1Color);
+            // The supplied button PNGs contain a baked checker surround, so sample only their solid plates.
+            Rect buttonUv = new Rect(0.2f, 0.25f, 0.6f, 0.5f);
+            Button resumeButton = CreateTextureButton("ResumeButton", pausePanel, pauseResumeTexture, buttonUv);
+            SetRelativeRect(resumeButton.transform as RectTransform, 0.135f, 0.405f, 0.33f, 0.092f);
             resumeButton.onClick.AddListener(() => owner?.OnCanvasResumeRequested());
 
-            Button settingsButton = CreateButton("SettingsButton", pausePanel, "SETTINGS", 224f, 146f, 160f, 42f, greenColor);
+            Button settingsButton = CreateTextureButton("SettingsButton", pausePanel, pauseSettingsTexture, buttonUv);
+            SetRelativeRect(settingsButton.transform as RectTransform, 0.535f, 0.405f, 0.33f, 0.092f);
             settingsButton.onClick.AddListener(() => owner?.OnCanvasSettingsRequested());
 
-            Button retryButton = CreateButton("RetryButton", pausePanel, "RETRY", 46f, 204f, 160f, 42f, orangeColor);
+            Button retryButton = CreateTextureButton("RetryButton", pausePanel, pauseRetryTexture, buttonUv);
+            SetRelativeRect(retryButton.transform as RectTransform, 0.135f, 0.641f, 0.33f, 0.092f);
             retryButton.onClick.AddListener(() => owner?.OnClickRetry());
 
-            Button menuButton = CreateButton("MainMenuButton", pausePanel, "MAIN MENU", 224f, 204f, 160f, 42f, player2Color);
+            Button menuButton = CreateTextureButton("MainMenuButton", pausePanel, pauseMainMenuTexture, buttonUv);
+            SetRelativeRect(menuButton.transform as RectTransform, 0.535f, 0.641f, 0.33f, 0.092f);
             menuButton.onClick.AddListener(() => owner?.OnClickBackToMenu());
-
-            Text hint = CreateText("PauseHint", pausePanel, "Press Escape or P to resume.", 12, FontStyle.Bold, textSecondary, TextAnchor.MiddleCenter);
-            SetTopLeft(hint.rectTransform, 48f, 280f, 334f, 24f);
         }
 
         /// <summary>
@@ -721,9 +733,9 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
-        /// Purpose: Shows and animates the pause panel.
+        /// Purpose: Shows the pause overlay without distorting the supplied artwork.
         /// Inputs: visible determines whether pausePanel should be active.
-        /// Output: no return value; updates panel active state, position, and scale.
+        /// Output: no return value; updates active state and aspect-preserving position.
         /// </summary>
         /// <param name="visible">True when the battle is paused and settings are not open.</param>
         private void RefreshPausePanel(bool visible)
@@ -734,9 +746,17 @@ namespace BubbleTown.UI
                 return;
             }
 
-            float bob = Mathf.Sin(Time.unscaledTime * 2.2f) * 2.2f;
-            SetCentered(pausePanel, 0f, bob, 430f, 330f);
-            pausePanel.localScale = Vector3.one * (1f + Mathf.Sin(Time.unscaledTime * 3.2f) * 0.006f);
+            float panelWidth = Mathf.Min(760f, Screen.width - 36f);
+            float panelHeight = panelWidth * PauseArtworkHeight / PauseArtworkWidth;
+            float maxHeight = Screen.height - 36f;
+            if (panelHeight > maxHeight)
+            {
+                panelHeight = maxHeight;
+                panelWidth = panelHeight * PauseArtworkWidth / PauseArtworkHeight;
+            }
+
+            SetCentered(pausePanel, 0f, 0f, panelWidth, panelHeight);
+            pausePanel.localScale = Vector3.one;
         }
 
         /// <summary>
@@ -1342,6 +1362,11 @@ namespace BubbleTown.UI
             battleItemGuideTexture = LoadHudTexture(BattleItemGuideTexturePath);
             battlePlayerTexture = LoadHudTexture(BattlePlayerTexturePath);
             pauseTexture = LoadHudTexture(PauseTexturePath);
+            pausePanelTexture = LoadHudTexture(PausePanelTexturePath);
+            pauseResumeTexture = LoadHudTexture(PauseResumeTexturePath);
+            pauseSettingsTexture = LoadHudTexture(PauseSettingsTexturePath);
+            pauseRetryTexture = LoadHudTexture(PauseRetryTexturePath);
+            pauseMainMenuTexture = LoadHudTexture(PauseMainMenuTexturePath);
             itemGuidePanelTexture = LoadHudTexture(ItemGuidePanelTexturePath);
             itemGuideCloseTexture = LoadHudTexture(ItemGuideCloseTexturePath);
             itemGuideBombTexture = LoadHudTexture(ItemGuideBombTexturePath);
