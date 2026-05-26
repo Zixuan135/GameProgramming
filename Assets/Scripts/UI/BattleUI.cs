@@ -303,6 +303,16 @@ namespace BubbleTown.UI
         /// </summary>
         private void OnGUI()
         {
+            if (useCanvasHud && isPaused && isPauseSettingsOpen)
+            {
+                if (SimpleUIFactory.SettingsModal(AudioManager.Instance))
+                {
+                    OnCanvasCloseSettingsRequested();
+                }
+
+                return;
+            }
+
             bool canvasHudActive = IsCanvasHudActive();
             if (canvasHudActive)
             {
@@ -411,9 +421,9 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
-        /// Purpose: Opens the Canvas settings sub-panel from the pause menu.
+        /// Purpose: Opens the shared main-menu settings modal from the Canvas pause menu.
         /// Inputs: no direct parameters; reads current pause state.
-        /// Output: no return value; toggles the settings panel only while paused.
+        /// Output: no return value; displays settings only while paused.
         /// </summary>
         public void OnCanvasSettingsRequested()
         {
@@ -428,9 +438,9 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
-        /// Purpose: Closes the Canvas settings sub-panel and returns to the pause menu.
+        /// Purpose: Closes the shared settings modal and returns to the Canvas pause menu.
         /// Inputs: no direct parameters; reads current pause state.
-        /// Output: no return value; hides the settings panel and refreshes Canvas overlays.
+        /// Output: no return value; hides settings and refreshes Canvas overlays.
         /// </summary>
         public void OnCanvasCloseSettingsRequested()
         {
