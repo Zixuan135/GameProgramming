@@ -589,11 +589,11 @@ namespace BubbleTown.UI
             bool showPause = owner != null && owner.IsBattlePaused && !owner.IsPauseSettingsOpen;
             bool showSettings = owner != null && owner.IsBattlePaused && owner.IsPauseSettingsOpen;
             bool showGuide = owner != null && owner.IsItemGuideOpen;
-            bool showDimmer = showPause || showSettings || showGuide;
+            bool showDimmer = showPause || showGuide;
             SetPanelActive(overlayDimmer, showDimmer);
 
             RefreshPausePanel(showPause);
-            RefreshSettingsPanel(showSettings);
+            RefreshSettingsPanel(false);
             RefreshItemGuidePanel(showGuide);
             RefreshOpeningPrompt(gameManager, !showPause && !showSettings && !showGuide);
             RefreshResultPrompt(!showPause && !showSettings);
