@@ -19,8 +19,17 @@ namespace BubbleTown.UI
         private const string BattleItemGuideTexturePath = "UI/BattleHUD/BattleItemGuide";
         private const string BattlePlayerTexturePath = "UI/BattleHUD/Cropped/BattlePlayer";
         private const string PauseTexturePath = "UI/BattleHUD/Pause";
+        private const string ItemGuidePanelTexturePath = "UI/BattleHUD/ItemGuide/ItemGuideUI";
+        private const string ItemGuideCloseTexturePath = "UI/BattleHUD/ItemGuide/Close3";
+        private const string ItemGuideBombTexturePath = "UI/BattleHUD/ItemGuide/Item1";
+        private const string ItemGuideRangeTexturePath = "UI/BattleHUD/ItemGuide/Item2";
+        private const string ItemGuideSpeedTexturePath = "UI/BattleHUD/ItemGuide/Item3";
+        private const string ItemGuideShieldTexturePath = "UI/BattleHUD/ItemGuide/Item4";
+        private const string ItemGuideInvincibleTexturePath = "UI/BattleHUD/ItemGuide/Item5";
         private const float HudArtworkWidth = 1024f;
         private const float HudArtworkHeight = 1536f;
+        private const float ItemGuideArtworkWidth = 1672f;
+        private const float ItemGuideArtworkHeight = 941f;
         private const float LeftHudX = 14f;
         private const float LeftHudWidth = 286f;
 
@@ -45,6 +54,13 @@ namespace BubbleTown.UI
         private Texture2D battleItemGuideTexture;
         private Texture2D battlePlayerTexture;
         private Texture2D pauseTexture;
+        private Texture2D itemGuidePanelTexture;
+        private Texture2D itemGuideCloseTexture;
+        private Texture2D itemGuideBombTexture;
+        private Texture2D itemGuideRangeTexture;
+        private Texture2D itemGuideSpeedTexture;
+        private Texture2D itemGuideShieldTexture;
+        private Texture2D itemGuideInvincibleTexture;
 
         private RectTransform safeAreaPanel;
         private RectTransform topStatusPanel;
@@ -94,7 +110,6 @@ namespace BubbleTown.UI
         private Slider masterSlider;
         private Slider bgmSlider;
         private Slider sfxSlider;
-        private ItemGuideCardViews[] itemGuideCards;
 
         /// <summary>
         /// Groups Text references for one character stats panel.
@@ -107,15 +122,6 @@ namespace BubbleTown.UI
             public Text RangeValue;
             public Text SpeedValue;
             public Text GuardValue;
-        }
-
-        /// <summary>
-        /// Groups views needed to animate and display one item guide card.
-        /// </summary>
-        private struct ItemGuideCardViews
-        {
-            public RectTransform IconRoot;
-            public ItemType ItemType;
         }
 
         /// <summary>
@@ -272,7 +278,7 @@ namespace BubbleTown.UI
             overlayDimmer = CreatePanel("OverlayDimmer", overlayRoot, new Color(0.04f, 0.18f, 0.26f, 0.46f), Color.clear);
             pausePanel = CreatePanel("PausePanel", overlayRoot, new Color(1f, 0.96f, 0.72f, 0.98f), player1Color);
             settingsPanel = CreatePanel("SettingsPanel", overlayRoot, new Color(1f, 0.96f, 0.72f, 0.98f), player1Color);
-            itemGuidePanel = CreatePanel("ItemGuidePanel", overlayRoot, new Color(1f, 0.96f, 0.74f, 0.97f), player1Color);
+            itemGuidePanel = CreatePanel("ItemGuidePanel", overlayRoot, Color.clear, Color.clear);
             openingPromptPanel = CreatePanel("OpeningPromptPanel", overlayRoot, new Color(1f, 0.96f, 0.72f, 0.98f), neutralColor);
             resultPromptPanel = CreatePanel("ResultPromptPanel", overlayRoot, new Color(1f, 0.96f, 0.72f, 0.98f), orangeColor);
             pickupToastPanel = CreatePanel("PickupToastPanel", overlayRoot, new Color(1f, 0.94f, 0.55f, 0.98f), Color.white);
@@ -455,36 +461,30 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
-        /// Purpose: Builds the item guide overlay cards.
-        /// Inputs: no direct parameters; writes card views under itemGuidePanel.
-        /// Output: no return value; caches card icon transforms for lightweight animation.
+        /// Purpose: Builds the item guide overlay from supplied panel and item artwork.
+        /// Inputs: no direct parameters; writes fixed content under itemGuidePanel.
+        /// Output: no return value; connects the close button to the existing callback.
         /// </summary>
         private void BuildItemGuidePanel()
         {
-            RectTransform titleBack = CreatePanel("GuideTitleBack", itemGuidePanel, player1Color, Color.white);
-            SetTopLeft(titleBack, 192f, 14f, 236f, 34f);
-            Text title = CreateText("GuideTitle", titleBack, "ITEM GUIDE", 20, FontStyle.Bold, creamText, TextAnchor.MiddleCenter);
-            SetTopLeft(title.rectTransform, 0f, 0f, 236f, 34f);
+            RawImage backdrop = CreateTextureImage("GuideBackdrop", itemGuidePanel, itemGuidePanelTexture);
+            SetStretch(backdrop.rectTransform);
 
-            Button close = CreateButton("CloseButton", itemGuidePanel, "X", 566f, 14f, 34f, 28f, player2Color);
+            Button close = CreateTextureButton("CloseButton", itemGuidePanel, itemGuideCloseTexture, new Rect(0.31f, 0.3f, 0.4f, 0.4f));
+            SetRelativeRect(close.transform as RectTransform, 0.938f, 0.028f, 0.043f, 0.076f);
             close.onClick.AddListener(() => owner?.OnCanvasCloseItemGuideRequested());
 
-            itemGuideCards = new ItemGuideCardViews[5];
-            float contentX = 24f;
-            float contentY = 66f;
-            float gap = 10f;
-            float cardHeight = 56f;
-            float cardWidth = (620f - 48f - gap) * 0.5f;
-            itemGuideCards[0] = BuildItemGuideCard("BombSlot", new Vector2(contentX, contentY), new Vector2(cardWidth, cardHeight), ItemType.BombCountUp, "B+", "Bomb Slot", "Extra bomb slot.", player1Color);
-            itemGuideCards[1] = BuildItemGuideCard("BlastRange", new Vector2(contentX + cardWidth + gap, contentY), new Vector2(cardWidth, cardHeight), ItemType.ExplosionRangeUp, "R+", "Blast Range", "Longer blast lines.", orangeColor);
-            itemGuideCards[2] = BuildItemGuideCard("SpeedBoots", new Vector2(contentX, contentY + cardHeight + gap), new Vector2(cardWidth, cardHeight), ItemType.MoveSpeedUp, "S", "Speed Boots", "Move faster.", greenColor);
-            itemGuideCards[3] = BuildItemGuideCard("Shield", new Vector2(contentX + cardWidth + gap, contentY + cardHeight + gap), new Vector2(cardWidth, cardHeight), ItemType.Shield, "SH", "Shield", "Blocks one hit.", new Color(0.35f, 0.78f, 1f, 1f));
-            itemGuideCards[4] = BuildItemGuideCard("Invincible", new Vector2(contentX, contentY + (cardHeight + gap) * 2f), new Vector2(620f - 48f, cardHeight), ItemType.TemporaryInvincible, "*", "Invincible", "Brief safety time.", purpleColor);
+            Rect iconUv = new Rect(0.22f, 0.21f, 0.56f, 0.56f);
+            BuildImageItemGuideCard("BombSlot", new Rect(0.063f, 0.181f, 0.429f, 0.19f), itemGuideBombTexture, iconUv, false, "Bomb Slot", "Extra bomb slot.", new Color(0.95f, 0.985f, 1f, 0.98f));
+            BuildImageItemGuideCard("BlastRange", new Rect(0.508f, 0.181f, 0.429f, 0.19f), itemGuideRangeTexture, iconUv, false, "Blast Range", "Longer blast lines.", new Color(1f, 0.98f, 0.93f, 0.98f));
+            BuildImageItemGuideCard("SpeedBoots", new Rect(0.063f, 0.397f, 0.429f, 0.19f), itemGuideSpeedTexture, iconUv, false, "Speed Boots", "Move faster.", new Color(0.96f, 1f, 0.93f, 0.98f));
+            BuildImageItemGuideCard("Shield", new Rect(0.508f, 0.397f, 0.429f, 0.19f), itemGuideShieldTexture, iconUv, false, "Shield", "Blocks one hit.", new Color(0.95f, 0.985f, 1f, 0.98f));
+            BuildImageItemGuideCard("Invincible", new Rect(0.063f, 0.616f, 0.874f, 0.176f), itemGuideInvincibleTexture, iconUv, true, "Invincible", "Brief safety time.", new Color(0.99f, 0.96f, 1f, 0.98f));
 
-            RectTransform tipBack = CreatePanel("GuideTipBack", itemGuidePanel, new Color(0.48f, 0.9f, 0.34f, 0.72f), Color.white);
-            SetTopLeft(tipBack, 140f, 290f, 340f, 24f);
-            Text tip = CreateText("GuideTip", tipBack, "Soft blocks hide power-ups.", 12, FontStyle.Bold, textPrimary, TextAnchor.MiddleCenter);
-            SetTopLeft(tip.rectTransform, 0f, 0f, 340f, 24f);
+            RectTransform tipBack = CreatePanel("GuideTipBack", itemGuidePanel, new Color(0.89f, 1f, 0.8f, 0.97f), Color.clear);
+            SetRelativeRect(tipBack, 0.268f, 0.858f, 0.464f, 0.038f);
+            Text tip = CreateText("GuideTip", tipBack, "Soft blocks hide power-ups.", 13, FontStyle.Bold, textPrimary, TextAnchor.MiddleCenter);
+            SetStretch(tip.rectTransform);
         }
 
         /// <summary>
@@ -776,9 +776,9 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
-        /// Purpose: Shows and animates the item guide overlay.
-        /// Inputs: visible determines whether guide cards should be active.
-        /// Output: no return value; updates active state, panel position, and icon motion.
+        /// Purpose: Shows the item guide overlay without distorting the supplied artwork.
+        /// Inputs: visible determines whether the guide panel should be active.
+        /// Output: no return value; updates active state and an aspect-preserving panel size.
         /// </summary>
         /// <param name="visible">True when the item guide should be shown.</param>
         private void RefreshItemGuidePanel(bool visible)
@@ -789,21 +789,16 @@ namespace BubbleTown.UI
                 return;
             }
 
-            SetCentered(itemGuidePanel, 0f, 0f, 620f, 330f);
-            for (int i = 0; i < itemGuideCards.Length; i++)
+            float panelWidth = Mathf.Min(900f, Screen.width - 36f);
+            float panelHeight = panelWidth * ItemGuideArtworkHeight / ItemGuideArtworkWidth;
+            float maxHeight = Screen.height - 36f;
+            if (panelHeight > maxHeight)
             {
-                ItemGuideCardViews card = itemGuideCards[i];
-                if (card.IconRoot == null)
-                {
-                    continue;
-                }
-
-                float phase = (int)card.ItemType * 0.73f;
-                float bob = Mathf.Sin(Time.unscaledTime * 3.1f + phase) * 1.4f;
-                float pulse = 1f + Mathf.Sin(Time.unscaledTime * 4.2f + phase) * 0.045f;
-                card.IconRoot.localPosition = new Vector3(card.IconRoot.localPosition.x, -9f - bob, 0f);
-                card.IconRoot.localScale = Vector3.one * pulse;
+                panelHeight = maxHeight;
+                panelWidth = panelHeight * ItemGuideArtworkWidth / ItemGuideArtworkHeight;
             }
+
+            SetCentered(itemGuidePanel, 0f, 0f, panelWidth, panelHeight);
         }
 
         /// <summary>
@@ -1134,39 +1129,36 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
-        /// Purpose: Creates one item guide card.
-        /// Inputs: card settings define placement, icon, title, body, and color.
-        /// Output: returns cached card views for later icon animation.
+        /// Purpose: Places one supplied item image and its unchanged guide copy into a pre-drawn card slot.
+        /// Inputs: slot and texture settings align content with the panel artwork.
+        /// Output: no return value; creates fixed visuals that do not drift out of their slots.
         /// </summary>
         /// <param name="name">Card GameObject name.</param>
-        /// <param name="position">Top-left local position.</param>
-        /// <param name="size">Card size.</param>
-        /// <param name="itemType">Item represented by the card.</param>
-        /// <param name="icon">Short icon label.</param>
+        /// <param name="slot">Normalized location of the pre-drawn card.</param>
+        /// <param name="texture">Source artwork for the item.</param>
+        /// <param name="iconUv">Opaque section of source artwork to avoid its baked background.</param>
+        /// <param name="wide">True for the single full-width bottom card.</param>
         /// <param name="title">Item name.</param>
         /// <param name="body">Short item description.</param>
-        /// <param name="accent">Card accent color.</param>
-        /// <returns>Created item guide card views.</returns>
-        private ItemGuideCardViews BuildItemGuideCard(string name, Vector2 position, Vector2 size, ItemType itemType, string icon, string title, string body, Color accent)
+        /// <param name="textFill">Fill used to cover template text markers beneath live copy.</param>
+        private void BuildImageItemGuideCard(string name, Rect slot, Texture2D texture, Rect iconUv, bool wide, string title, string body, Color textFill)
         {
-            RectTransform card = CreatePanel(name, itemGuidePanel, new Color(1f, 0.99f, 0.88f, 0.92f), Color.Lerp(accent, Color.white, 0.18f));
-            SetTopLeft(card, position.x, position.y, size.x, size.y);
+            RectTransform card = CreatePanel(name, itemGuidePanel, Color.clear, Color.clear);
+            SetRelativeRect(card, slot.x, slot.y, slot.width, slot.height);
 
-            RectTransform iconRoot = CreatePanel("Icon", card, Color.Lerp(accent, Color.white, 0.08f), Color.white);
-            SetTopLeft(iconRoot, 10f, 9f, 40f, 40f);
-            Text iconText = CreateText("IconText", iconRoot, icon, 13, FontStyle.Bold, Color.white, TextAnchor.MiddleCenter);
-            SetTopLeft(iconText.rectTransform, 4f, 4f, 32f, 32f);
+            RawImage icon = CreateTextureImage("Icon", card, texture);
+            icon.uvRect = iconUv;
+            SetRelativeRect(icon.rectTransform, wide ? 0.018f : 0.032f, 0.12f, wide ? 0.086f : 0.19f, 0.76f);
 
-            Text titleText = CreateText("Title", card, title, 13, FontStyle.Bold, textPrimary, TextAnchor.MiddleLeft);
-            SetTopLeft(titleText.rectTransform, 60f, 8f, size.x - 70f, 20f);
-            Text bodyText = CreateText("Body", card, body, 11, FontStyle.Bold, textSecondary, TextAnchor.MiddleLeft);
-            SetTopLeft(bodyText.rectTransform, 60f, 30f, size.x - 70f, 18f);
+            float textX = wide ? 0.15f : 0.275f;
+            float textWidth = wide ? 0.76f : 0.67f;
+            RectTransform textBack = CreatePanel("TextBack", card, textFill, Color.clear);
+            SetRelativeRect(textBack, textX, 0.2f, textWidth, 0.62f);
 
-            return new ItemGuideCardViews
-            {
-                IconRoot = iconRoot,
-                ItemType = itemType
-            };
+            Text titleText = CreateText("Title", textBack, title, 14, FontStyle.Bold, textPrimary, TextAnchor.MiddleLeft);
+            SetRelativeRect(titleText.rectTransform, 0.02f, 0.06f, 0.96f, 0.4f);
+            Text bodyText = CreateText("Body", textBack, body, 11, FontStyle.Bold, textSecondary, TextAnchor.MiddleLeft);
+            SetRelativeRect(bodyText.rectTransform, 0.02f, 0.53f, 0.96f, 0.34f);
         }
 
         /// <summary>
@@ -1350,6 +1342,13 @@ namespace BubbleTown.UI
             battleItemGuideTexture = LoadHudTexture(BattleItemGuideTexturePath);
             battlePlayerTexture = LoadHudTexture(BattlePlayerTexturePath);
             pauseTexture = LoadHudTexture(PauseTexturePath);
+            itemGuidePanelTexture = LoadHudTexture(ItemGuidePanelTexturePath);
+            itemGuideCloseTexture = LoadHudTexture(ItemGuideCloseTexturePath);
+            itemGuideBombTexture = LoadHudTexture(ItemGuideBombTexturePath);
+            itemGuideRangeTexture = LoadHudTexture(ItemGuideRangeTexturePath);
+            itemGuideSpeedTexture = LoadHudTexture(ItemGuideSpeedTexturePath);
+            itemGuideShieldTexture = LoadHudTexture(ItemGuideShieldTexturePath);
+            itemGuideInvincibleTexture = LoadHudTexture(ItemGuideInvincibleTexturePath);
         }
 
         /// <summary>
