@@ -12,10 +12,16 @@ namespace BubbleTown.UI
     public class ResultUI : MonoBehaviour
     {
         private const int TextureSize = 64;
-        private const int MaxStars = 3;
+        private const string ResultPanelResourcePath = "UI/Result/ResultUI";
+        private const string RetryButtonResourcePath = "UI/Result/Retry2";
+        private const string MainMenuButtonResourcePath = "UI/Result/MainMenu2";
+        private const float ResultArtworkWidth = 1586f;
+        private const float ResultArtworkHeight = 992f;
 
         private static readonly Dictionary<string, Texture2D> RoundedTextureCache = new Dictionary<string, Texture2D>();
         private static readonly Dictionary<string, Texture2D> CircleTextureCache = new Dictionary<string, Texture2D>();
+        private static readonly Rect RetryButtonCrop = new Rect(0f, 0f, 1835f, 400f);
+        private static readonly Rect MainMenuButtonCrop = new Rect(0f, 0f, 1554f, 316f);
 
         [Header("Result Colors")]
         [SerializeField] private Color victoryColor = new Color(0.2f, 0.86f, 1f, 1f);
@@ -37,9 +43,13 @@ namespace BubbleTown.UI
         private GUIStyle pillTextStyle;
         private GUIStyle resultTitleStyle;
         private GUIStyle resultBodyStyle;
-        private GUIStyle scoreStyle;
-        private GUIStyle starStyle;
+        private GUIStyle resultDetailStyle;
+        private GUIStyle transparentButtonStyle;
+        private Texture2D resultPanelTexture;
+        private Texture2D retryButtonTexture;
+        private Texture2D mainMenuButtonTexture;
         private bool resultAudioPlayed;
+        private bool texturesLoaded;
         private float shownAtTime;
 
         private enum ResultOutcome
@@ -60,11 +70,9 @@ namespace BubbleTown.UI
             public string ModeName;
             public string MapName;
             public string OutcomeLabel;
-            public string ScoreLabel;
             public string MatchScoreLabel;
             public string IconText;
             public string MoodText;
-            public int StarCount;
             public ResultOutcome Outcome;
             public Color AccentColor;
         }
@@ -88,10 +96,17 @@ namespace BubbleTown.UI
         private void OnGUI()
         {
             EnsureStyles();
-            SimpleUIFactory.DrawCandyBackground();
+            EnsureResultTexturesLoaded();
 
             ResultViewModel viewModel = BuildResultViewModel();
             PlayResultAudioOnce(viewModel);
+            if (HasImageResultAssets())
+            {
+                DrawImageResult(viewModel);
+                return;
+            }
+
+            SimpleUIFactory.DrawCandyBackground();
             Rect panel = SimpleUIFactory.CenteredRect(800f, 500f);
 
             Matrix4x4 previousMatrix = GUI.matrix;
@@ -152,8 +167,6 @@ namespace BubbleTown.UI
             GameMode mode = gameManager != null ? gameManager.CurrentGameMode : GameMode.SinglePlayer;
             BattleMapType mapType = gameManager != null ? gameManager.CurrentMapType : BattleMapType.Default;
             ResultOutcome outcome = hasResult ? ResolveOutcome(title, winner) : ResultOutcome.Pending;
-            int score = CalculateScore(outcome, mode);
-            int starCount = CalculateStarCount(outcome);
 
             return new ResultViewModel
             {
@@ -164,11 +177,9 @@ namespace BubbleTown.UI
                 ModeName = FormatModeName(mode),
                 MapName = FormatMapName(mapType),
                 OutcomeLabel = FormatOutcome(outcome),
-                ScoreLabel = score.ToString("0000"),
                 MatchScoreLabel = FormatMatchScore(gameManager, mode),
                 IconText = FormatIconText(outcome),
                 MoodText = FormatMoodText(outcome),
-                StarCount = starCount,
                 Outcome = outcome,
                 AccentColor = ResolveAccentColor(outcome)
             };
@@ -234,74 +245,6 @@ namespace BubbleTown.UI
             }
 
             return ResultOutcome.Complete;
-        }
-
-        /// <summary>
-        /// Purpose: Calculates score.
-        /// Inputs: `outcome`, `mode`; may also read serialized fields and current runtime state.
-        /// Output: a `int` value.
-        /// </summary>
-        /// <param name="outcome">Input value used by this method.</param>
-        /// <param name="mode">Input value used by this method.</param>
-        /// <returns>a `int` value.</returns>
-        private int CalculateScore(ResultOutcome outcome, GameMode mode)
-        {
-            switch (outcome)
-            {
-                case ResultOutcome.Victory:
-                    return 1200 + GetModeBonus(mode);
-                case ResultOutcome.Draw:
-                    return 550 + GetModeBonus(mode) / 2;
-                case ResultOutcome.Defeat:
-                    return 200;
-                case ResultOutcome.Complete:
-                    return 800;
-                default:
-                    return 0;
-            }
-        }
-
-        /// <summary>
-        /// Purpose: Gets mode bonus.
-        /// Inputs: `mode`; may also read serialized fields and current runtime state.
-        /// Output: a `int` value.
-        /// </summary>
-        /// <param name="mode">Input value used by this method.</param>
-        /// <returns>a `int` value.</returns>
-        private int GetModeBonus(GameMode mode)
-        {
-            switch (mode)
-            {
-                case GameMode.AIBattle:
-                    return 200;
-                case GameMode.LocalVS:
-                    return 250;
-                default:
-                    return 100;
-            }
-        }
-
-        /// <summary>
-        /// Purpose: Calculates star count.
-        /// Inputs: `outcome`; may also read serialized fields and current runtime state.
-        /// Output: a `int` value.
-        /// </summary>
-        /// <param name="outcome">Input value used by this method.</param>
-        /// <returns>a `int` value.</returns>
-        private int CalculateStarCount(ResultOutcome outcome)
-        {
-            switch (outcome)
-            {
-                case ResultOutcome.Victory:
-                    return 3;
-                case ResultOutcome.Draw:
-                case ResultOutcome.Complete:
-                    return 2;
-                case ResultOutcome.Defeat:
-                    return 1;
-                default:
-                    return 0;
-            }
         }
 
         /// <summary>
@@ -461,6 +404,231 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
+        /// Purpose: Loads the illustrated result screen assets on demand.
+        /// Inputs: no direct parameters; uses Resources paths without file extensions.
+        /// Output: no return value; caches loaded textures and applies UI sampling settings.
+        /// </summary>
+        private void EnsureResultTexturesLoaded()
+        {
+            if (texturesLoaded)
+            {
+                return;
+            }
+
+            texturesLoaded = true;
+            resultPanelTexture = Resources.Load<Texture2D>(ResultPanelResourcePath);
+            retryButtonTexture = Resources.Load<Texture2D>(RetryButtonResourcePath);
+            mainMenuButtonTexture = Resources.Load<Texture2D>(MainMenuButtonResourcePath);
+
+            ApplyResultTextureSettings(resultPanelTexture);
+            ApplyResultTextureSettings(retryButtonTexture);
+            ApplyResultTextureSettings(mainMenuButtonTexture);
+        }
+
+        /// <summary>
+        /// Purpose: Checks whether the new image-based result screen can be drawn.
+        /// Inputs: no direct parameters; reads cached texture references.
+        /// Output: true when all required result art is available.
+        /// </summary>
+        /// <returns>True when the illustrated result screen assets are loaded.</returns>
+        private bool HasImageResultAssets()
+        {
+            return resultPanelTexture != null &&
+                   retryButtonTexture != null &&
+                   mainMenuButtonTexture != null;
+        }
+
+        /// <summary>
+        /// Purpose: Applies stable sampling settings to imported result textures.
+        /// Inputs: texture may be null.
+        /// Output: no return value; configures texture filtering and wrapping when present.
+        /// </summary>
+        /// <param name="texture">Texture to configure.</param>
+        private void ApplyResultTextureSettings(Texture2D texture)
+        {
+            if (texture == null)
+            {
+                return;
+            }
+
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.filterMode = FilterMode.Bilinear;
+            texture.anisoLevel = 0;
+        }
+
+        /// <summary>
+        /// Purpose: Draws the illustrated result screen while preserving runtime labels and button callbacks.
+        /// Inputs: viewModel supplies dynamic result text.
+        /// Output: no return value; handles retry and main menu button clicks.
+        /// </summary>
+        /// <param name="viewModel">Runtime result content.</param>
+        private void DrawImageResult(ResultViewModel viewModel)
+        {
+            SimpleUIFactory.DrawCandyBackground();
+
+            Rect panel = PixelSnapRect(SimpleUIFactory.CenteredRect(800f, 500f));
+            Matrix4x4 previousMatrix = GUI.matrix;
+            float entranceScale = ResolvePanelEntranceScale();
+            GUIUtility.ScaleAroundPivot(new Vector2(entranceScale, entranceScale), panel.center);
+            GUI.DrawTexture(panel, resultPanelTexture, ScaleMode.StretchToFill, false);
+            DrawImageResultContent(panel, viewModel);
+            GUI.matrix = previousMatrix;
+        }
+
+        /// <summary>
+        /// Purpose: Places dynamic result text over the new illustrated panel without changing button behavior.
+        /// Inputs: panel is the on-screen artwork rect; viewModel supplies current battle result.
+        /// Output: no return value; draws labels and image buttons.
+        /// </summary>
+        /// <param name="panel">Drawn artwork rect.</param>
+        /// <param name="viewModel">Runtime result content.</param>
+        private void DrawImageResultContent(Rect panel, ResultViewModel viewModel)
+        {
+            DrawImageResultTitle(panel, viewModel.Title);
+
+            Rect iconRect = RelativeArtworkRect(panel, 286f, 313f, 156f, 156f);
+            GUI.DrawTexture(iconRect, GetCircleTexture(viewModel.AccentColor));
+            DrawLockedLabel(iconRect, viewModel.IconText, resultIconStyle);
+
+            DrawArtworkTextMask(RelativeArtworkRect(panel, 490f, 286f, 740f, 202f), 0);
+            DrawLockedLabel(RelativeArtworkRect(panel, 502f, 297f, 700f, 56f), viewModel.OutcomeLabel, resultTitleStyle);
+            DrawLockedLabel(
+                RelativeArtworkRect(panel, 502f, 374f, 720f, 104f),
+                viewModel.MoodText + "\n" + viewModel.Detail,
+                resultDetailStyle);
+
+            DrawArtworkValue(RelativeArtworkRect(panel, 220f, 626f, 322f, 56f), viewModel.ModeName);
+            DrawArtworkValue(RelativeArtworkRect(panel, 632f, 626f, 322f, 56f), viewModel.MapName);
+            DrawArtworkValue(RelativeArtworkRect(panel, 1050f, 626f, 292f, 56f), viewModel.Winner);
+
+            DrawImageActionButtons(panel);
+        }
+
+        /// <summary>
+        /// Purpose: Draws a dynamic title only when it differs from the title baked into the artwork.
+        /// Inputs: panel is the on-screen artwork rect; title is the runtime battle result title.
+        /// Output: no return value; avoids double-drawing the baked Game Over text.
+        /// </summary>
+        /// <param name="panel">Drawn artwork rect.</param>
+        /// <param name="title">Runtime result title.</param>
+        private void DrawImageResultTitle(Rect panel, string title)
+        {
+            if (string.IsNullOrEmpty(title) ||
+                string.Equals(title, "Game Over", System.StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            DrawArtworkTextMask(RelativeArtworkRect(panel, 430f, 104f, 760f, 148f), 0);
+            DrawLockedLabel(RelativeArtworkRect(panel, 430f, 122f, 760f, 96f), title, screenTitleStyle);
+        }
+
+        /// <summary>
+        /// Purpose: Draws one dynamic value into an illustrated summary card.
+        /// Inputs: valueRect is in screen space and value is the runtime text.
+        /// Output: no return value; covers baked placeholder text and draws the current value.
+        /// </summary>
+        /// <param name="valueRect">Screen-space text slot.</param>
+        /// <param name="value">Current value text.</param>
+        private void DrawArtworkValue(Rect valueRect, string value)
+        {
+            DrawArtworkTextMask(valueRect, 18);
+            DrawLockedLabel(valueRect, value, cardValueStyle);
+        }
+
+        /// <summary>
+        /// Purpose: Draws a soft mask matching the result artwork so dynamic text does not overlap baked sample text.
+        /// Inputs: rect describes the text slot; radius controls corner roundness.
+        /// Output: no return value; draws a non-interactive background patch.
+        /// </summary>
+        /// <param name="rect">Screen-space patch rect.</param>
+        /// <param name="radius">Rounded corner radius.</param>
+        private void DrawArtworkTextMask(Rect rect, int radius)
+        {
+            GUI.DrawTexture(
+                PixelSnapRect(rect),
+                GetRoundedTexture(new Color(1f, 0.94f, 0.68f, 1f), new Color(1f, 0.94f, 0.68f, 1f), Mathf.Max(0, radius), 0));
+        }
+
+        /// <summary>
+        /// Purpose: Draws and handles the new image-based retry and main-menu buttons.
+        /// Inputs: panel is the drawn result artwork rect.
+        /// Output: no return value; invokes existing button callbacks on click.
+        /// </summary>
+        /// <param name="panel">Drawn artwork rect.</param>
+        private void DrawImageActionButtons(Rect panel)
+        {
+            Rect retryRect = RelativeArtworkRect(panel, 334f, 790f, 435f, 112f);
+            Rect menuRect = RelativeArtworkRect(panel, 813f, 790f, 435f, 112f);
+
+            if (DrawCroppedImageButton(retryRect, retryButtonTexture, RetryButtonCrop))
+            {
+                OnClickRematch();
+            }
+
+            if (DrawCroppedImageButton(menuRect, mainMenuButtonTexture, MainMenuButtonCrop))
+            {
+                OnClickBackToMenu();
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Draws a cropped image button and keeps click hitboxes aligned with the artwork slot.
+        /// Inputs: clickRect is the interactive slot; cropPixels selects the actual button from source art.
+        /// Output: true when the invisible button is clicked.
+        /// </summary>
+        /// <param name="clickRect">Screen-space hitbox.</param>
+        /// <param name="texture">Source texture.</param>
+        /// <param name="cropPixels">Source crop in top-left pixel coordinates.</param>
+        /// <returns>True when clicked.</returns>
+        private bool DrawCroppedImageButton(Rect clickRect, Texture2D texture, Rect cropPixels)
+        {
+            bool isHovered = clickRect.Contains(Event.current.mousePosition);
+            bool isPressed = isHovered && Event.current.type == EventType.MouseDown && Event.current.button == 0;
+            Rect drawRect = CalculateAspectFitRect(cropPixels.width, cropPixels.height, clickRect);
+
+            if (isHovered)
+            {
+                drawRect = ScaleRectAroundCenter(drawRect, 1.035f, 1.035f);
+            }
+
+            if (isPressed)
+            {
+                drawRect = ScaleRectAroundCenter(drawRect, 0.98f, 0.98f);
+                drawRect.y += drawRect.height * 0.025f;
+            }
+
+            DrawCroppedTexture(PixelSnapRect(drawRect), texture, cropPixels);
+            return GUI.Button(clickRect, GUIContent.none, GetTransparentButtonStyle());
+        }
+
+        /// <summary>
+        /// Purpose: Draws a top-left pixel crop from a larger source texture.
+        /// Inputs: drawRect is destination space; sourcePixels is crop space in the source texture.
+        /// Output: no return value; clips drawing to drawRect.
+        /// </summary>
+        /// <param name="drawRect">Destination rect.</param>
+        /// <param name="texture">Source texture.</param>
+        /// <param name="sourcePixels">Top-left pixel crop.</param>
+        private void DrawCroppedTexture(Rect drawRect, Texture2D texture, Rect sourcePixels)
+        {
+            if (texture == null || sourcePixels.width <= 0f || sourcePixels.height <= 0f)
+            {
+                return;
+            }
+
+            float scaleX = drawRect.width / sourcePixels.width;
+            float scaleY = drawRect.height / sourcePixels.height;
+            GUI.BeginGroup(drawRect);
+            GUI.DrawTexture(
+                new Rect(-sourcePixels.x * scaleX, -sourcePixels.y * scaleY, texture.width * scaleX, texture.height * scaleY),
+                texture,
+                ScaleMode.StretchToFill,
+                true);
+            GUI.EndGroup();
+        }
+
+        /// <summary>
         /// Purpose: Draws result content in the current GUI or scene context.
         /// Inputs: `panel`, `viewModel`; may also read serialized fields and current runtime state.
         /// Output: no return value; updates component, scene, or game state as needed.
@@ -485,9 +653,6 @@ namespace BubbleTown.UI
 
             y += 136f;
             DrawSummaryCards(new Rect(panel.x + margin + 18f, y, contentWidth - 36f, 64f), viewModel);
-
-            y += 80f;
-            DrawScorePanel(new Rect(panel.x + margin + 86f, y, contentWidth - 172f, 72f), viewModel);
 
             float buttonY = panel.y + panel.height - 58f;
             DrawActionButtons(new Rect(panel.x + margin + 124f, buttonY, contentWidth - 248f, 42f));
@@ -580,24 +745,6 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
-        /// Purpose: Draws score panel in the current GUI or scene context.
-        /// Inputs: `rewardRect`, `viewModel`; may also read serialized fields and current runtime state.
-        /// Output: no return value; updates component, scene, or game state as needed.
-        /// </summary>
-        /// <param name="rewardRect">Input value used by this method.</param>
-        /// <param name="viewModel">Input value used by this method.</param>
-        private void DrawScorePanel(Rect rewardRect, ResultViewModel viewModel)
-        {
-            DrawPanel(rewardRect, new Color(1f, 0.98f, 0.86f, 0.98f), new Color(1f, 0.68f, 0.22f, 1f), 22, 4);
-
-            DrawLockedLabel(new Rect(rewardRect.x + 22f, rewardRect.y + 7f, 150f, 20f), "SCORE", cardTitleStyle);
-            DrawLockedLabel(new Rect(rewardRect.x + 22f, rewardRect.y + 29f, 150f, 38f), viewModel.ScoreLabel, scoreStyle);
-
-            DrawLockedLabel(new Rect(rewardRect.x + 192f, rewardRect.y + 7f, rewardRect.width - 214f, 20f), "RATING", cardTitleStyle);
-            DrawStarSlots(new Rect(rewardRect.x + 196f, rewardRect.y + 33f, rewardRect.width - 222f, 32f), viewModel.StarCount, viewModel.AccentColor);
-        }
-
-        /// <summary>
         /// Purpose: Draws action buttons in the current GUI or scene context.
         /// Inputs: `slot`; may also read serialized fields and current runtime state.
         /// Output: no return value; updates component, scene, or game state as needed.
@@ -617,39 +764,6 @@ namespace BubbleTown.UI
             if (SimpleUIFactory.FixedSecondaryButton(menuRect, "MAIN MENU"))
             {
                 OnClickBackToMenu();
-            }
-        }
-
-        /// <summary>
-        /// Purpose: Draws star slots in the current GUI or scene context.
-        /// Inputs: `rect`, `starCount`, `activeColor`; may also read serialized fields and current runtime state.
-        /// Output: no return value; updates component, scene, or game state as needed.
-        /// </summary>
-        /// <param name="rect">Input value used by this method.</param>
-        /// <param name="starCount">Input value used by this method.</param>
-        /// <param name="activeColor">Input value used by this method.</param>
-        private void DrawStarSlots(Rect rect, int starCount, Color activeColor)
-        {
-            float slotSize = Mathf.Min(34f, rect.height - 2f);
-            float gap = 10f;
-            float startX = rect.x + (rect.width - slotSize * MaxStars - gap * (MaxStars - 1)) * 0.5f;
-            for (int i = 0; i < MaxStars; i++)
-            {
-                bool isActive = i < starCount;
-                Color fill = isActive ? activeColor : new Color(0.78f, 0.82f, 0.86f, 1f);
-                Rect slotRect = new Rect(startX + i * (slotSize + gap), rect.y + 2f, slotSize, slotSize);
-                Matrix4x4 previousMatrix = GUI.matrix;
-                if (isActive)
-                {
-                    float starProgress = Mathf.Clamp01((Time.unscaledTime - shownAtTime - 0.15f * i) / 0.35f);
-                    float starScale = Mathf.Lerp(0.72f, 1f, Mathf.SmoothStep(0f, 1f, starProgress)) +
-                                      Mathf.Sin(starProgress * Mathf.PI) * 0.12f;
-                    GUIUtility.ScaleAroundPivot(new Vector2(starScale, starScale), slotRect.center);
-                }
-
-                DrawPanel(slotRect, fill, Color.white, 18, 2);
-                DrawLockedLabel(slotRect, isActive ? "*" : "-", starStyle);
-                GUI.matrix = previousMatrix;
             }
         }
 
@@ -773,6 +887,121 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
+        /// Purpose: Converts ResultUI artwork pixel coordinates into the current screen-space panel rect.
+        /// Inputs: panel is the drawn artwork rect; x/y/width/height are source-art top-left pixels.
+        /// Output: a screen-space rect aligned to the artwork.
+        /// </summary>
+        /// <param name="panel">Drawn artwork rect.</param>
+        /// <param name="x">Source artwork x coordinate.</param>
+        /// <param name="y">Source artwork y coordinate.</param>
+        /// <param name="width">Source artwork width.</param>
+        /// <param name="height">Source artwork height.</param>
+        /// <returns>Screen-space rect.</returns>
+        private Rect RelativeArtworkRect(Rect panel, float x, float y, float width, float height)
+        {
+            return PixelSnapRect(new Rect(
+                panel.x + panel.width * x / ResultArtworkWidth,
+                panel.y + panel.height * y / ResultArtworkHeight,
+                panel.width * width / ResultArtworkWidth,
+                panel.height * height / ResultArtworkHeight));
+        }
+
+        /// <summary>
+        /// Purpose: Calculates an aspect-preserving rect inside a destination slot.
+        /// Inputs: sourceWidth/sourceHeight define art ratio; bounds is the available screen space.
+        /// Output: an aspect-fit rect centered in bounds.
+        /// </summary>
+        /// <param name="sourceWidth">Source art width.</param>
+        /// <param name="sourceHeight">Source art height.</param>
+        /// <param name="bounds">Available bounds.</param>
+        /// <returns>Aspect-fit rect.</returns>
+        private Rect CalculateAspectFitRect(float sourceWidth, float sourceHeight, Rect bounds)
+        {
+            if (sourceWidth <= 0f || sourceHeight <= 0f || bounds.width <= 0f || bounds.height <= 0f)
+            {
+                return bounds;
+            }
+
+            float sourceAspect = sourceWidth / sourceHeight;
+            float boundsAspect = bounds.width / bounds.height;
+            float width = bounds.width;
+            float height = bounds.height;
+            if (boundsAspect > sourceAspect)
+            {
+                width = height * sourceAspect;
+            }
+            else
+            {
+                height = width / sourceAspect;
+            }
+
+            return PixelSnapRect(new Rect(
+                bounds.x + (bounds.width - width) * 0.5f,
+                bounds.y + (bounds.height - height) * 0.5f,
+                width,
+                height));
+        }
+
+        /// <summary>
+        /// Purpose: Scales a rect around its center for hover/press feedback.
+        /// Inputs: rect is source geometry; scaleX/scaleY are multipliers.
+        /// Output: scaled rect.
+        /// </summary>
+        /// <param name="rect">Rect to scale.</param>
+        /// <param name="scaleX">Horizontal scale.</param>
+        /// <param name="scaleY">Vertical scale.</param>
+        /// <returns>Scaled rect.</returns>
+        private Rect ScaleRectAroundCenter(Rect rect, float scaleX, float scaleY)
+        {
+            Vector2 center = rect.center;
+            float width = rect.width * scaleX;
+            float height = rect.height * scaleY;
+            return new Rect(center.x - width * 0.5f, center.y - height * 0.5f, width, height);
+        }
+
+        /// <summary>
+        /// Purpose: Rounds a rect to full pixels so UI art stays stable and crisp.
+        /// Inputs: rect may contain fractional coordinates from scaling.
+        /// Output: pixel-snapped rect.
+        /// </summary>
+        /// <param name="rect">Rect to snap.</param>
+        /// <returns>Pixel-aligned rect.</returns>
+        private Rect PixelSnapRect(Rect rect)
+        {
+            return new Rect(
+                Mathf.Round(rect.x),
+                Mathf.Round(rect.y),
+                Mathf.Round(rect.width),
+                Mathf.Round(rect.height));
+        }
+
+        /// <summary>
+        /// Purpose: Creates or returns a style used by invisible image button hitboxes.
+        /// Inputs: no direct parameters.
+        /// Output: transparent GUIStyle.
+        /// </summary>
+        /// <returns>Transparent button style.</returns>
+        private GUIStyle GetTransparentButtonStyle()
+        {
+            if (transparentButtonStyle == null)
+            {
+                transparentButtonStyle = new GUIStyle(GUIStyle.none)
+                {
+                    normal = { background = null },
+                    hover = { background = null },
+                    active = { background = null },
+                    focused = { background = null },
+                    onNormal = { background = null },
+                    onHover = { background = null },
+                    onActive = { background = null },
+                    onFocused = { background = null }
+                };
+            }
+
+            return transparentButtonStyle;
+        }
+
+        /// <summary>
         /// Purpose: Ensures styles exists or is initialized before use.
         /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
         /// Output: no return value; updates component, scene, or game state as needed.
@@ -786,8 +1015,7 @@ namespace BubbleTown.UI
                 pillTextStyle != null &&
                 resultTitleStyle != null &&
                 resultBodyStyle != null &&
-                scoreStyle != null &&
-                starStyle != null)
+                resultDetailStyle != null)
             {
                 return;
             }
@@ -864,25 +1092,15 @@ namespace BubbleTown.UI
             };
             LockStyleTextColor(resultBodyStyle, textSecondary);
 
-            scoreStyle = new GUIStyle(GUI.skin.label)
+            resultDetailStyle = new GUIStyle(GUI.skin.label)
             {
-                alignment = TextAnchor.MiddleCenter,
+                alignment = TextAnchor.UpperLeft,
                 clipping = TextClipping.Overflow,
-                fontSize = 31,
-                fontStyle = FontStyle.Bold,
-                normal = { textColor = textPrimary }
+                fontSize = 11,
+                wordWrap = true,
+                normal = { textColor = textSecondary }
             };
-            LockStyleTextColor(scoreStyle, textPrimary);
-
-            starStyle = new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                clipping = TextClipping.Overflow,
-                fontSize = 24,
-                fontStyle = FontStyle.Bold,
-                normal = { textColor = Color.white }
-            };
-            LockStyleTextColor(starStyle, Color.white);
+            LockStyleTextColor(resultDetailStyle, textSecondary);
         }
 
         /// <summary>
