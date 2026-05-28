@@ -731,18 +731,18 @@ namespace BubbleTown.CameraSystem
         /// <returns>a `Rect` value.</returns>
         private Rect ResolveGameplayViewport()
         {
+            Rect configuredViewport = ClampViewport(gameplayViewport);
             if (!autoFitViewportToHud)
             {
-                return ClampViewport(gameplayViewport);
+                return configuredViewport;
             }
 
-            // Render only the gameplay pane to the right of the HUD so world objects do not sit under UI panels.
-            // The full pane height avoids black letterbox gaps around the camera viewport.
-            float left = Mathf.Clamp01(leftHudSafeWidthNormalized);
-            float bottom = 0f;
-            float right = 1f;
-            float top = 1f;
-            return ClampViewport(new Rect(left, bottom, Mathf.Max(0.05f, right - left), Mathf.Max(0.05f, top - bottom)));
+            // Keep the gameplay camera inside the authored battle layout slot instead of stretching to every
+            // pixel right of the HUD. This keeps the map, HUD, and background feeling like one composed screen.
+            float left = Mathf.Max(Mathf.Clamp01(leftHudSafeWidthNormalized), configuredViewport.x);
+            float right = Mathf.Min(1f, configuredViewport.xMax);
+            float width = Mathf.Max(0.05f, right - left);
+            return ClampViewport(new Rect(left, configuredViewport.y, width, configuredViewport.height));
         }
 
         /// <summary>

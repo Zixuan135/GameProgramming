@@ -182,10 +182,10 @@ Camera:
   m_LensShift: {x: 0, y: 0}
   m_NormalizedViewPortRect:
     serializedVersion: 2
-    x: 0.332
-    y: 0.092
+    x: 0.324
+    y: 0.108
     width: 0.656
-    height: 0.896
+    height: 0.84
   near clip plane: 0.3
   far clip plane: 1000
   field of view: 52
@@ -231,10 +231,10 @@ MonoBehaviour:
   viewportPaddingNormalized: 0
   gameplayViewport:
     serializedVersion: 2
-    x: 0.32
-    y: 0.08
-    width: 0.68
-    height: 0.92
+    x: 0.324
+    y: 0.108
+    width: 0.656
+    height: 0.84
   followOffset: {x: 0, y: 11.25, z: -8.35}
   lookAtOffset: {x: 0, y: -0.25, z: 0.35}
   focusSmoothTime: 0.1

@@ -2,6 +2,7 @@ using BubbleTown.Core.Enums;
 using BubbleTown.Managers;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.UI;
 
 namespace BubbleTown.Visuals
 {
@@ -11,6 +12,8 @@ namespace BubbleTown.Visuals
     /// </summary>
     public class BattleVisualStyleController : MonoBehaviour
     {
+        private const string BattleBackgroundTexturePath = "UI/BattleHUD/BattleBottomBackground";
+
         [Header("References")]
         [SerializeField] private Camera targetCamera;
         [SerializeField] private Light directionalLight;
@@ -40,6 +43,14 @@ namespace BubbleTown.Visuals
         [SerializeField] private Color snowAmbientEquator = new Color(0.76f, 0.9f, 1f);
         [SerializeField] private Color snowAmbientGround = new Color(0.72f, 0.82f, 0.9f);
 
+        [Header("Battle Background")]
+        [SerializeField] private bool useIllustratedBackground = true;
+
+        private Texture2D battleBackgroundTexture;
+        private Camera backgroundCamera;
+        private Canvas backgroundCanvas;
+        private RawImage backgroundImage;
+
         private BattleMapType lastAppliedMapType = (BattleMapType)(-1);
 
         /// <summary>
@@ -50,6 +61,7 @@ namespace BubbleTown.Visuals
         private void Awake()
         {
             ResolveReferences();
+            EnsureBackgroundResources();
             ApplyCurrentStyle(true);
         }
 
@@ -60,6 +72,7 @@ namespace BubbleTown.Visuals
         /// </summary>
         private void Start()
         {
+            EnsureBackgroundResources();
             ApplyCurrentStyle(true);
         }
 
@@ -71,6 +84,7 @@ namespace BubbleTown.Visuals
         private void LateUpdate()
         {
             ApplyCurrentStyle(false);
+            RefreshBackgroundPlacement();
         }
 
         /// <summary>
@@ -93,6 +107,7 @@ namespace BubbleTown.Visuals
             ResolveReferences();
             ApplyLighting(mapType);
             ApplyCameraBackground(mapType);
+            RefreshBackgroundAppearance(mapType);
             lastAppliedMapType = mapType;
         }
 
@@ -117,6 +132,66 @@ namespace BubbleTown.Visuals
             {
                 directionalLight = RenderSettings.sun != null ? RenderSettings.sun : FindDirectionalLight();
             }
+        }
+
+        /// <summary>
+        /// Purpose: Loads the illustrated battle background and creates a dedicated background camera/UI.
+        /// Inputs: no direct parameters; reads Resources and current scene state.
+        /// Output: no return value; prepares background rendering when enabled.
+        /// </summary>
+        private void EnsureBackgroundResources()
+        {
+            if (!useIllustratedBackground)
+            {
+                SetBackgroundActive(false);
+                return;
+            }
+
+            if (battleBackgroundTexture == null)
+            {
+                battleBackgroundTexture = Resources.Load<Texture2D>(BattleBackgroundTexturePath);
+                if (battleBackgroundTexture != null)
+                {
+                    battleBackgroundTexture.wrapMode = TextureWrapMode.Clamp;
+                    battleBackgroundTexture.filterMode = FilterMode.Bilinear;
+                    battleBackgroundTexture.anisoLevel = 0;
+                }
+            }
+
+            if (battleBackgroundTexture == null || backgroundCanvas != null)
+            {
+                return;
+            }
+
+            GameObject cameraObject = new GameObject("BattleBackgroundCamera");
+            cameraObject.transform.SetParent(transform, false);
+            SetLayerRecursively(cameraObject, LayerMask.NameToLayer("UI"));
+            backgroundCamera = cameraObject.AddComponent<Camera>();
+            backgroundCamera.clearFlags = CameraClearFlags.SolidColor;
+            backgroundCamera.cullingMask = 1 << LayerMask.NameToLayer("UI");
+            backgroundCamera.orthographic = true;
+            backgroundCamera.orthographicSize = 1f;
+            backgroundCamera.nearClipPlane = -10f;
+            backgroundCamera.farClipPlane = 10f;
+            backgroundCamera.depth = targetCamera != null ? targetCamera.depth - 1f : -10f;
+
+            GameObject canvasObject = new GameObject("BattleBackgroundCanvas", typeof(RectTransform));
+            canvasObject.transform.SetParent(cameraObject.transform, false);
+            SetLayerRecursively(canvasObject, LayerMask.NameToLayer("UI"));
+            backgroundCanvas = canvasObject.AddComponent<Canvas>();
+            backgroundCanvas.renderMode = RenderMode.ScreenSpaceCamera;
+            backgroundCanvas.worldCamera = backgroundCamera;
+            backgroundCanvas.planeDistance = 1f;
+            backgroundCanvas.sortingOrder = -1000;
+            canvasObject.AddComponent<CanvasScaler>().uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+
+            GameObject imageObject = new GameObject("BattleBackgroundImage", typeof(RectTransform));
+            imageObject.transform.SetParent(canvasObject.transform, false);
+            SetLayerRecursively(imageObject, LayerMask.NameToLayer("UI"));
+            backgroundImage = imageObject.AddComponent<RawImage>();
+            backgroundImage.texture = battleBackgroundTexture;
+            backgroundImage.raycastTarget = false;
+            backgroundImage.color = Color.white;
         }
 
         /// <summary>
@@ -197,7 +272,12 @@ namespace BubbleTown.Visuals
                 return;
             }
 
-            targetCamera.clearFlags = CameraClearFlags.SolidColor;
+            bool shouldShowIllustratedBackground = useIllustratedBackground &&
+                                                   battleBackgroundTexture != null &&
+                                                   mapType == BattleMapType.Default;
+            targetCamera.clearFlags = shouldShowIllustratedBackground
+                ? CameraClearFlags.Depth
+                : CameraClearFlags.SolidColor;
             if (mapType == BattleMapType.OpenField)
             {
                 targetCamera.backgroundColor = snowSkyColor;
@@ -209,6 +289,108 @@ namespace BubbleTown.Visuals
             else
             {
                 targetCamera.backgroundColor = candySkyColor;
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Shows the illustrated background for Candy Park style battles and hides it for other themes.
+        /// Inputs: mapType selects the current battle theme.
+        /// Output: no return value; updates quad visibility.
+        /// </summary>
+        /// <param name="mapType">Current battle map type.</param>
+        private void RefreshBackgroundAppearance(BattleMapType mapType)
+        {
+            bool shouldShow = useIllustratedBackground &&
+                              battleBackgroundTexture != null &&
+                              mapType == BattleMapType.Default;
+
+            if (backgroundCamera != null)
+            {
+                backgroundCamera.backgroundColor = candySkyColor;
+            }
+
+            SetBackgroundActive(shouldShow);
+        }
+
+        /// <summary>
+        /// Purpose: Syncs the dedicated background camera and image to the full battle screen.
+        /// Inputs: no direct parameters; reads the current screen size.
+        /// Output: no return value; updates background camera properties and image placement.
+        /// </summary>
+        private void RefreshBackgroundPlacement()
+        {
+            if (targetCamera == null || backgroundCamera == null || backgroundCanvas == null || backgroundImage == null || !backgroundCanvas.gameObject.activeSelf)
+            {
+                return;
+            }
+
+            backgroundCamera.rect = new Rect(0f, 0f, 1f, 1f);
+            backgroundCamera.depth = targetCamera.depth - 1f;
+            backgroundCamera.backgroundColor = targetCamera.backgroundColor;
+
+            RectTransform canvasRect = backgroundCanvas.transform as RectTransform;
+            if (canvasRect != null)
+            {
+                canvasRect.anchorMin = Vector2.zero;
+                canvasRect.anchorMax = Vector2.one;
+                canvasRect.offsetMin = Vector2.zero;
+                canvasRect.offsetMax = Vector2.zero;
+            }
+
+            RectTransform imageRect = backgroundImage.rectTransform;
+            imageRect.anchorMin = Vector2.zero;
+            imageRect.anchorMax = Vector2.one;
+            imageRect.pivot = new Vector2(0.5f, 0.5f);
+            imageRect.offsetMin = Vector2.zero;
+            imageRect.offsetMax = Vector2.zero;
+        }
+
+        /// <summary>
+        /// Purpose: Shows or hides the runtime background quad safely.
+        /// Inputs: active defines the desired state.
+        /// Output: no return value; updates the quad when present.
+        /// </summary>
+        /// <param name="active">True to show the background quad.</param>
+        private void SetBackgroundActive(bool active)
+        {
+            if (backgroundCamera != null)
+            {
+                backgroundCamera.gameObject.SetActive(active);
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Applies one layer value to a helper object and all of its children.
+        /// Inputs: root is the hierarchy root and layer is the Unity layer index.
+        /// Output: no return value; updates GameObject.layer recursively.
+        /// </summary>
+        /// <param name="root">Hierarchy root to update.</param>
+        /// <param name="layer">Target Unity layer index.</param>
+        private void SetLayerRecursively(GameObject root, int layer)
+        {
+            if (root == null || layer < 0)
+            {
+                return;
+            }
+
+            root.layer = layer;
+            Transform rootTransform = root.transform;
+            for (int i = 0; i < rootTransform.childCount; i++)
+            {
+                SetLayerRecursively(rootTransform.GetChild(i).gameObject, layer);
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Releases generated runtime objects.
+        /// Inputs: no direct parameters.
+        /// Output: no return value; prevents orphaned helper objects.
+        /// </summary>
+        private void OnDestroy()
+        {
+            if (backgroundCamera != null)
+            {
+                Destroy(backgroundCamera.gameObject);
             }
         }
     }
