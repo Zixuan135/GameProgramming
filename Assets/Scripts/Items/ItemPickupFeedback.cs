@@ -52,6 +52,22 @@ namespace BubbleTown.Items
         }
 
         /// <summary>
+        /// Purpose: Retargets pickup feedback after runtime item visuals are rebuilt.
+        /// Inputs: new visual root, renderers that should pulse, and pickup glow color.
+        /// Output: pickup pop/shrink animation and emission apply to the new model only.
+        /// </summary>
+        /// <param name="newVisualRoot">Visual transform animated during pickup.</param>
+        /// <param name="newPulseRenderers">Renderers that receive pickup emission.</param>
+        /// <param name="newPickupEmissionColor">Emission color used by pickup feedback.</param>
+        public void SetVisualReferences(Transform newVisualRoot, Renderer[] newPulseRenderers, Color newPickupEmissionColor)
+        {
+            visualRoot = newVisualRoot;
+            pulseRenderers = newPulseRenderers ?? new Renderer[0];
+            pickupEmissionColor = newPickupEmissionColor;
+            ApplyEmission(0f);
+        }
+
+        /// <summary>
         /// Purpose: Plays pickup feedback.
         /// Inputs: `collector`, `itemType`, `onComplete`; may also read serialized fields and current runtime state.
         /// Output: no return value; updates component, scene, or game state as needed.

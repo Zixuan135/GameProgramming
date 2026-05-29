@@ -60,6 +60,7 @@ namespace BubbleTown.Items
         public virtual void Initialize(ItemType newItemType)
         {
             itemType = newItemType;
+            RebuildDropVisuals();
             ClearGridPositionState();
         }
 
@@ -74,6 +75,7 @@ namespace BubbleTown.Items
         public virtual void Initialize(ItemType newItemType, MapManager ownerMapManager, Vector2Int itemGridPosition)
         {
             itemType = newItemType;
+            RebuildDropVisuals();
 
             if (ownerMapManager == null)
             {
@@ -265,6 +267,16 @@ namespace BubbleTown.Items
             }
 
             characterFeedback.PlayPickupFlash(itemType);
+        }
+
+        /// <summary>
+        /// Purpose: Rebuilds the visible pickup model so every spawned item matches the illustrated item language.
+        /// Inputs: reads the current item type and this GameObject's visual children.
+        /// Output: replaces only visual children; pickup colliders and gameplay state stay unchanged.
+        /// </summary>
+        private void RebuildDropVisuals()
+        {
+            ItemDropVisualFactory.Rebuild(gameObject, itemType);
         }
 
         /// <summary>

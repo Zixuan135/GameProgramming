@@ -70,6 +70,25 @@ namespace BubbleTown.Items
         }
 
         /// <summary>
+        /// Purpose: Retargets the idle animation after runtime item visuals are rebuilt.
+        /// Inputs: new visual root, renderers that should pulse, and the theme color for emission.
+        /// Output: resets cached pose data so bob/rotation animation drives the new model only.
+        /// </summary>
+        /// <param name="newVisualRoot">Visual transform to animate.</param>
+        /// <param name="newPulseRenderers">Renderers that receive pulse emission.</param>
+        /// <param name="newPulseEmissionColor">Emission color used by the idle pulse.</param>
+        public void SetVisualReferences(Transform newVisualRoot, Renderer[] newPulseRenderers, Color newPulseEmissionColor)
+        {
+            visualRoot = newVisualRoot;
+            pulseRenderers = newPulseRenderers ?? new Renderer[0];
+            pulseEmissionColor = newPulseEmissionColor;
+            elapsedSeconds = 0f;
+            hasCachedBasePose = false;
+            ApplyPulseEmission(0f);
+            CacheBasePose();
+        }
+
+        /// <summary>
         /// Purpose: Runs this component's per-frame logic.
         /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
         /// Output: no return value; updates component, scene, or game state as needed.
