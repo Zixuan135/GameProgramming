@@ -69,6 +69,10 @@ namespace BubbleTown.Map
         private Material jellyDarkMaterial;
         private Material jellyPropCyanMaterial;
         private Material jellyPropPinkMaterial;
+        private Material jellyTileStarMaterial;
+        private Material jellyHardWallSideMaterial;
+        private Material jellySoftWallSideMaterial;
+        private Material jellySoftWallHighlightMaterial;
         private Material snowFloorMaterial;
         private Material snowTileInsetMaterial;
         private Material snowHardWallMaterial;
@@ -828,20 +832,29 @@ namespace BubbleTown.Map
             root.transform.SetParent(parent);
             root.transform.position = center;
 
-            float length = Mathf.Max(1, lengthCells - 1) * cellSize;
-            Vector3 railScale = horizontal ? new Vector3(length, 0.08f, 0.08f) : new Vector3(0.08f, 0.08f, length);
+            float length = Mathf.Max(1, lengthCells - 1) * cellSize + 0.42f;
+            Vector3 railScale = new Vector3(0.052f, length * 0.5f, 0.052f);
+            Vector3 railRotation = horizontal ? new Vector3(0f, 0f, 90f) : new Vector3(90f, 0f, 0f);
             Vector3 postStep = horizontal ? Vector3.right * cellSize * 2f : Vector3.forward * cellSize * 2f;
             int postCount = Mathf.Max(2, Mathf.CeilToInt(lengthCells / 2f) + 1);
             Vector3 start = -postStep * ((postCount - 1) * 0.5f);
 
-            CreatePrimitiveChild(root.transform, "Rail_GlowTop", PrimitiveType.Cube, new Vector3(0f, 0.7f, 0f), railScale, GetJellyGlowMaterial());
-            CreatePrimitiveChild(root.transform, "Rail_DarkBase", PrimitiveType.Cube, new Vector3(0f, 0.42f, 0f), railScale * 1.18f, GetJellyDarkMaterial());
+            GameObject topRail = CreatePrimitiveChild(root.transform, "Rail_CreamTopRod", PrimitiveType.Cylinder, new Vector3(0f, 0.64f, 0f), railScale, GetJellyHardWallHighlightMaterial());
+            topRail.transform.localEulerAngles = railRotation;
+            GameObject lowerRail = CreatePrimitiveChild(root.transform, "Rail_CreamLowerRod", PrimitiveType.Cylinder, new Vector3(0f, 0.34f, 0f), railScale, GetJellyHardWallHighlightMaterial());
+            lowerRail.transform.localEulerAngles = railRotation;
+            GameObject purpleRidge = CreatePrimitiveChild(root.transform, "Rail_PurpleRidge", PrimitiveType.Cylinder, new Vector3(0f, 0.48f, 0f), new Vector3(0.046f, length * 0.46f, 0.046f), GetJellyHardWallMaterial());
+            purpleRidge.transform.localEulerAngles = railRotation;
 
             for (int i = 0; i < postCount; i++)
             {
-                Vector3 localPosition = start + postStep * i + Vector3.up * 0.42f;
-                CreatePrimitiveChild(root.transform, $"Post_Dark_{i:00}", PrimitiveType.Cube, localPosition, new Vector3(0.14f, 0.84f, 0.14f), GetJellyHardWallMaterial());
-                CreatePrimitiveChild(root.transform, $"Post_Glow_{i:00}", PrimitiveType.Sphere, localPosition + Vector3.up * 0.46f, new Vector3(0.18f, 0.18f, 0.18f), GetJellyPropCyanMaterial());
+                Vector3 localPosition = start + postStep * i + Vector3.up * 0.38f;
+                CreatePrimitiveChild(root.transform, $"Post_Purple_{i:00}", PrimitiveType.Cylinder, localPosition, new Vector3(0.075f, 0.38f, 0.075f), GetJellyHardWallMaterial());
+                CreatePrimitiveChild(root.transform, $"Post_CyanOrb_{i:00}", PrimitiveType.Sphere, localPosition + Vector3.up * 0.44f, new Vector3(0.16f, 0.16f, 0.16f), GetJellyPropCyanMaterial());
+                if (i % 3 == 0)
+                {
+                    CreatePrimitiveChild(root.transform, $"Post_PinkBase_{i:00}", PrimitiveType.Sphere, localPosition - Vector3.up * 0.25f, new Vector3(0.16f, 0.08f, 0.16f), GetJellyPropPinkMaterial());
+                }
             }
         }
 
@@ -1166,10 +1179,34 @@ namespace BubbleTown.Map
         private GameObject CreateJellyMazeGroundTile(string objectName)
         {
             GameObject root = new GameObject(objectName);
-            CreatePrimitiveChild(root.transform, "TileBase_DarkJelly", PrimitiveType.Cube, new Vector3(0f, -0.052f, 0f), new Vector3(0.98f, 0.07f, 0.98f), GetJellyFloorMaterial());
-            CreatePrimitiveChild(root.transform, "TileInset_GlowLane", PrimitiveType.Cube, new Vector3(0f, -0.004f, 0f), new Vector3(0.7f, 0.018f, 0.7f), GetJellyTileInsetMaterial());
-            CreatePrimitiveChild(root.transform, "TileCenterDot", PrimitiveType.Sphere, new Vector3(0f, 0.018f, 0f), new Vector3(0.12f, 0.02f, 0.12f), GetJellyGlowMaterial());
+            TryParseGeneratedGridPosition(objectName, out int x, out int y);
+
+            CreatePrimitiveChild(root.transform, "TileBase_PurpleJellyFrame", PrimitiveType.Cube, new Vector3(0f, -0.052f, 0f), new Vector3(0.98f, 0.07f, 0.98f), GetJellyFloorMaterial());
+            CreatePrimitiveChild(root.transform, "TileInset_CyanGlass", PrimitiveType.Cube, new Vector3(0f, -0.004f, 0f), new Vector3(0.72f, 0.018f, 0.72f), GetJellyTileInsetMaterial());
+            CreatePrimitiveChild(root.transform, "TilePurpleLip_North", PrimitiveType.Cube, new Vector3(0f, 0.004f, 0.47f), new Vector3(0.82f, 0.014f, 0.022f), GetJellyHardWallSideMaterial());
+            CreatePrimitiveChild(root.transform, "TilePurpleLip_East", PrimitiveType.Cube, new Vector3(0.47f, 0.004f, 0f), new Vector3(0.022f, 0.014f, 0.82f), GetJellyHardWallSideMaterial());
+            CreateJellyTileStar(root.transform, new Vector3(0f, 0.018f, 0f), $"JellyStar_{x:00}_{y:00}", 0.15f);
             return root;
+        }
+
+        /// <summary>
+        /// Purpose: Creates a small white star mark on the cyan Jelly Maze floor tile.
+        /// Inputs: parent, local position, object name, and approximate size.
+        /// Output: no return value; adds visual-only thin primitives.
+        /// </summary>
+        /// <param name="parent">Parent transform for the star pieces.</param>
+        /// <param name="localPosition">Local center of the star.</param>
+        /// <param name="objectName">Name prefix for generated pieces.</param>
+        /// <param name="size">Approximate star size.</param>
+        private void CreateJellyTileStar(Transform parent, Vector3 localPosition, string objectName, float size)
+        {
+            Material starMaterial = GetJellyTileStarMaterial();
+            GameObject armA = CreatePrimitiveChild(parent, objectName + "_ArmA", PrimitiveType.Cube, localPosition, new Vector3(size, 0.008f, 0.026f), starMaterial);
+            armA.transform.localEulerAngles = new Vector3(0f, 0f, 0f);
+            GameObject armB = CreatePrimitiveChild(parent, objectName + "_ArmB", PrimitiveType.Cube, localPosition, new Vector3(size, 0.008f, 0.026f), starMaterial);
+            armB.transform.localEulerAngles = new Vector3(0f, 90f, 0f);
+            GameObject sparkle = CreatePrimitiveChild(parent, objectName + "_Sparkle", PrimitiveType.Sphere, localPosition + Vector3.up * 0.002f, new Vector3(size * 0.48f, 0.012f, size * 0.48f), starMaterial);
+            sparkle.transform.localEulerAngles = new Vector3(0f, 45f, 0f);
         }
 
         /// <summary>
@@ -1305,13 +1342,18 @@ namespace BubbleTown.Map
         {
             GameObject root = new GameObject(objectName);
             BoxCollider collider = root.AddComponent<BoxCollider>();
-            collider.size = new Vector3(0.92f, 1.02f, 0.92f);
-            collider.center = new Vector3(0f, 0.51f, 0f);
+            collider.size = new Vector3(0.92f, 1.08f, 0.92f);
+            collider.center = new Vector3(0f, 0.54f, 0f);
             Transform visualRoot = CreateVisualRoot(root.transform);
-            CreatePrimitiveChild(visualRoot, "BottomShadow", PrimitiveType.Cube, new Vector3(0f, 0.06f, 0f), new Vector3(0.98f, 0.12f, 0.98f), GetJellyDarkMaterial());
-            CreatePrimitiveChild(visualRoot, "GlassBlock", PrimitiveType.Cube, new Vector3(0f, 0.48f, 0f), new Vector3(0.88f, 0.88f, 0.88f), GetJellyHardWallMaterial());
-            CreatePrimitiveChild(visualRoot, "GlowCap", PrimitiveType.Cube, new Vector3(0f, 0.96f, 0f), new Vector3(0.68f, 0.08f, 0.68f), GetJellyHardWallHighlightMaterial());
-            CreatePrimitiveChild(visualRoot, "CornerLight", PrimitiveType.Sphere, new Vector3(-0.28f, 0.78f, -0.28f), new Vector3(0.16f, 0.16f, 0.16f), GetJellyGlowMaterial());
+            CreatePrimitiveChild(visualRoot, "PurpleBaseShadow", PrimitiveType.Cube, new Vector3(0f, 0.055f, 0f), new Vector3(0.98f, 0.11f, 0.98f), GetJellyDarkMaterial());
+            CreatePrimitiveChild(visualRoot, "TallPurpleJellyBody", PrimitiveType.Cube, new Vector3(0f, 0.46f, 0f), new Vector3(0.88f, 0.82f, 0.88f), GetJellyHardWallMaterial());
+            CreatePrimitiveChild(visualRoot, "PurpleSideShadow_Front", PrimitiveType.Cube, new Vector3(0f, 0.47f, -0.456f), new Vector3(0.72f, 0.66f, 0.028f), GetJellyHardWallSideMaterial());
+            CreatePrimitiveChild(visualRoot, "PurpleSideShadow_Right", PrimitiveType.Cube, new Vector3(0.456f, 0.47f, 0f), new Vector3(0.028f, 0.66f, 0.72f), GetJellyHardWallSideMaterial());
+            CreatePrimitiveChild(visualRoot, "RoundedPurpleTop", PrimitiveType.Sphere, new Vector3(0f, 0.86f, 0f), new Vector3(0.82f, 0.2f, 0.82f), GetJellyHardWallMaterial());
+            CreatePrimitiveChild(visualRoot, "LargeCreamTopSquare", PrimitiveType.Cube, new Vector3(0f, 1.01f, 0f), new Vector3(0.66f, 0.07f, 0.66f), GetJellyHardWallHighlightMaterial());
+            CreatePrimitiveChild(visualRoot, "CreamTopPillow", PrimitiveType.Sphere, new Vector3(-0.08f, 1.055f, -0.08f), new Vector3(0.46f, 0.08f, 0.46f), GetJellyGlowMaterial());
+            CreatePrimitiveChild(visualRoot, "PurpleFaceGloss", PrimitiveType.Cube, new Vector3(-0.18f, 0.68f, -0.472f), new Vector3(0.4f, 0.045f, 0.018f), GetJellyGlowMaterial());
+            CreatePrimitiveChild(visualRoot, "CyanCornerOrb", PrimitiveType.Sphere, new Vector3(0.26f, 0.92f, 0.26f), new Vector3(0.09f, 0.09f, 0.09f), GetJellyPropCyanMaterial());
             ConfigureGeneratedWallFeedback(root, visualRoot);
             return root;
         }
@@ -1470,13 +1512,17 @@ namespace BubbleTown.Map
         {
             GameObject root = new GameObject(objectName);
             BoxCollider collider = root.AddComponent<BoxCollider>();
-            collider.size = new Vector3(0.82f, 0.78f, 0.82f);
-            collider.center = new Vector3(0f, 0.39f, 0f);
+            collider.size = new Vector3(0.78f, 0.68f, 0.78f);
+            collider.center = new Vector3(0f, 0.34f, 0f);
             Transform visualRoot = CreateVisualRoot(root.transform);
-            CreatePrimitiveChild(visualRoot, "JellyCore", PrimitiveType.Cube, new Vector3(0f, 0.39f, 0f), new Vector3(0.82f, 0.78f, 0.82f), GetJellySoftWallMaterial());
-            CreatePrimitiveChild(visualRoot, "GlowStripe_X", PrimitiveType.Cube, new Vector3(0f, 0.58f, -0.42f), new Vector3(0.62f, 0.08f, 0.04f), GetJellyGlowMaterial());
-            CreatePrimitiveChild(visualRoot, "GlowStripe_Z", PrimitiveType.Cube, new Vector3(-0.42f, 0.34f, 0f), new Vector3(0.04f, 0.08f, 0.62f), GetJellyPropCyanMaterial());
-            CreatePrimitiveChild(visualRoot, "BubbleShine", PrimitiveType.Sphere, new Vector3(-0.24f, 0.66f, -0.24f), new Vector3(0.2f, 0.08f, 0.2f), GetJellyHardWallHighlightMaterial());
+            CreatePrimitiveChild(visualRoot, "PinkBaseShadow", PrimitiveType.Cube, new Vector3(0f, 0.05f, 0f), new Vector3(0.82f, 0.08f, 0.82f), GetJellyDarkMaterial());
+            CreatePrimitiveChild(visualRoot, "ShortPinkJellyBody", PrimitiveType.Cube, new Vector3(0f, 0.3f, 0f), new Vector3(0.72f, 0.5f, 0.72f), GetJellySoftWallMaterial());
+            CreatePrimitiveChild(visualRoot, "PinkSideShadow_Front", PrimitiveType.Cube, new Vector3(0f, 0.3f, -0.372f), new Vector3(0.56f, 0.36f, 0.028f), GetJellySoftWallSideMaterial());
+            CreatePrimitiveChild(visualRoot, "PinkSideShadow_Right", PrimitiveType.Cube, new Vector3(0.372f, 0.3f, 0f), new Vector3(0.028f, 0.36f, 0.56f), GetJellySoftWallSideMaterial());
+            CreatePrimitiveChild(visualRoot, "RoundedPinkTop", PrimitiveType.Sphere, new Vector3(0f, 0.56f, 0f), new Vector3(0.7f, 0.13f, 0.7f), GetJellySoftWallMaterial());
+            CreatePrimitiveChild(visualRoot, "BigWhiteFrontStripe", PrimitiveType.Cube, new Vector3(0f, 0.42f, -0.388f), new Vector3(0.5f, 0.055f, 0.02f), GetJellySoftWallHighlightMaterial());
+            CreatePrimitiveChild(visualRoot, "BigWhiteSideStripe", PrimitiveType.Cube, new Vector3(0.388f, 0.34f, 0f), new Vector3(0.02f, 0.05f, 0.42f), GetJellySoftWallHighlightMaterial());
+            CreatePrimitiveChild(visualRoot, "PinkTopGloss", PrimitiveType.Sphere, new Vector3(-0.2f, 0.62f, -0.18f), new Vector3(0.2f, 0.04f, 0.2f), GetJellySoftWallHighlightMaterial());
             ConfigureGeneratedWallFeedback(root, visualRoot);
             return root;
         }
@@ -2060,7 +2106,7 @@ namespace BubbleTown.Map
         {
             if (jellyFloorMaterial == null)
             {
-                jellyFloorMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_FloorViolet", new Color(0.24f, 0.18f, 0.42f));
+                jellyFloorMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_FloorViolet", new Color(0.42f, 0.24f, 0.72f), false, 0f, 0.38f);
             }
 
             return jellyFloorMaterial;
@@ -2076,7 +2122,7 @@ namespace BubbleTown.Map
         {
             if (jellyTileInsetMaterial == null)
             {
-                jellyTileInsetMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_TileCyan", new Color(0.18f, 0.78f, 0.95f), true, 0.55f);
+                jellyTileInsetMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_TileCyan", new Color(0.12f, 0.78f, 0.94f), false, 0f, 0.48f);
             }
 
             return jellyTileInsetMaterial;
@@ -2092,7 +2138,7 @@ namespace BubbleTown.Map
         {
             if (jellyHardWallMaterial == null)
             {
-                jellyHardWallMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_HardWallViolet", new Color(0.43f, 0.34f, 0.9f), true, 0.2f);
+                jellyHardWallMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_HardWallViolet", new Color(0.62f, 0.4f, 0.94f), false, 0f, 0.5f);
             }
 
             return jellyHardWallMaterial;
@@ -2108,7 +2154,7 @@ namespace BubbleTown.Map
         {
             if (jellyHardWallHighlightMaterial == null)
             {
-                jellyHardWallHighlightMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_HardWallHighlight", new Color(0.78f, 0.96f, 1f), true, 0.65f);
+                jellyHardWallHighlightMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_HardWallHighlight", new Color(1f, 0.94f, 0.82f), false, 0f, 0.32f);
             }
 
             return jellyHardWallHighlightMaterial;
@@ -2124,7 +2170,7 @@ namespace BubbleTown.Map
         {
             if (jellySoftWallMaterial == null)
             {
-                jellySoftWallMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_SoftWallMagenta", new Color(1f, 0.33f, 0.82f), true, 0.35f);
+                jellySoftWallMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_SoftWallMagenta", new Color(1f, 0.4f, 0.72f), false, 0f, 0.48f);
             }
 
             return jellySoftWallMaterial;
@@ -2140,7 +2186,7 @@ namespace BubbleTown.Map
         {
             if (jellyGlowMaterial == null)
             {
-                jellyGlowMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_GlowCream", new Color(0.78f, 1f, 0.96f), true, 0.95f);
+                jellyGlowMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_GlowCream", new Color(1f, 0.98f, 0.9f), false, 0f, 0.3f);
             }
 
             return jellyGlowMaterial;
@@ -2156,7 +2202,7 @@ namespace BubbleTown.Map
         {
             if (jellyDarkMaterial == null)
             {
-                jellyDarkMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_DarkFrame", new Color(0.12f, 0.1f, 0.22f));
+                jellyDarkMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_DarkFrame", new Color(0.24f, 0.12f, 0.38f), false, 0f, 0.2f);
             }
 
             return jellyDarkMaterial;
@@ -2172,7 +2218,7 @@ namespace BubbleTown.Map
         {
             if (jellyPropCyanMaterial == null)
             {
-                jellyPropCyanMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_PropCyan", new Color(0.18f, 0.92f, 1f), true, 0.75f);
+                jellyPropCyanMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_PropCyan", new Color(0.12f, 0.82f, 0.96f), false, 0f, 0.44f);
             }
 
             return jellyPropCyanMaterial;
@@ -2188,10 +2234,74 @@ namespace BubbleTown.Map
         {
             if (jellyPropPinkMaterial == null)
             {
-                jellyPropPinkMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_PropPink", new Color(1f, 0.42f, 0.9f), true, 0.55f);
+                jellyPropPinkMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_PropPink", new Color(1f, 0.36f, 0.74f), false, 0f, 0.4f);
             }
 
             return jellyPropPinkMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets the white star material used on Jelly Maze cyan floor tiles.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
+        private Material GetJellyTileStarMaterial()
+        {
+            if (jellyTileStarMaterial == null)
+            {
+                jellyTileStarMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_TileStar", new Color(0.94f, 1f, 0.98f), false, 0f, 0.3f);
+            }
+
+            return jellyTileStarMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets the deeper purple side material for Jelly Maze hard walls and tile lips.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
+        private Material GetJellyHardWallSideMaterial()
+        {
+            if (jellyHardWallSideMaterial == null)
+            {
+                jellyHardWallSideMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_HardWallSide", new Color(0.42f, 0.22f, 0.72f), false, 0f, 0.32f);
+            }
+
+            return jellyHardWallSideMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets the deeper pink side material for Jelly Maze soft walls.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
+        private Material GetJellySoftWallSideMaterial()
+        {
+            if (jellySoftWallSideMaterial == null)
+            {
+                jellySoftWallSideMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_SoftWallSide", new Color(0.82f, 0.22f, 0.56f), false, 0f, 0.32f);
+            }
+
+            return jellySoftWallSideMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets the white candy shine material for Jelly Maze soft wall stripes.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
+        private Material GetJellySoftWallHighlightMaterial()
+        {
+            if (jellySoftWallHighlightMaterial == null)
+            {
+                jellySoftWallHighlightMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyMaze_SoftWallHighlight", new Color(1f, 0.93f, 0.98f), false, 0f, 0.28f);
+            }
+
+            return jellySoftWallHighlightMaterial;
         }
 
         /// <summary>
