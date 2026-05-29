@@ -107,7 +107,7 @@ namespace BubbleTown.Visuals
             ResolveReferences();
             ApplyLighting(mapType);
             ApplyCameraBackground(mapType);
-            RefreshBackgroundAppearance(mapType);
+            RefreshBackgroundAppearance();
             lastAppliedMapType = mapType;
         }
 
@@ -273,8 +273,7 @@ namespace BubbleTown.Visuals
             }
 
             bool shouldShowIllustratedBackground = useIllustratedBackground &&
-                                                   battleBackgroundTexture != null &&
-                                                   mapType == BattleMapType.Default;
+                                                   battleBackgroundTexture != null;
             targetCamera.clearFlags = shouldShowIllustratedBackground
                 ? CameraClearFlags.Depth
                 : CameraClearFlags.SolidColor;
@@ -293,16 +292,14 @@ namespace BubbleTown.Visuals
         }
 
         /// <summary>
-        /// Purpose: Shows the illustrated background for Candy Park style battles and hides it for other themes.
-        /// Inputs: mapType selects the current battle theme.
+        /// Purpose: Shows the shared illustrated battle background for every map theme.
+        /// Inputs: no direct parameters; reads the loaded background texture and feature toggle.
         /// Output: no return value; updates quad visibility.
         /// </summary>
-        /// <param name="mapType">Current battle map type.</param>
-        private void RefreshBackgroundAppearance(BattleMapType mapType)
+        private void RefreshBackgroundAppearance()
         {
             bool shouldShow = useIllustratedBackground &&
-                              battleBackgroundTexture != null &&
-                              mapType == BattleMapType.Default;
+                              battleBackgroundTexture != null;
 
             if (backgroundCamera != null)
             {
