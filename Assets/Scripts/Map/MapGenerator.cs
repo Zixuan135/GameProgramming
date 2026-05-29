@@ -34,6 +34,8 @@ namespace BubbleTown.Map
         [SerializeField] private GameObject groundTilePrefab;
         [SerializeField] private GameObject hardWallPrefab;
         [SerializeField] private GameObject softWallPrefab;
+        // Generated Candy Park pieces now carry the richer illustrated-board style by default.
+        [SerializeField] private bool useCandyParkPrefabs;
 
         [Header("Generation")]
         [SerializeField] private Transform generatedMapRoot;
@@ -45,6 +47,13 @@ namespace BubbleTown.Map
 
         private Material grassMaterial;
         private Material candyBlueMaterial;
+        private Material candyTileInsetMaterial;
+        private Material candyCreamEdgeMaterial;
+        private Material candyGlossMaterial;
+        private Material candyWaferMaterial;
+        private Material candyWaferShadowMaterial;
+        private Material candyJellyDeepMaterial;
+        private Material candyJellyGlowMaterial;
         private Material creamMaterial;
         private Material jellyBlueMaterial;
         private Material shadowMaterial;
@@ -181,7 +190,7 @@ namespace BubbleTown.Map
 
                     if (generateGroundTiles)
                     {
-                        GameObject selectedGroundPrefab = visualTheme == MapVisualTheme.CandyPark ? groundTilePrefab : null;
+                        GameObject selectedGroundPrefab = visualTheme == MapVisualTheme.CandyPark && useCandyParkPrefabs ? groundTilePrefab : null;
                         SpawnMapPiece(selectedGroundPrefab, groundRoot, mapManager.GridToWorld(gridPosition), $"Tile_{x:00}_{y:00}", name => CreateFallbackGroundTile(name, visualTheme));
                     }
 
@@ -192,12 +201,12 @@ namespace BubbleTown.Map
 
                     if (cell.IsHardWall)
                     {
-                        GameObject selectedHardWallPrefab = visualTheme == MapVisualTheme.CandyPark ? hardWallPrefab : null;
+                        GameObject selectedHardWallPrefab = visualTheme == MapVisualTheme.CandyPark && useCandyParkPrefabs ? hardWallPrefab : null;
                         SpawnMapPiece(selectedHardWallPrefab, hardWallRoot, mapManager.GridToWorld(gridPosition), $"Wall_Hard_{x:00}_{y:00}", name => CreateFallbackHardWall(name, visualTheme));
                     }
                     else if (cell.IsSoftWall)
                     {
-                        GameObject selectedSoftWallPrefab = visualTheme == MapVisualTheme.CandyPark ? softWallPrefab : null;
+                        GameObject selectedSoftWallPrefab = visualTheme == MapVisualTheme.CandyPark && useCandyParkPrefabs ? softWallPrefab : null;
                         GameObject softWall = SpawnMapPiece(selectedSoftWallPrefab, softWallRoot, mapManager.GridToWorld(gridPosition), $"Wall_Soft_{x:00}_{y:00}", name => CreateFallbackSoftWall(name, visualTheme));
                         mapManager.RegisterSoftWallObject(gridPosition, softWall);
                     }
@@ -335,6 +344,8 @@ namespace BubbleTown.Map
             CreateLollipopTree(decorationRoot, new Vector3(maxX - 0.15f, 0f, minZ + 0.25f), "LollipopTree_SouthEast", GetThemeAccentColor(mapType, 1));
             CreateLollipopTree(decorationRoot, new Vector3(minX + 0.2f, 0f, maxZ - 0.15f), "LollipopTree_NorthWest", GetThemeAccentColor(mapType, 2));
             CreateBalloonCluster(decorationRoot, new Vector3(maxX - 0.3f, 0f, maxZ - 0.1f), "BalloonCluster_NorthEast");
+            CreateCandyPlanet(decorationRoot, new Vector3(maxX - 0.22f, 0f, minZ + 0.05f), "CandyPlanet_SouthEast", GetPropMintMaterial());
+            CreateCandyPlanet(decorationRoot, new Vector3(minX + 0.22f, 0f, centerZ + cellSize * 0.35f), "CandyPlanet_WestRail", GetCandyBlueMaterial());
             CreateRoundBush(decorationRoot, new Vector3(centerX, 0f, maxZ - 0.1f), "RoundBush_NorthCenter");
             CreateSignBoard(decorationRoot, new Vector3(centerX, 0f, minZ + 0.1f), "Sign_CandyPark");
 
@@ -364,18 +375,23 @@ namespace BubbleTown.Map
             root.transform.SetParent(parent);
             root.transform.position = center;
 
-            float length = Mathf.Max(1, lengthCells - 1) * cellSize;
-            Vector3 railScale = horizontal ? new Vector3(length, 0.12f, 0.12f) : new Vector3(0.12f, 0.12f, length);
+            float length = Mathf.Max(1, lengthCells - 1) * cellSize + 0.35f;
+            Vector3 railScale = new Vector3(0.055f, length * 0.5f, 0.055f);
+            Vector3 railRotation = horizontal ? new Vector3(0f, 0f, 90f) : new Vector3(90f, 0f, 0f);
             Vector3 postStep = horizontal ? Vector3.right * cellSize * 2f : Vector3.forward * cellSize * 2f;
             int postCount = Mathf.Max(2, Mathf.CeilToInt(lengthCells / 2f) + 1);
             Vector3 start = -postStep * ((postCount - 1) * 0.5f);
 
-            CreatePrimitiveChild(root.transform, "Rail_Top", PrimitiveType.Cube, new Vector3(0f, 0.55f, 0f), railScale, GetCreamMaterial());
-            CreatePrimitiveChild(root.transform, "Rail_Bottom", PrimitiveType.Cube, new Vector3(0f, 0.32f, 0f), railScale, GetCandyBlueMaterial());
+            GameObject topRail = CreatePrimitiveChild(root.transform, "Rail_Top_CreamRod", PrimitiveType.Cylinder, new Vector3(0f, 0.58f, 0f), railScale, GetCandyGlossMaterial());
+            topRail.transform.localEulerAngles = railRotation;
+            GameObject bottomRail = CreatePrimitiveChild(root.transform, "Rail_Bottom_CreamRod", PrimitiveType.Cylinder, new Vector3(0f, 0.34f, 0f), railScale, GetCreamMaterial());
+            bottomRail.transform.localEulerAngles = railRotation;
 
             for (int i = 0; i < postCount; i++)
             {
-                CreatePrimitiveChild(root.transform, $"Post_{i:00}", PrimitiveType.Cube, start + postStep * i + Vector3.up * 0.38f, new Vector3(0.16f, 0.72f, 0.16f), GetCreamMaterial());
+                Vector3 localPosition = start + postStep * i + Vector3.up * 0.38f;
+                CreatePrimitiveChild(root.transform, $"Post_Cream_{i:00}", PrimitiveType.Cylinder, localPosition, new Vector3(0.07f, 0.36f, 0.07f), GetCreamMaterial());
+                CreatePrimitiveChild(root.transform, $"Post_Cap_{i:00}", PrimitiveType.Sphere, localPosition + Vector3.up * 0.39f, new Vector3(0.16f, 0.12f, 0.16f), i % 2 == 0 ? GetPropYellowMaterial() : GetCandyBlueMaterial());
             }
         }
 
@@ -419,6 +435,38 @@ namespace BubbleTown.Map
             CreatePrimitiveChild(root.transform, "Balloon_Pink", PrimitiveType.Sphere, new Vector3(-0.2f, 1.2f, 0f), new Vector3(0.36f, 0.46f, 0.36f), GetPropPinkMaterial());
             CreatePrimitiveChild(root.transform, "Balloon_Mint", PrimitiveType.Sphere, new Vector3(0.18f, 1.35f, 0.04f), new Vector3(0.36f, 0.46f, 0.36f), GetPropMintMaterial());
             CreatePrimitiveChild(root.transform, "Balloon_Yellow", PrimitiveType.Sphere, new Vector3(0f, 1.55f, -0.12f), new Vector3(0.34f, 0.44f, 0.34f), GetPropYellowMaterial());
+        }
+
+        /// <summary>
+        /// Purpose: Creates a candy planet ornament similar to the reference board rail decorations.
+        /// Inputs: `parent`, `position`, `objectName`, `planetMaterial`; may also read serialized fields and current runtime state.
+        /// Output: no return value; creates a visual-only ornament.
+        /// </summary>
+        /// <param name="parent">Input value used by this method.</param>
+        /// <param name="position">Input value used by this method.</param>
+        /// <param name="objectName">Input value used by this method.</param>
+        /// <param name="planetMaterial">Input value used by this method.</param>
+        private void CreateCandyPlanet(Transform parent, Vector3 position, string objectName, Material planetMaterial)
+        {
+            GameObject root = new GameObject(objectName);
+            root.transform.SetParent(parent);
+            root.transform.position = position;
+
+            CreatePrimitiveChild(root.transform, "Tripod_Left", PrimitiveType.Cylinder, new Vector3(-0.18f, 0.24f, 0f), new Vector3(0.035f, 0.28f, 0.035f), GetCreamMaterial()).transform.localEulerAngles = new Vector3(0f, 0f, -18f);
+            CreatePrimitiveChild(root.transform, "Tripod_Right", PrimitiveType.Cylinder, new Vector3(0.18f, 0.24f, 0f), new Vector3(0.035f, 0.28f, 0.035f), GetCreamMaterial()).transform.localEulerAngles = new Vector3(0f, 0f, 18f);
+
+            GameObject ornament = new GameObject("PlanetOrnament");
+            Transform ornamentTransform = ornament.transform;
+            ornamentTransform.SetParent(root.transform);
+            ornamentTransform.localPosition = Vector3.zero;
+            ornamentTransform.localRotation = Quaternion.identity;
+            ornamentTransform.localScale = Vector3.one;
+
+            CreatePrimitiveChild(ornamentTransform, "PlanetCandy", PrimitiveType.Sphere, new Vector3(0f, 0.78f, 0f), new Vector3(0.42f, 0.34f, 0.42f), planetMaterial);
+            GameObject ring = CreatePrimitiveChild(ornamentTransform, "CandyRing", PrimitiveType.Cylinder, new Vector3(0f, 0.78f, 0f), new Vector3(0.52f, 0.018f, 0.52f), GetPropYellowMaterial());
+            ring.transform.localEulerAngles = new Vector3(18f, 0f, 90f);
+            CreatePrimitiveChild(ornamentTransform, "PlanetHighlight", PrimitiveType.Sphere, new Vector3(-0.18f, 0.92f, -0.16f), new Vector3(0.14f, 0.12f, 0.14f), GetCandyGlossMaterial());
+            AddDecorationAnimation(root, ornamentTransform, true, 0.045f, 2.1f, new Vector3(0f, 26f, 0f), true, 0.04f, 2.8f);
         }
 
         /// <summary>
@@ -1075,8 +1123,20 @@ namespace BubbleTown.Map
         private GameObject CreateCandyParkGroundTile(string objectName)
         {
             GameObject root = new GameObject(objectName);
-            CreatePrimitiveChild(root.transform, "TileBase", PrimitiveType.Cube, new Vector3(0f, -0.045f, 0f), new Vector3(0.98f, 0.08f, 0.98f), GetGrassMaterial());
-            CreatePrimitiveChild(root.transform, "TileInset", PrimitiveType.Cube, new Vector3(0f, 0.005f, 0f), new Vector3(0.64f, 0.025f, 0.64f), GetCandyBlueMaterial());
+            bool checker = TryParseGeneratedGridPosition(objectName, out int x, out int y) && (x + y) % 2 != 0;
+            Material insetMaterial = checker ? GetCandyTileInsetMaterial() : GetCandyWaferMaterial();
+
+            CreatePrimitiveChild(root.transform, "TileBase_WaferCream", PrimitiveType.Cube, new Vector3(0f, -0.052f, 0f), new Vector3(0.98f, 0.07f, 0.98f), GetCandyWaferMaterial());
+            CreatePrimitiveChild(root.transform, "TileInset_CreamPressed", PrimitiveType.Cube, new Vector3(0f, -0.004f, 0f), new Vector3(0.66f, 0.018f, 0.66f), insetMaterial);
+            CreatePrimitiveChild(root.transform, "TileCaramelEdge_Front", PrimitiveType.Cube, new Vector3(0f, -0.004f, -0.49f), new Vector3(0.74f, 0.018f, 0.018f), GetCandyCreamEdgeMaterial());
+            CreatePrimitiveChild(root.transform, "TileCaramelEdge_Right", PrimitiveType.Cube, new Vector3(0.49f, -0.004f, 0f), new Vector3(0.018f, 0.018f, 0.74f), GetCandyCreamEdgeMaterial());
+            CreatePrimitiveChild(root.transform, "TileSoftShadow_Front", PrimitiveType.Cube, new Vector3(0f, -0.035f, -0.49f), new Vector3(0.82f, 0.025f, 0.02f), GetCandyWaferShadowMaterial());
+
+            if (ShouldAddCandyTileAccent(x, y))
+            {
+                CreatePrimitiveChild(root.transform, "TinyCandyGem", PrimitiveType.Sphere, new Vector3(0.22f, 0.018f, 0.22f), new Vector3(0.06f, 0.018f, 0.06f), ResolveCandySprinkleMaterial(x + y));
+            }
+
             return root;
         }
 
@@ -1147,9 +1207,29 @@ namespace BubbleTown.Map
             collider.size = new Vector3(0.92f, 1f, 0.92f);
             collider.center = new Vector3(0f, 0.5f, 0f);
             Transform visualRoot = CreateVisualRoot(root.transform);
-            CreatePrimitiveChild(visualRoot, "BottomShadow", PrimitiveType.Cube, new Vector3(0f, 0.08f, 0f), new Vector3(0.96f, 0.12f, 0.96f), GetShadowMaterial());
-            CreatePrimitiveChild(visualRoot, "BaseBlock", PrimitiveType.Cube, new Vector3(0f, 0.46f, 0f), new Vector3(0.9f, 0.86f, 0.9f), GetCreamMaterial());
-            CreatePrimitiveChild(visualRoot, "TopHighlight", PrimitiveType.Cube, new Vector3(0f, 0.92f, 0f), new Vector3(0.68f, 0.08f, 0.68f), GetCandyBlueMaterial());
+            TryParseGeneratedGridPosition(objectName, out int x, out int y);
+
+            CreatePrimitiveChild(visualRoot, "BottomCaramelShadow", PrimitiveType.Cube, new Vector3(0f, 0.07f, 0f), new Vector3(0.96f, 0.11f, 0.96f), GetCandyWaferShadowMaterial());
+            CreatePrimitiveChild(visualRoot, "CreamWaferBody", PrimitiveType.Cube, new Vector3(0f, 0.42f, 0f), new Vector3(0.88f, 0.76f, 0.88f), GetCandyWaferMaterial());
+            CreatePrimitiveChild(visualRoot, "PillowTop_Dome", PrimitiveType.Sphere, new Vector3(0f, 0.84f, 0f), new Vector3(0.78f, 0.18f, 0.78f), GetCandyWaferMaterial());
+            CreatePrimitiveChild(visualRoot, "WaferTopBloom", PrimitiveType.Sphere, new Vector3(-0.12f, 0.91f, -0.12f), new Vector3(0.34f, 0.06f, 0.34f), GetCandyGlossMaterial());
+            CreatePrimitiveChild(visualRoot, "TopCreamButton", PrimitiveType.Cylinder, new Vector3(0f, 0.96f, 0f), new Vector3(0.3f, 0.02f, 0.3f), GetCandyTileInsetMaterial());
+            CreatePrimitiveChild(visualRoot, "TopCaramelRim_Front", PrimitiveType.Cube, new Vector3(0f, 0.84f, -0.42f), new Vector3(0.58f, 0.026f, 0.024f), GetCandyCreamEdgeMaterial());
+            CreatePrimitiveChild(visualRoot, "TopCaramelRim_Right", PrimitiveType.Cube, new Vector3(0.42f, 0.84f, 0f), new Vector3(0.024f, 0.026f, 0.58f), GetCandyCreamEdgeMaterial());
+            CreatePrimitiveChild(visualRoot, "WarmEdge_Front", PrimitiveType.Cube, new Vector3(0f, 0.15f, -0.45f), new Vector3(0.72f, 0.05f, 0.03f), GetCandyCreamEdgeMaterial());
+            CreatePrimitiveChild(visualRoot, "WarmEdge_Right", PrimitiveType.Cube, new Vector3(0.45f, 0.15f, 0f), new Vector3(0.03f, 0.05f, 0.72f), GetCandyCreamEdgeMaterial());
+            CreatePrimitiveChild(visualRoot, "WaferSideShadow_Front", PrimitiveType.Cube, new Vector3(0f, 0.36f, -0.456f), new Vector3(0.72f, 0.22f, 0.018f), GetCandyWaferShadowMaterial());
+            CreatePrimitiveChild(visualRoot, "WaferSideShadow_Right", PrimitiveType.Cube, new Vector3(0.456f, 0.36f, 0f), new Vector3(0.018f, 0.22f, 0.72f), GetCandyWaferShadowMaterial());
+            CreatePrimitiveChild(visualRoot, "WaferFaceGloss", PrimitiveType.Cube, new Vector3(-0.2f, 0.66f, -0.457f), new Vector3(0.3f, 0.035f, 0.016f), GetCandyGlossMaterial());
+
+            GameObject veinA = CreatePrimitiveChild(visualRoot, "CaramelVein_Front_A", PrimitiveType.Cube, new Vector3(-0.16f, 0.54f, -0.456f), new Vector3(0.28f, 0.024f, 0.018f), GetCandyCreamEdgeMaterial());
+            veinA.transform.localEulerAngles = new Vector3(0f, 0f, 14f);
+            GameObject veinB = CreatePrimitiveChild(visualRoot, "CaramelVein_Right_B", PrimitiveType.Cube, new Vector3(0.456f, 0.62f, 0.13f), new Vector3(0.018f, 0.024f, 0.24f), GetCandyCreamEdgeMaterial());
+            veinB.transform.localEulerAngles = new Vector3(0f, 18f, 0f);
+
+            CreatePrimitiveChild(visualRoot, "TopCandyGem", PrimitiveType.Sphere, new Vector3(0.16f, 1.02f, 0.06f), new Vector3(0.075f, 0.034f, 0.075f), ResolveCandySprinkleMaterial(x + y));
+            GameObject sprinkle = CreatePrimitiveChild(visualRoot, "TopCandySprinkle", PrimitiveType.Cube, new Vector3(-0.18f, 1.01f, -0.1f), new Vector3(0.12f, 0.025f, 0.045f), ResolveCandySprinkleMaterial(x * 3 + y + 1));
+            sprinkle.transform.localEulerAngles = new Vector3(0f, 35f, 0f);
             ConfigureGeneratedWallFeedback(root, visualRoot);
             return root;
         }
@@ -1235,10 +1315,81 @@ namespace BubbleTown.Map
             collider.size = new Vector3(0.82f, 0.78f, 0.82f);
             collider.center = new Vector3(0f, 0.39f, 0f);
             Transform visualRoot = CreateVisualRoot(root.transform);
-            CreatePrimitiveChild(visualRoot, "JellyBody", PrimitiveType.Cube, new Vector3(0f, 0.39f, 0f), new Vector3(0.82f, 0.78f, 0.82f), GetJellyBlueMaterial());
-            CreatePrimitiveChild(visualRoot, "JellyShine", PrimitiveType.Sphere, new Vector3(-0.22f, 0.68f, -0.22f), new Vector3(0.18f, 0.08f, 0.18f), GetCreamMaterial());
+            CreatePrimitiveChild(visualRoot, "JellyBaseShadow", PrimitiveType.Cube, new Vector3(0f, 0.05f, 0f), new Vector3(0.84f, 0.08f, 0.84f), GetCandyJellyDeepMaterial());
+            CreatePrimitiveChild(visualRoot, "JellyBody_GlassBlue", PrimitiveType.Cube, new Vector3(0f, 0.31f, 0f), new Vector3(0.74f, 0.54f, 0.74f), GetJellyBlueMaterial());
+            CreatePrimitiveChild(visualRoot, "JellySideShadow_Front", PrimitiveType.Cube, new Vector3(0f, 0.31f, -0.382f), new Vector3(0.58f, 0.36f, 0.028f), GetCandyJellyDeepMaterial());
+            CreatePrimitiveChild(visualRoot, "JellySideShadow_Right", PrimitiveType.Cube, new Vector3(0.382f, 0.31f, 0f), new Vector3(0.028f, 0.36f, 0.58f), GetCandyJellyDeepMaterial());
+            CreatePrimitiveChild(visualRoot, "JellyBody_FrontGlow", PrimitiveType.Cube, new Vector3(-0.08f, 0.48f, -0.386f), new Vector3(0.42f, 0.09f, 0.018f), GetCandyJellyGlowMaterial());
+            CreatePrimitiveChild(visualRoot, "JellyBody_LeftGlow", PrimitiveType.Cube, new Vector3(-0.386f, 0.48f, -0.08f), new Vector3(0.018f, 0.09f, 0.42f), GetCandyJellyGlowMaterial());
+            CreatePrimitiveChild(visualRoot, "JellyRoundedCap", PrimitiveType.Sphere, new Vector3(0f, 0.62f, 0f), new Vector3(0.74f, 0.18f, 0.74f), GetJellyBlueMaterial());
+            CreatePrimitiveChild(visualRoot, "JellyTopGlow", PrimitiveType.Cylinder, new Vector3(0f, 0.72f, 0f), new Vector3(0.36f, 0.014f, 0.36f), GetCandyJellyGlowMaterial());
+            CreatePrimitiveChild(visualRoot, "JellyShine_Large", PrimitiveType.Sphere, new Vector3(-0.22f, 0.67f, -0.22f), new Vector3(0.2f, 0.055f, 0.2f), GetCandyGlossMaterial());
+            CreatePrimitiveChild(visualRoot, "JellyShine_Side", PrimitiveType.Cube, new Vector3(0f, 0.54f, -0.39f), new Vector3(0.36f, 0.035f, 0.018f), GetCandyGlossMaterial());
             ConfigureGeneratedWallFeedback(root, visualRoot);
             return root;
+        }
+
+        /// <summary>
+        /// Purpose: Parses generated tile or wall names like `Tile_03_07` into grid coordinates.
+        /// Inputs: `objectName`; may also read serialized fields and current runtime state.
+        /// Output: true when coordinates were found.
+        /// </summary>
+        /// <param name="objectName">Input value used by this method.</param>
+        /// <param name="x">Parsed x coordinate.</param>
+        /// <param name="y">Parsed y coordinate.</param>
+        /// <returns>True if the object name contains generated grid coordinates.</returns>
+        private bool TryParseGeneratedGridPosition(string objectName, out int x, out int y)
+        {
+            x = 0;
+            y = 0;
+            if (string.IsNullOrEmpty(objectName))
+            {
+                return false;
+            }
+
+            string[] parts = objectName.Split('_');
+            if (parts.Length < 3)
+            {
+                return false;
+            }
+
+            return int.TryParse(parts[parts.Length - 2], out x) &&
+                   int.TryParse(parts[parts.Length - 1], out y);
+        }
+
+        /// <summary>
+        /// Purpose: Chooses sparse floor candy accents so the board stays readable.
+        /// Inputs: `x`, `y`; may also read serialized fields and current runtime state.
+        /// Output: true when a tiny decorative gem should be added.
+        /// </summary>
+        /// <param name="x">Grid x coordinate.</param>
+        /// <param name="y">Grid y coordinate.</param>
+        /// <returns>True if the tile should receive a small candy accent.</returns>
+        private bool ShouldAddCandyTileAccent(int x, int y)
+        {
+            return (x * 7 + y * 11) % 17 == 0;
+        }
+
+        /// <summary>
+        /// Purpose: Resolves a rotating candy sprinkle material.
+        /// Inputs: `index`; may also read serialized fields and current runtime state.
+        /// Output: a candy-colored Material.
+        /// </summary>
+        /// <param name="index">Input value used by this method.</param>
+        /// <returns>A themed sprinkle material.</returns>
+        private Material ResolveCandySprinkleMaterial(int index)
+        {
+            switch (Mathf.Abs(index) % 4)
+            {
+                case 0:
+                    return GetPropPinkMaterial();
+                case 1:
+                    return GetPropYellowMaterial();
+                case 2:
+                    return GetCandyBlueMaterial();
+                default:
+                    return GetPropMintMaterial();
+            }
         }
 
         /// <summary>
@@ -1594,7 +1745,7 @@ namespace BubbleTown.Map
         {
             if (grassMaterial == null)
             {
-                grassMaterial = CreateRuntimeMaterial("Mat_Runtime_Tile_GrassPastel", new Color(0.57f, 0.91f, 0.65f));
+                grassMaterial = CreateRuntimeMaterial("Mat_Runtime_CandyPark_TileMint", new Color(0.48f, 0.74f, 0.6f), false, 0f, 0.32f);
             }
 
             return grassMaterial;
@@ -1610,10 +1761,122 @@ namespace BubbleTown.Map
         {
             if (candyBlueMaterial == null)
             {
-                candyBlueMaterial = CreateRuntimeMaterial("Mat_Runtime_Tile_CandyBlue", new Color(0.48f, 0.86f, 1f));
+                candyBlueMaterial = CreateRuntimeMaterial("Mat_Runtime_CandyPark_ClearBlue", new Color(0.04f, 0.46f, 0.62f), false, 0f, 0.42f);
             }
 
             return candyBlueMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets candy park cream tile inset material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
+        private Material GetCandyTileInsetMaterial()
+        {
+            if (candyTileInsetMaterial == null)
+            {
+                candyTileInsetMaterial = CreateRuntimeMaterial("Mat_Runtime_CandyPark_TileCreamInset", new Color(0.74f, 0.78f, 0.58f), false, 0f, 0.24f);
+            }
+
+            return candyTileInsetMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets candy park caramel edge material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
+        private Material GetCandyCreamEdgeMaterial()
+        {
+            if (candyCreamEdgeMaterial == null)
+            {
+                candyCreamEdgeMaterial = CreateRuntimeMaterial("Mat_Runtime_CandyPark_CaramelEdge", new Color(0.36f, 0.19f, 0.07f), false, 0f, 0.18f);
+            }
+
+            return candyCreamEdgeMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets candy park glossy white highlight material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
+        private Material GetCandyGlossMaterial()
+        {
+            if (candyGlossMaterial == null)
+            {
+                candyGlossMaterial = CreateRuntimeMaterial("Mat_Runtime_CandyPark_CrispGloss", new Color(0.72f, 0.72f, 0.58f), false, 0f, 0.26f);
+            }
+
+            return candyGlossMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets candy park wafer block material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
+        private Material GetCandyWaferMaterial()
+        {
+            if (candyWaferMaterial == null)
+            {
+                candyWaferMaterial = CreateRuntimeMaterial("Mat_Runtime_CandyPark_WaferCream", new Color(0.7f, 0.6f, 0.39f), false, 0f, 0.28f);
+            }
+
+            return candyWaferMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets candy park wafer shadow material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
+        private Material GetCandyWaferShadowMaterial()
+        {
+            if (candyWaferShadowMaterial == null)
+            {
+                candyWaferShadowMaterial = CreateRuntimeMaterial("Mat_Runtime_CandyPark_WaferShadow", new Color(0.27f, 0.15f, 0.06f), false, 0f, 0.14f);
+            }
+
+            return candyWaferShadowMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets candy park deep jelly side material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
+        private Material GetCandyJellyDeepMaterial()
+        {
+            if (candyJellyDeepMaterial == null)
+            {
+                candyJellyDeepMaterial = CreateRuntimeMaterial("Mat_Runtime_CandyPark_JellyDeepBlue", new Color(0f, 0.16f, 0.28f), false, 0f, 0.28f);
+            }
+
+            return candyJellyDeepMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets candy park bright jelly top glow material.
+        /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
+        /// Output: a `Material` value.
+        /// </summary>
+        /// <returns>a `Material` value.</returns>
+        private Material GetCandyJellyGlowMaterial()
+        {
+            if (candyJellyGlowMaterial == null)
+            {
+                candyJellyGlowMaterial = CreateRuntimeMaterial("Mat_Runtime_CandyPark_JellyTopHighlight", new Color(0.22f, 0.58f, 0.66f), false, 0f, 0.36f);
+            }
+
+            return candyJellyGlowMaterial;
         }
 
         /// <summary>
@@ -1642,7 +1905,7 @@ namespace BubbleTown.Map
         {
             if (jellyBlueMaterial == null)
             {
-                jellyBlueMaterial = CreateRuntimeMaterial("Mat_Runtime_JellyBlue", new Color(0.36f, 0.86f, 1f));
+                jellyBlueMaterial = CreateRuntimeMaterial("Mat_Runtime_CandyPark_JellyBlue", new Color(0.02f, 0.36f, 0.52f), false, 0f, 0.36f);
             }
 
             return jellyBlueMaterial;
@@ -1658,7 +1921,7 @@ namespace BubbleTown.Map
         {
             if (shadowMaterial == null)
             {
-                shadowMaterial = CreateRuntimeMaterial("Mat_Runtime_WarmShadow", new Color(0.45f, 0.35f, 0.24f));
+                shadowMaterial = CreateRuntimeMaterial("Mat_Runtime_WarmShadow", new Color(0.45f, 0.35f, 0.24f), false, 0f, 0.2f);
             }
 
             return shadowMaterial;
@@ -2018,15 +2281,16 @@ namespace BubbleTown.Map
 
         /// <summary>
         /// Purpose: Creates runtime material.
-        /// Inputs: `materialName`, `color`, `useEmission`, `emissionIntensity`; may also read serialized fields and current runtime state.
+        /// Inputs: `materialName`, `color`, `useEmission`, `emissionIntensity`, `smoothness`; may also read serialized fields and current runtime state.
         /// Output: a `Material` value.
         /// </summary>
         /// <param name="materialName">Input value used by this method.</param>
         /// <param name="color">Input value used by this method.</param>
         /// <param name="useEmission">Input value used by this method.</param>
         /// <param name="emissionIntensity">Input value used by this method.</param>
+        /// <param name="smoothness">Input value used by this method.</param>
         /// <returns>a `Material` value.</returns>
-        private Material CreateRuntimeMaterial(string materialName, Color color, bool useEmission = false, float emissionIntensity = 0f)
+        private Material CreateRuntimeMaterial(string materialName, Color color, bool useEmission = false, float emissionIntensity = 0f, float smoothness = 0.5f)
         {
             Material material = new Material(Shader.Find("Standard"))
             {
@@ -2034,6 +2298,16 @@ namespace BubbleTown.Map
                 color = color,
                 hideFlags = HideFlags.HideAndDontSave
             };
+
+            if (material.HasProperty("_Glossiness"))
+            {
+                material.SetFloat("_Glossiness", Mathf.Clamp01(smoothness));
+            }
+
+            if (material.HasProperty("_Metallic"))
+            {
+                material.SetFloat("_Metallic", 0f);
+            }
 
             if (useEmission && material.HasProperty("_EmissionColor"))
             {
