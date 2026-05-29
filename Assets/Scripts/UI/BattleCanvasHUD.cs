@@ -1073,10 +1073,15 @@ namespace BubbleTown.UI
             SetRelativeRect(slot, x, y, 0.46f, 0.43f);
 
             Text labelText = CreateText("Label", slot, label, 11, FontStyle.Bold, accentColor, TextAnchor.MiddleLeft);
-            SetRelativeRect(labelText.rectTransform, 0.1f, 0.23f, 0.34f, 0.54f);
+            SetRelativeRect(labelText.rectTransform, 0.08f, 0.23f, 0.3f, 0.54f);
 
             Text valueText = CreateText("Value", slot, "...", 12, FontStyle.Bold, textPrimary, TextAnchor.MiddleCenter);
-            SetRelativeRect(valueText.rectTransform, 0.5f, 0.22f, 0.42f, 0.56f);
+            valueText.horizontalOverflow = HorizontalWrapMode.Overflow;
+            valueText.verticalOverflow = VerticalWrapMode.Overflow;
+            valueText.resizeTextForBestFit = true;
+            valueText.resizeTextMinSize = 8;
+            valueText.resizeTextMaxSize = 12;
+            SetRelativeRect(valueText.rectTransform, 0.4f, 0.2f, 0.56f, 0.6f);
             return valueText;
         }
 
