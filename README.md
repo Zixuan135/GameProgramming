@@ -1,34 +1,36 @@
 # BubbleTown
 
-BubbleTown is a colorful chibi-style 3D grid battle game inspired by classic Bomberman-style party games. Players move tile by tile, place bubble bombs, break soft blocks, collect power-ups, and try to survive the blast-filled arena.
+BubbleTown is a colorful chibi-style 3D grid battle game inspired by classic Bomberman-style party games. Players move tile by tile, place bubble bombs, break soft walls, collect power-ups, and survive compact toy-board arenas.
 
-The project currently uses low-cost placeholder art and procedural Unity primitives, but the goal is to shape it into a playful, readable, candy-colored prototype that can keep improving over time.
+The current build is a playable Unity prototype with a complete menu-to-result flow, three battle modes, six selectable heroes, themed 3D runtime maps, illustrated UI screens, battle HUD overlays, placeholder audio, and persistent player-facing settings.
 
-## Highlights
+## Latest Snapshot
 
-- 3D angled overhead battle view
-- Six original chibi-style hero looks built from Unity primitive shapes
-- Original chibi hero selection before entering a map
-- Grid-based movement on the XZ plane
-- Bubble bombs with countdowns, cross-shaped explosions, hard-wall blocking, soft-block destruction, and chain reactions
-- Power-ups for bomb count, blast range, movement speed, shield, and temporary invincibility
-- SinglePlayer route objective: blast through soft blocks and reach the exit marker
-- AI Battle mode with a basic grid-aware opponent
-- Local VS mode with shared-keyboard controls and Best of 3 scoring
-- Player-facing menu flow: Main Menu, Mode Select, Character Select, Map Select, Battle, Result
-- Canvas-based Battle HUD with mode, map, timer, objective, player stats, item guide, pause, and settings overlays
-- Built-in placeholder BGM/SFX with settings, reset defaults, preview playback, mute, and screen shake
+- Built with Unity `2022.3.62f3c1`.
+- Full scene flow: Main Menu, Mode Select, Character Select, Map Select, AI Difficulty Select, Battle, and Result.
+- Three playable modes: SinglePlayer, AI Battle, and Local VS.
+- Six original chibi hero looks backed by `CharacterData` assets and character prefabs.
+- Three selectable map themes: Candy Park, Snowfield, and Jelly Maze.
+- Runtime-generated 3D map visuals now have stronger theme identity, material contrast, wall readability, and decorative borders.
+- Battle uses an illustrated full-screen background behind the arena and a Canvas-based left HUD.
+- Menu, guide, settings, character select, map select, difficulty select, battle overlays, item guide, pause menu, and result page use image-driven UI assets when available.
+- Built-in placeholder BGM/SFX cover menu, battle, result, movement, bombs, explosions, pickups, victory, defeat, and button feedback.
+
+## How To Run
+
+1. Open the project with Unity `2022.3.62f3c1` or a compatible Unity 2022.3 LTS editor.
+2. Open `Assets/Scenes/MainMenu.unity`.
+3. Press Play.
+4. Choose a mode, character, and map.
+5. In AI Battle, choose Easy, Normal, or Hard before entering the battle.
 
 ## Game Modes
 
-### SinglePlayer
-Break soft blocks, open a route through the arena, and reach the highlighted exit marker.
-
-### AI Battle
-Fight a simple AI opponent that can move around the grid, avoid danger, and place bombs.
-
-### Local VS
-Two players share one keyboard and battle for round wins. The first player to reach the Best of 3 target wins the match.
+| Mode | Goal |
+| --- | --- |
+| `SinglePlayer` | Break through the arena route and reach the highlighted exit objective. |
+| `AI Battle` | Fight a grid-aware AI opponent with selectable difficulty. |
+| `Local VS` | Two players share one keyboard and play a Best of 3 match. |
 
 ## Controls
 
@@ -37,11 +39,11 @@ Two players share one keyboard and battle for round wins. The first player to re
 | Player 1 | `WASD` | `Space` |
 | Player 2 | Arrow Keys | `Enter` or `RightControl` |
 
-Pause the battle with the `Pause` button, `Esc`, or `P` to resume, retry, return to the main menu, or adjust settings.
+Pause during battle with the on-screen `Pause` button, `Esc`, or `P`. From pause, players can resume, retry, return to the main menu, or open settings.
 
 ## Characters
 
-Players can choose from six original chibi heroes before selecting a map. The current roster focuses on visual variety while keeping gameplay stats balanced across all characters:
+Players can choose from six original chibi heroes. The current roster focuses on clear silhouettes and visual variety while keeping gameplay stats balanced:
 
 - `Bubble Ranger`: blue bubble-helmet hero
 - `Bear Blaster`: red bear-suit hero
@@ -50,78 +52,94 @@ Players can choose from six original chibi heroes before selecting a map. The cu
 - `Bunny Pop`: pink bunny-ear hero
 - `Star Mage`: purple magic-hat hero
 
-The characters are currently built from Unity primitives as readable placeholder prefabs, making them easy to replace later with polished original models.
+The characters are currently built from lightweight Unity prefabs and primitive-based meshes, making them easy to replace later with polished authored models.
 
 ## Maps
 
-- `Candy Park`: balanced candy-themed paths and colorful soft blocks
-- `Snowfield`: open snowy lanes with icy walls and gift-style soft blocks
-- `Jelly Maze`: tighter routes with a more maze-like feel
+| Display Name | Internal Type | Current Visual Direction |
+| --- | --- | --- |
+| `Candy Park` | `BattleMapType.Default` | Bright candy toy-board with cream wafer hard walls, blue jelly soft walls, candy lamps, rails, planets, signs, and pastel props. |
+| `Snowfield` | `BattleMapType.OpenField` | Snow-and-ice playground with packed snow hard walls, warm gift-crate soft walls, icy tile insets, snowflake marks, fences, snowmen, pines, and winter props. |
+| `Jelly Maze` | `BattleMapType.Maze` | Purple/cyan/pink jelly-lab board with violet hard walls, magenta soft walls, cyan star floor tiles, cream highlights, neon rails, crystals, beacons, and holo props. |
+
+All three maps are generated at runtime by `MapGenerator`, while `MapManager` owns gameplay grid state, wall blocking, soft-wall destruction, item spawning, and objective state.
 
 ## Power-Ups
 
-- `Bomb Slot`: place one more bomb at a time
-- `Blast Range`: bombs reach farther
-- `Speed Boots`: move faster on the grid
-- `Shield`: block one explosion hit
-- `Invincible`: gain short temporary safety after pickup
+- `Bomb Slot`: place one more bomb at a time.
+- `Blast Range`: extend bomb explosion range.
+- `Speed Boots`: increase movement speed.
+- `Shield`: block one explosion hit.
+- `Invincible`: gain short temporary safety after pickup.
+
+## UI And Flow
+
+BubbleTown now mixes runtime UI construction with imported image assets stored under `Assets/Resources/UI`.
+
+- Main menu, mode select, character select, map select, AI difficulty select, guide, settings, result, and battle overlays use illustrated textures when the full asset set is present.
+- `SimpleUIFactory` still provides fallback drawing for screens that do not have every image asset loaded.
+- `BattleCanvasHUD` owns the in-battle left HUD, item guide, pause panel, settings overlay, opening prompt, result prompt, and pickup toast.
+- `BattleVisualStyleController` applies map-aware lighting and places the shared illustrated battle background behind the arena.
+- The Result screen intentionally uses its own result artwork instead of the battle background.
 
 ## Audio And Settings
 
-BubbleTown includes generated placeholder audio so the prototype has immediate game feel:
+The prototype includes generated placeholder audio so it has immediate game feel:
 
-- Menu, battle, and result BGM loops
-- Button click, movement, bomb placement, explosion, pickup, defeat, victory, and character death SFX
-- Settings popup with master volume, BGM volume, SFX volume, mute toggles, preview playback buttons, screen shake toggle, and reset defaults
-- In-battle pause menu with quick access to resume, sound/settings, retry, and main menu actions
+- Menu, battle, and result BGM loops.
+- Button click, movement, bomb placement, explosion, pickup, character death, victory, and defeat SFX.
+- Settings popup with master volume, BGM volume, SFX volume, BGM/SFX mute toggles, preview playback, screen shake toggle, and reset defaults.
+- Settings persist through `PlayerPrefs` via `GameSettings`.
 
 These sounds are placeholders and can be replaced later with final original or licensed audio.
-
-## How To Run
-
-1. Open the project with Unity 2022.3 LTS.
-2. Open `Assets/Scenes/MainMenu.unity`.
-3. Press Play.
-4. Use `Start Game` to choose a mode, character, and map.
-5. Use `Guide` for controls, `Settings` for audio, and `Esc` or `P` during battle to pause.
-
-## Current Prototype Status
-
-BubbleTown is currently a playable prototype rather than a finished game. The core loop is in place: choose a mode, enter a map, move on the grid, place bombs, trigger explosions, collect items, finish a round, and return to the menu or retry.
-
-The current visuals are intentionally lightweight. Most assets are placeholder primitives or generated UI shapes, but the game already has a clear playable loop, character selection, a Canvas-backed battle HUD, and basic sound feedback.
 
 ## Project Structure
 
 ```text
 Assets/
-  Audio/                 Placeholder source folders
-  Materials/             Character, gameplay, map, and UI materials
-  Prefabs/               Gameplay, character, map, environment, and UI prefabs
-  Resources/Audio/       Auto-loaded placeholder BGM and SFX
-  Resources/Characters/  CharacterData assets used by character select
-  Scenes/                MainMenu, ModeSelect, CharacterSelect, MapSelect, Battle, Result
-  Scripts/               Gameplay, map, UI, camera, AI, managers, visuals
-  UI/                    UI-related assets
+  Audio/                 Source folders for generated placeholder audio
+  Materials/             Character, gameplay, map, environment, and UI materials
+  Prefabs/               Character, gameplay, map, environment, and UI prefabs
+  Resources/
+    Audio/               Runtime-loaded BGM and SFX clips
+    Characters/          CharacterData assets used by character selection
+    UI/                  Runtime-loaded illustrated UI textures
+  Scenes/                MainMenu, ModeSelect, CharacterSelect, MapSelect, DifficultySelect, Battle, Result
+  Scripts/
+    AI/                  Grid-aware AI movement, danger avoidance, and bomb decisions
+    Camera/              Battle camera framing and shake feedback
+    Characters/          Player/character data, control, visuals, and pickup feedback
+    Core/                Constants, settings, enums, and shared state definitions
+    Gameplay/            Bomb and explosion behavior
+    Items/               Power-up spawning, visuals, and pickup feedback
+    Managers/            Game session, scene flow, and audio systems
+    Map/                 Grid, map generation, visual themes, wall feedback, decorations
+    UI/                  Menu screens, Canvas HUD, settings, guide, result UI
+    Visuals/             Battle lighting and illustrated background controller
 
-Docs/                    Art direction, map themes, and visual style notes
+Docs/                    Art direction, map theme, and environment decoration notes
 ```
 
 ## Documentation
 
-- `Docs/Phase2_ArtDirection.md`: visual direction and asset guidelines
-- `Docs/Phase2_VisualStyleGuide.md`: palette, material, lighting, and readability notes
-- `Docs/CandyPark_MapTheme.md`: Candy Park theme reference
-- `Docs/SnowfieldPlayground_MapTheme.md`: Snowfield theme reference
-- `Docs/JellyMaze_MapTheme.md`: Jelly Maze theme reference
-- `Docs/EnvironmentDecorationGuide.md`: decoration placement and readability notes
+- `Docs/Phase2_ArtDirection.md`: overall visual direction and asset guidelines.
+- `Docs/Phase2_VisualStyleGuide.md`: palette, material, lighting, and readability notes.
+- `Docs/CandyPark_MapTheme.md`: Candy Park theme reference.
+- `Docs/SnowfieldPlayground_MapTheme.md`: Snowfield theme reference.
+- `Docs/JellyMaze_MapTheme.md`: Jelly Maze theme reference.
+- `Docs/EnvironmentDecorationGuide.md`: decoration placement and readability notes.
+
+## Current Prototype Status
+
+BubbleTown is a playable vertical-slice prototype rather than a finished game. The main loop is implemented: choose a mode, pick a hero, select a map, enter battle, move on the grid, place bombs, trigger explosions, collect items, resolve the round, and retry or return to the menu.
+
+The visual direction is now much closer to a soft toy-board style: maps have distinct themed materials and props, the battle screen has a dedicated illustrated background and HUD, and the menu flow uses custom image assets. Many 3D assets are still runtime-generated primitives, so future art work can focus on replacing those generated forms with reusable polished models while preserving the current gameplay layout.
 
 ## Roadmap
 
-- Replace placeholder audio with final original or licensed sound assets
-- Polish character silhouettes, animations, and selection icons
-- Replace primitive placeholder art with stronger reusable prefabs
-- Improve AI behavior and game balance
-- Convert more runtime-built UI into reusable Canvas prefabs
-- Polish menus, result screen, and feedback animations
-- Continue refining maps so each mode feels distinct and readable
+- Replace runtime primitive map pieces with authored reusable prefabs while keeping the current Candy Park, Snowfield, and Jelly Maze readability.
+- Polish character models, silhouettes, animations, and selection presentation.
+- Replace placeholder audio with final original or licensed sound assets.
+- Continue improving AI behavior, difficulty tuning, and local-versus balance.
+- Convert remaining fallback IMGUI pieces into reusable Canvas or prefab-based UI where useful.
+- Add automated validation or play-mode checks for map generation, scene flow, and battle-state regressions.
