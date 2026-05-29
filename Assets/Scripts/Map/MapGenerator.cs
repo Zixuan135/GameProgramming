@@ -79,6 +79,10 @@ namespace BubbleTown.Map
         private Material snowWoodMaterial;
         private Material snowPropBlueMaterial;
         private Material snowPropPinkMaterial;
+        private Material snowTileEdgeMaterial;
+        private Material snowPackedShadowMaterial;
+        private Material snowflakeMarkMaterial;
+        private Material snowGiftSideMaterial;
 
         public int MapWidth => mapWidth;
         public int MapHeight => mapHeight;
@@ -636,20 +640,29 @@ namespace BubbleTown.Map
             root.transform.SetParent(parent);
             root.transform.position = center;
 
-            float length = Mathf.Max(1, lengthCells - 1) * cellSize;
-            Vector3 railScale = horizontal ? new Vector3(length, 0.08f, 0.08f) : new Vector3(0.08f, 0.08f, length);
+            float length = Mathf.Max(1, lengthCells - 1) * cellSize + 0.4f;
+            Vector3 railScale = new Vector3(0.052f, length * 0.5f, 0.052f);
+            Vector3 railRotation = horizontal ? new Vector3(0f, 0f, 90f) : new Vector3(90f, 0f, 0f);
             Vector3 postStep = horizontal ? Vector3.right * cellSize * 2f : Vector3.forward * cellSize * 2f;
             int postCount = Mathf.Max(2, Mathf.CeilToInt(lengthCells / 2f) + 1);
             Vector3 start = -postStep * ((postCount - 1) * 0.5f);
 
-            CreatePrimitiveChild(root.transform, "Rail_IceTop", PrimitiveType.Cube, new Vector3(0f, 0.58f, 0f), railScale, GetSnowIceMaterial());
-            CreatePrimitiveChild(root.transform, "Rail_WoodBase", PrimitiveType.Cube, new Vector3(0f, 0.34f, 0f), railScale * 1.08f, GetSnowWoodMaterial());
+            GameObject topRail = CreatePrimitiveChild(root.transform, "Rail_WoodTop", PrimitiveType.Cylinder, new Vector3(0f, 0.58f, 0f), railScale, GetSnowWoodMaterial());
+            topRail.transform.localEulerAngles = railRotation;
+            GameObject bottomRail = CreatePrimitiveChild(root.transform, "Rail_WoodBase", PrimitiveType.Cylinder, new Vector3(0f, 0.32f, 0f), railScale, GetSnowWoodMaterial());
+            bottomRail.transform.localEulerAngles = railRotation;
+            GameObject snowRidge = CreatePrimitiveChild(root.transform, "Rail_SnowRidge", PrimitiveType.Cylinder, new Vector3(0f, 0.66f, 0f), new Vector3(0.046f, length * 0.46f, 0.046f), GetSnowFloorMaterial());
+            snowRidge.transform.localEulerAngles = railRotation;
 
             for (int i = 0; i < postCount; i++)
             {
                 Vector3 localPosition = start + postStep * i + Vector3.up * 0.38f;
-                CreatePrimitiveChild(root.transform, $"Post_Wood_{i:00}", PrimitiveType.Cube, localPosition, new Vector3(0.16f, 0.68f, 0.16f), GetSnowWoodMaterial());
-                CreatePrimitiveChild(root.transform, $"Post_SnowCap_{i:00}", PrimitiveType.Sphere, localPosition + Vector3.up * 0.38f, new Vector3(0.22f, 0.12f, 0.22f), GetSnowFloorMaterial());
+                CreatePrimitiveChild(root.transform, $"Post_Wood_{i:00}", PrimitiveType.Cylinder, localPosition, new Vector3(0.07f, 0.36f, 0.07f), GetSnowWoodMaterial());
+                CreatePrimitiveChild(root.transform, $"Post_SnowCap_{i:00}", PrimitiveType.Sphere, localPosition + Vector3.up * 0.4f, new Vector3(0.2f, 0.12f, 0.2f), GetSnowFloorMaterial());
+                if (i % 2 == 0)
+                {
+                    CreatePrimitiveChild(root.transform, $"Post_IceBead_{i:00}", PrimitiveType.Sphere, localPosition + Vector3.up * 0.2f, new Vector3(0.09f, 0.09f, 0.09f), GetSnowIceMaterial());
+                }
             }
         }
 
@@ -712,11 +725,14 @@ namespace BubbleTown.Map
             root.transform.SetParent(parent);
             root.transform.position = position;
 
-            CreatePrimitiveChild(root.transform, "GiftBody", PrimitiveType.Cube, new Vector3(0f, 0.32f, 0f), new Vector3(0.56f, 0.5f, 0.56f), GetSnowSoftWallMaterial());
-            CreatePrimitiveChild(root.transform, "Ribbon_X", PrimitiveType.Cube, new Vector3(0f, 0.34f, -0.29f), new Vector3(0.12f, 0.48f, 0.04f), ribbonMaterial);
-            CreatePrimitiveChild(root.transform, "Ribbon_Z", PrimitiveType.Cube, new Vector3(-0.29f, 0.34f, 0f), new Vector3(0.04f, 0.48f, 0.12f), ribbonMaterial);
-            CreatePrimitiveChild(root.transform, "Bow_Left", PrimitiveType.Sphere, new Vector3(-0.12f, 0.64f, -0.18f), new Vector3(0.16f, 0.08f, 0.12f), ribbonMaterial);
-            CreatePrimitiveChild(root.transform, "Bow_Right", PrimitiveType.Sphere, new Vector3(0.12f, 0.64f, -0.18f), new Vector3(0.16f, 0.08f, 0.12f), ribbonMaterial);
+            CreatePrimitiveChild(root.transform, "GiftShadow", PrimitiveType.Cube, new Vector3(0f, 0.04f, 0f), new Vector3(0.62f, 0.08f, 0.62f), GetSnowPackedShadowMaterial());
+            CreatePrimitiveChild(root.transform, "GiftBody", PrimitiveType.Cube, new Vector3(0f, 0.3f, 0f), new Vector3(0.56f, 0.46f, 0.56f), GetSnowSoftWallMaterial());
+            CreatePrimitiveChild(root.transform, "GiftSideShade", PrimitiveType.Cube, new Vector3(0f, 0.3f, -0.29f), new Vector3(0.4f, 0.36f, 0.028f), GetSnowGiftSideMaterial());
+            CreatePrimitiveChild(root.transform, "Ribbon_X", PrimitiveType.Cube, new Vector3(0f, 0.32f, -0.305f), new Vector3(0.1f, 0.4f, 0.036f), ribbonMaterial);
+            CreatePrimitiveChild(root.transform, "Ribbon_Z", PrimitiveType.Cube, new Vector3(-0.305f, 0.32f, 0f), new Vector3(0.036f, 0.4f, 0.1f), ribbonMaterial);
+            CreatePrimitiveChild(root.transform, "SnowCap", PrimitiveType.Cube, new Vector3(0f, 0.56f, 0f), new Vector3(0.54f, 0.06f, 0.54f), GetSnowFloorMaterial());
+            CreatePrimitiveChild(root.transform, "Bow_Left", PrimitiveType.Sphere, new Vector3(-0.12f, 0.63f, -0.18f), new Vector3(0.14f, 0.06f, 0.1f), ribbonMaterial);
+            CreatePrimitiveChild(root.transform, "Bow_Right", PrimitiveType.Sphere, new Vector3(0.12f, 0.63f, -0.18f), new Vector3(0.14f, 0.06f, 0.1f), ribbonMaterial);
         }
 
         /// <summary>
@@ -1166,10 +1182,54 @@ namespace BubbleTown.Map
         private GameObject CreateSnowfieldGroundTile(string objectName)
         {
             GameObject root = new GameObject(objectName);
-            CreatePrimitiveChild(root.transform, "TileBase_Snow", PrimitiveType.Cube, new Vector3(0f, -0.05f, 0f), new Vector3(0.98f, 0.07f, 0.98f), GetSnowFloorMaterial());
-            CreatePrimitiveChild(root.transform, "TileInset_IcePatch", PrimitiveType.Cube, new Vector3(0f, -0.002f, 0f), new Vector3(0.68f, 0.018f, 0.68f), GetSnowTileInsetMaterial());
-            CreatePrimitiveChild(root.transform, "TinySnowSparkle", PrimitiveType.Sphere, new Vector3(-0.22f, 0.02f, -0.2f), new Vector3(0.07f, 0.018f, 0.07f), GetSnowIceMaterial());
+            bool checker = TryParseGeneratedGridPosition(objectName, out int x, out int y) && (x + y) % 2 != 0;
+            Material tileFaceMaterial = checker ? GetSnowTileInsetMaterial() : GetSnowFloorMaterial();
+
+            CreatePrimitiveChild(root.transform, "TileBase_FrostedIce", PrimitiveType.Cube, new Vector3(0f, -0.052f, 0f), new Vector3(0.98f, 0.07f, 0.98f), GetSnowTileInsetMaterial());
+            CreatePrimitiveChild(root.transform, "TileFace_PaleIce", PrimitiveType.Cube, new Vector3(0f, -0.004f, 0f), new Vector3(0.82f, 0.018f, 0.82f), tileFaceMaterial);
+            CreatePrimitiveChild(root.transform, "TileGrout_North", PrimitiveType.Cube, new Vector3(0f, 0.004f, 0.47f), new Vector3(0.86f, 0.014f, 0.018f), GetSnowTileEdgeMaterial());
+            CreatePrimitiveChild(root.transform, "TileGrout_East", PrimitiveType.Cube, new Vector3(0.47f, 0.004f, 0f), new Vector3(0.018f, 0.014f, 0.86f), GetSnowTileEdgeMaterial());
+
+            if (ShouldAddSnowflakeTileAccent(x, y))
+            {
+                CreateSnowflakeMark(root.transform, new Vector3(0f, 0.018f, 0f), $"Snowflake_{x:00}_{y:00}", 0.3f + ((x + y) % 3) * 0.035f);
+            }
+
             return root;
+        }
+
+        /// <summary>
+        /// Purpose: Chooses which Snowfield floor tiles receive thin snowflake etching.
+        /// Inputs: grid coordinates parsed from generated object names.
+        /// Output: true when an ice tile should receive a decorative mark.
+        /// </summary>
+        /// <param name="x">Grid x coordinate.</param>
+        /// <param name="y">Grid y coordinate.</param>
+        /// <returns>True when the tile should receive a snowflake mark.</returns>
+        private bool ShouldAddSnowflakeTileAccent(int x, int y)
+        {
+            return (x + y) % 2 == 0 || (x * 3 + y * 5) % 7 == 0;
+        }
+
+        /// <summary>
+        /// Purpose: Creates a flat geometric snowflake decal for icy Snowfield floor tiles.
+        /// Inputs: parent, local position, object name, and mark size.
+        /// Output: no return value; adds visual-only thin primitives.
+        /// </summary>
+        /// <param name="parent">Parent transform for the snowflake pieces.</param>
+        /// <param name="localPosition">Local center of the snowflake.</param>
+        /// <param name="objectName">Name prefix for generated pieces.</param>
+        /// <param name="size">Approximate arm length.</param>
+        private void CreateSnowflakeMark(Transform parent, Vector3 localPosition, string objectName, float size)
+        {
+            Material markMaterial = GetSnowflakeMarkMaterial();
+            GameObject armA = CreatePrimitiveChild(parent, objectName + "_ArmA", PrimitiveType.Cube, localPosition, new Vector3(size, 0.008f, 0.018f), markMaterial);
+            armA.transform.localEulerAngles = new Vector3(0f, 0f, 0f);
+            GameObject armB = CreatePrimitiveChild(parent, objectName + "_ArmB", PrimitiveType.Cube, localPosition, new Vector3(size, 0.008f, 0.018f), markMaterial);
+            armB.transform.localEulerAngles = new Vector3(0f, 60f, 0f);
+            GameObject armC = CreatePrimitiveChild(parent, objectName + "_ArmC", PrimitiveType.Cube, localPosition, new Vector3(size, 0.008f, 0.018f), markMaterial);
+            armC.transform.localEulerAngles = new Vector3(0f, -60f, 0f);
+            CreatePrimitiveChild(parent, objectName + "_Core", PrimitiveType.Sphere, localPosition + Vector3.up * 0.002f, new Vector3(0.055f, 0.012f, 0.055f), markMaterial);
         }
 
         /// <summary>
@@ -1267,15 +1327,22 @@ namespace BubbleTown.Map
         {
             GameObject root = new GameObject(objectName);
             BoxCollider collider = root.AddComponent<BoxCollider>();
-            collider.size = new Vector3(0.92f, 1.02f, 0.92f);
-            collider.center = new Vector3(0f, 0.51f, 0f);
+            collider.size = new Vector3(0.92f, 1.08f, 0.92f);
+            collider.center = new Vector3(0f, 0.54f, 0f);
 
             Transform visualRoot = CreateVisualRoot(root.transform);
-            CreatePrimitiveChild(visualRoot, "BottomShadow", PrimitiveType.Cube, new Vector3(0f, 0.06f, 0f), new Vector3(0.98f, 0.12f, 0.98f), GetShadowMaterial());
-            CreatePrimitiveChild(visualRoot, "PackedSnowBlock", PrimitiveType.Cube, new Vector3(0f, 0.48f, 0f), new Vector3(0.88f, 0.86f, 0.88f), GetSnowHardWallMaterial());
-            CreatePrimitiveChild(visualRoot, "IceCap", PrimitiveType.Cube, new Vector3(0f, 0.94f, 0f), new Vector3(0.7f, 0.08f, 0.7f), GetSnowHardWallHighlightMaterial());
-            CreatePrimitiveChild(visualRoot, "FrozenCorner", PrimitiveType.Sphere, new Vector3(-0.28f, 0.76f, -0.28f), new Vector3(0.16f, 0.16f, 0.16f), GetSnowIceMaterial());
-            CreatePrimitiveChild(visualRoot, "WoodenBrace", PrimitiveType.Cube, new Vector3(0.42f, 0.42f, 0f), new Vector3(0.05f, 0.62f, 0.62f), GetSnowWoodMaterial());
+            CreatePrimitiveChild(visualRoot, "ColdBaseShadow", PrimitiveType.Cube, new Vector3(0f, 0.055f, 0f), new Vector3(0.98f, 0.11f, 0.98f), GetSnowPackedShadowMaterial());
+            CreatePrimitiveChild(visualRoot, "TallColdSnowBlock", PrimitiveType.Cube, new Vector3(0f, 0.48f, 0f), new Vector3(0.9f, 0.86f, 0.9f), GetSnowHardWallMaterial());
+            CreatePrimitiveChild(visualRoot, "DarkIceSide_Front", PrimitiveType.Cube, new Vector3(0f, 0.48f, -0.465f), new Vector3(0.78f, 0.68f, 0.03f), GetSnowPackedShadowMaterial());
+            CreatePrimitiveChild(visualRoot, "DarkIceSide_Right", PrimitiveType.Cube, new Vector3(0.465f, 0.48f, 0f), new Vector3(0.03f, 0.68f, 0.78f), GetSnowPackedShadowMaterial());
+            CreatePrimitiveChild(visualRoot, "WideSnowCap", PrimitiveType.Sphere, new Vector3(0f, 0.92f, 0f), new Vector3(0.86f, 0.24f, 0.86f), GetSnowHardWallHighlightMaterial());
+            CreatePrimitiveChild(visualRoot, "TopSoftCenter", PrimitiveType.Sphere, new Vector3(-0.08f, 1f, -0.08f), new Vector3(0.46f, 0.09f, 0.46f), GetSnowFloorMaterial());
+            CreatePrimitiveChild(visualRoot, "FrontPackedSnowLip", PrimitiveType.Cube, new Vector3(0f, 0.8f, -0.47f), new Vector3(0.72f, 0.07f, 0.045f), GetSnowHardWallHighlightMaterial());
+            CreatePrimitiveChild(visualRoot, "RightPackedSnowLip", PrimitiveType.Cube, new Vector3(0.47f, 0.8f, 0f), new Vector3(0.045f, 0.07f, 0.72f), GetSnowHardWallHighlightMaterial());
+            CreatePrimitiveChild(visualRoot, "IceCrack_Front_A", PrimitiveType.Cube, new Vector3(-0.14f, 0.44f, -0.482f), new Vector3(0.34f, 0.022f, 0.018f), GetSnowTileEdgeMaterial()).transform.localEulerAngles = new Vector3(0f, 0f, 24f);
+            CreatePrimitiveChild(visualRoot, "IceCrack_Front_B", PrimitiveType.Cube, new Vector3(0.16f, 0.58f, -0.482f), new Vector3(0.24f, 0.02f, 0.018f), GetSnowTileEdgeMaterial()).transform.localEulerAngles = new Vector3(0f, 0f, -28f);
+            CreatePrimitiveChild(visualRoot, "CornerSnowBall", PrimitiveType.Sphere, new Vector3(-0.3f, 0.94f, -0.3f), new Vector3(0.16f, 0.11f, 0.16f), GetSnowFloorMaterial());
+            CreatePrimitiveChild(visualRoot, "TinyIceChip", PrimitiveType.Sphere, new Vector3(0.22f, 1f, 0.18f), new Vector3(0.07f, 0.035f, 0.07f), GetSnowIceMaterial());
             ConfigureGeneratedWallFeedback(root, visualRoot);
             return root;
         }
@@ -1425,14 +1492,22 @@ namespace BubbleTown.Map
         {
             GameObject root = new GameObject(objectName);
             BoxCollider collider = root.AddComponent<BoxCollider>();
-            collider.size = new Vector3(0.82f, 0.78f, 0.82f);
-            collider.center = new Vector3(0f, 0.39f, 0f);
+            collider.size = new Vector3(0.74f, 0.68f, 0.74f);
+            collider.center = new Vector3(0f, 0.34f, 0f);
 
             Transform visualRoot = CreateVisualRoot(root.transform);
-            CreatePrimitiveChild(visualRoot, "GiftBody", PrimitiveType.Cube, new Vector3(0f, 0.39f, 0f), new Vector3(0.82f, 0.76f, 0.82f), GetSnowSoftWallMaterial());
-            CreatePrimitiveChild(visualRoot, "RibbonFront", PrimitiveType.Cube, new Vector3(0f, 0.42f, -0.43f), new Vector3(0.15f, 0.62f, 0.04f), GetSnowSoftWallRibbonMaterial());
-            CreatePrimitiveChild(visualRoot, "RibbonSide", PrimitiveType.Cube, new Vector3(-0.43f, 0.42f, 0f), new Vector3(0.04f, 0.62f, 0.15f), GetSnowPropPinkMaterial());
-            CreatePrimitiveChild(visualRoot, "SnowDust", PrimitiveType.Sphere, new Vector3(-0.22f, 0.7f, -0.24f), new Vector3(0.18f, 0.08f, 0.18f), GetSnowFloorMaterial());
+            CreatePrimitiveChild(visualRoot, "GiftSmallShadow", PrimitiveType.Cube, new Vector3(0f, 0.045f, 0f), new Vector3(0.78f, 0.08f, 0.78f), GetSnowPackedShadowMaterial());
+            CreatePrimitiveChild(visualRoot, "BrightGiftBody", PrimitiveType.Cube, new Vector3(0f, 0.3f, 0f), new Vector3(0.68f, 0.52f, 0.68f), GetSnowSoftWallMaterial());
+            CreatePrimitiveChild(visualRoot, "GiftWarmSide_Front", PrimitiveType.Cube, new Vector3(0f, 0.3f, -0.352f), new Vector3(0.5f, 0.4f, 0.03f), GetSnowGiftSideMaterial());
+            CreatePrimitiveChild(visualRoot, "GiftWarmSide_Right", PrimitiveType.Cube, new Vector3(0.352f, 0.3f, 0f), new Vector3(0.03f, 0.4f, 0.5f), GetSnowGiftSideMaterial());
+            CreatePrimitiveChild(visualRoot, "BigBlueRibbon_Front", PrimitiveType.Cube, new Vector3(0f, 0.31f, -0.372f), new Vector3(0.18f, 0.44f, 0.04f), GetSnowSoftWallRibbonMaterial());
+            CreatePrimitiveChild(visualRoot, "BigPinkRibbon_Right", PrimitiveType.Cube, new Vector3(0.372f, 0.31f, 0f), new Vector3(0.04f, 0.44f, 0.18f), GetSnowPropPinkMaterial());
+            CreatePrimitiveChild(visualRoot, "ThinSnowTop", PrimitiveType.Cube, new Vector3(0f, 0.58f, 0f), new Vector3(0.56f, 0.045f, 0.56f), GetSnowFloorMaterial());
+            CreatePrimitiveChild(visualRoot, "SnowDrift_BackLeft", PrimitiveType.Sphere, new Vector3(-0.18f, 0.62f, 0.12f), new Vector3(0.24f, 0.07f, 0.18f), GetSnowHardWallHighlightMaterial());
+            CreatePrimitiveChild(visualRoot, "TopRibbon_Blue", PrimitiveType.Cube, new Vector3(0f, 0.62f, -0.02f), new Vector3(0.16f, 0.035f, 0.58f), GetSnowSoftWallRibbonMaterial());
+            CreatePrimitiveChild(visualRoot, "Bow_LeftPink", PrimitiveType.Sphere, new Vector3(-0.17f, 0.64f, -0.31f), new Vector3(0.16f, 0.06f, 0.1f), GetSnowPropPinkMaterial());
+            CreatePrimitiveChild(visualRoot, "Bow_RightPink", PrimitiveType.Sphere, new Vector3(0.17f, 0.64f, -0.31f), new Vector3(0.16f, 0.06f, 0.1f), GetSnowPropPinkMaterial());
+            CreatePrimitiveChild(visualRoot, "BreakableGiftDot", PrimitiveType.Sphere, new Vector3(-0.24f, 0.5f, -0.33f), new Vector3(0.06f, 0.03f, 0.06f), GetSnowPropPinkMaterial());
             ConfigureGeneratedWallFeedback(root, visualRoot);
             return root;
         }
@@ -2129,7 +2204,7 @@ namespace BubbleTown.Map
         {
             if (snowFloorMaterial == null)
             {
-                snowFloorMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_SnowFloor", new Color(0.9f, 0.98f, 1f));
+                snowFloorMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_SnowFloor", new Color(0.84f, 0.93f, 0.98f), false, 0f, 0.32f);
             }
 
             return snowFloorMaterial;
@@ -2145,7 +2220,7 @@ namespace BubbleTown.Map
         {
             if (snowTileInsetMaterial == null)
             {
-                snowTileInsetMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_IceTile", new Color(0.58f, 0.9f, 1f), true, 0.32f);
+                snowTileInsetMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_IceTile", new Color(0.54f, 0.8f, 0.93f), false, 0f, 0.48f);
             }
 
             return snowTileInsetMaterial;
@@ -2161,7 +2236,7 @@ namespace BubbleTown.Map
         {
             if (snowHardWallMaterial == null)
             {
-                snowHardWallMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_HardWallPackedSnow", new Color(0.78f, 0.92f, 1f), true, 0.12f);
+                snowHardWallMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_HardWallPackedSnow", new Color(0.56f, 0.72f, 0.84f), false, 0f, 0.24f);
             }
 
             return snowHardWallMaterial;
@@ -2177,7 +2252,7 @@ namespace BubbleTown.Map
         {
             if (snowHardWallHighlightMaterial == null)
             {
-                snowHardWallHighlightMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_HardWallHighlight", new Color(1f, 1f, 0.92f), true, 0.28f);
+                snowHardWallHighlightMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_HardWallHighlight", new Color(0.95f, 0.99f, 1f), false, 0f, 0.34f);
             }
 
             return snowHardWallHighlightMaterial;
@@ -2193,7 +2268,7 @@ namespace BubbleTown.Map
         {
             if (snowSoftWallMaterial == null)
             {
-                snowSoftWallMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_SoftWallGift", new Color(0.98f, 0.72f, 0.42f));
+                snowSoftWallMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_SoftWallGift", new Color(1f, 0.6f, 0.12f), false, 0f, 0.26f);
             }
 
             return snowSoftWallMaterial;
@@ -2209,7 +2284,7 @@ namespace BubbleTown.Map
         {
             if (snowSoftWallRibbonMaterial == null)
             {
-                snowSoftWallRibbonMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_SoftWallRibbonBlue", new Color(0.3f, 0.78f, 1f), true, 0.18f);
+                snowSoftWallRibbonMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_SoftWallRibbonBlue", new Color(0.02f, 0.42f, 0.72f), false, 0f, 0.32f);
             }
 
             return snowSoftWallRibbonMaterial;
@@ -2225,7 +2300,7 @@ namespace BubbleTown.Map
         {
             if (snowIceMaterial == null)
             {
-                snowIceMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_GlowIce", new Color(0.42f, 0.88f, 1f), true, 0.55f);
+                snowIceMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_GlowIce", new Color(0.34f, 0.72f, 0.9f), false, 0f, 0.5f);
             }
 
             return snowIceMaterial;
@@ -2241,7 +2316,7 @@ namespace BubbleTown.Map
         {
             if (snowWoodMaterial == null)
             {
-                snowWoodMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_WarmWood", new Color(0.52f, 0.38f, 0.24f));
+                snowWoodMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_WarmWood", new Color(0.34f, 0.24f, 0.17f), false, 0f, 0.22f);
             }
 
             return snowWoodMaterial;
@@ -2257,7 +2332,7 @@ namespace BubbleTown.Map
         {
             if (snowPropBlueMaterial == null)
             {
-                snowPropBlueMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_PropBlue", new Color(0.28f, 0.72f, 1f), true, 0.25f);
+                snowPropBlueMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_PropBlue", new Color(0.22f, 0.6f, 0.82f), false, 0f, 0.34f);
             }
 
             return snowPropBlueMaterial;
@@ -2273,10 +2348,74 @@ namespace BubbleTown.Map
         {
             if (snowPropPinkMaterial == null)
             {
-                snowPropPinkMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_PropPink", new Color(1f, 0.54f, 0.78f), true, 0.22f);
+                snowPropPinkMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_PropPink", new Color(0.98f, 0.28f, 0.62f), false, 0f, 0.28f);
             }
 
             return snowPropPinkMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets the cool grout material used between Snowfield ice tiles.
+        /// Inputs: no direct parameters; creates the material lazily on first use.
+        /// Output: a cached Material instance.
+        /// </summary>
+        /// <returns>The Snowfield tile edge material.</returns>
+        private Material GetSnowTileEdgeMaterial()
+        {
+            if (snowTileEdgeMaterial == null)
+            {
+                snowTileEdgeMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_IceTileEdge", new Color(0.38f, 0.58f, 0.7f), false, 0f, 0.22f);
+            }
+
+            return snowTileEdgeMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets the blue-gray packed shadow material for snow blocks and gifts.
+        /// Inputs: no direct parameters; creates the material lazily on first use.
+        /// Output: a cached Material instance.
+        /// </summary>
+        /// <returns>The Snowfield packed shadow material.</returns>
+        private Material GetSnowPackedShadowMaterial()
+        {
+            if (snowPackedShadowMaterial == null)
+            {
+                snowPackedShadowMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_PackedShadow", new Color(0.18f, 0.27f, 0.36f), false, 0f, 0.18f);
+            }
+
+            return snowPackedShadowMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets the subtle blue material for Snowfield floor snowflake etching.
+        /// Inputs: no direct parameters; creates the material lazily on first use.
+        /// Output: a cached Material instance.
+        /// </summary>
+        /// <returns>The Snowfield snowflake mark material.</returns>
+        private Material GetSnowflakeMarkMaterial()
+        {
+            if (snowflakeMarkMaterial == null)
+            {
+                snowflakeMarkMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_SnowflakeMark", new Color(0.42f, 0.68f, 0.82f), false, 0f, 0.42f);
+            }
+
+            return snowflakeMarkMaterial;
+        }
+
+        /// <summary>
+        /// Purpose: Gets the warmer shaded side material for Snowfield gift soft walls.
+        /// Inputs: no direct parameters; creates the material lazily on first use.
+        /// Output: a cached Material instance.
+        /// </summary>
+        /// <returns>The Snowfield gift side material.</returns>
+        private Material GetSnowGiftSideMaterial()
+        {
+            if (snowGiftSideMaterial == null)
+            {
+                snowGiftSideMaterial = CreateRuntimeMaterial("Mat_Runtime_Snowfield_GiftSideShade", new Color(0.82f, 0.36f, 0.08f), false, 0f, 0.22f);
+            }
+
+            return snowGiftSideMaterial;
         }
 
         /// <summary>
