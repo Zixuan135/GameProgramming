@@ -20,6 +20,15 @@ namespace BubbleTown.UI
 
         private static readonly Dictionary<string, Texture2D> RoundedTextureCache = new Dictionary<string, Texture2D>();
         private static readonly Dictionary<string, Texture2D> CircleTextureCache = new Dictionary<string, Texture2D>();
+        private static readonly string[] ResultFontCandidates =
+        {
+            "Arial Rounded MT Bold",
+            "Avenir Next Heavy",
+            "Avenir Next Condensed Heavy",
+            "Helvetica Rounded",
+            "Marker Felt"
+        };
+
         private static readonly Rect RetryButtonCrop = new Rect(0f, 0f, 1835f, 400f);
         private static readonly Rect MainMenuButtonCrop = new Rect(0f, 0f, 1554f, 316f);
 
@@ -48,6 +57,7 @@ namespace BubbleTown.UI
         private Texture2D resultPanelTexture;
         private Texture2D retryButtonTexture;
         private Texture2D mainMenuButtonTexture;
+        private Font resultFont;
         private bool resultAudioPlayed;
         private bool texturesLoaded;
         private float shownAtTime;
@@ -485,15 +495,21 @@ namespace BubbleTown.UI
         private void DrawImageResultContent(Rect panel, ResultViewModel viewModel)
         {
             DrawImageResultTitle(panel, viewModel.Title);
+            DrawImageHeroResultPanel(panel, viewModel);
 
             Rect iconRect = RelativeArtworkRect(panel, 286f, 313f, 156f, 156f);
-            GUI.DrawTexture(iconRect, GetCircleTexture(viewModel.AccentColor));
-            DrawLockedLabel(iconRect, viewModel.IconText, resultIconStyle);
+            DrawImageResultIconBadge(iconRect, viewModel);
 
-            DrawArtworkTextMask(RelativeArtworkRect(panel, 490f, 286f, 740f, 202f), 0);
-            DrawLockedLabel(RelativeArtworkRect(panel, 502f, 297f, 700f, 56f), viewModel.OutcomeLabel, resultTitleStyle);
+            DrawOutlinedLabel(
+                RelativeArtworkRect(panel, 502f, 286f, 700f, 74f),
+                viewModel.OutcomeLabel,
+                resultTitleStyle,
+                ResolveOutcomeTextColor(viewModel),
+                Color.white,
+                new Color(0.07f, 0.20f, 0.32f, 0.24f),
+                2);
             DrawLockedLabel(
-                RelativeArtworkRect(panel, 502f, 374f, 720f, 104f),
+                RelativeArtworkRect(panel, 502f, 376f, 720f, 102f),
                 viewModel.MoodText + "\n" + viewModel.Detail,
                 resultDetailStyle);
 
@@ -519,8 +535,120 @@ namespace BubbleTown.UI
                 return;
             }
 
-            DrawArtworkTextMask(RelativeArtworkRect(panel, 430f, 104f, 760f, 148f), 0);
-            DrawLockedLabel(RelativeArtworkRect(panel, 430f, 122f, 760f, 96f), title, screenTitleStyle);
+            Rect coverRect = RelativeArtworkRect(panel, 388f, 93f, 818f, 160f);
+            DrawArtworkTitleCover(coverRect);
+            DrawOutlinedLabel(
+                RelativeArtworkRect(panel, 416f, 112f, 760f, 104f),
+                title.ToUpperInvariant(),
+                screenTitleStyle,
+                Color.white,
+                new Color(0.09f, 0.28f, 0.52f, 1f),
+                new Color(0.72f, 0.46f, 0.18f, 0.34f),
+                3);
+        }
+
+        /// <summary>
+        /// Purpose: Replaces the baked defeat card with an outcome-colored card so dynamic result text does not fight the artwork.
+        /// Inputs: panel is the on-screen artwork rect; viewModel supplies the result accent.
+        /// Output: no return value; draws a non-interactive hero result card.
+        /// </summary>
+        /// <param name="panel">Drawn artwork rect.</param>
+        /// <param name="viewModel">Runtime result content.</param>
+        private void DrawImageHeroResultPanel(Rect panel, ResultViewModel viewModel)
+        {
+            Rect cardRect = RelativeArtworkRect(panel, 228f, 238f, 1130f, 282f);
+            Color accent = Color.Lerp(viewModel.AccentColor, Color.white, 0.1f);
+
+            Rect shadowRect = new Rect(
+                cardRect.x + cardRect.width * 0.006f,
+                cardRect.y + cardRect.height * 0.045f,
+                cardRect.width,
+                cardRect.height);
+            GUI.DrawTexture(
+                PixelSnapRect(shadowRect),
+                GetRoundedTexture(new Color(0.32f, 0.15f, 0.08f, 0.18f), Color.clear, 46, 0));
+
+            GUI.DrawTexture(
+                cardRect,
+                GetRoundedTexture(new Color(1f, 0.975f, 0.82f, 1f), accent, 46, 6));
+
+            Rect innerGlowRect = new Rect(
+                cardRect.x + cardRect.width * 0.018f,
+                cardRect.y + cardRect.height * 0.08f,
+                cardRect.width * 0.964f,
+                cardRect.height * 0.78f);
+            GUI.DrawTexture(
+                PixelSnapRect(innerGlowRect),
+                GetRoundedTexture(new Color(1f, 1f, 0.94f, 0.38f), Color.clear, 38, 0));
+
+            Rect shineRect = new Rect(
+                cardRect.x + cardRect.width * 0.12f,
+                cardRect.y + cardRect.height * 0.08f,
+                cardRect.width * 0.68f,
+                Mathf.Max(4f, cardRect.height * 0.065f));
+            GUI.DrawTexture(
+                PixelSnapRect(shineRect),
+                GetRoundedTexture(new Color(1f, 1f, 1f, 0.30f), Color.clear, Mathf.RoundToInt(shineRect.height), 0));
+
+            Rect dividerRect = RelativeArtworkRect(panel, 462f, 302f, 4f, 168f);
+            GUI.DrawTexture(
+                dividerRect,
+                GetRoundedTexture(new Color(accent.r, accent.g, accent.b, 0.42f), Color.clear, 2, 0));
+        }
+
+        /// <summary>
+        /// Purpose: Covers the baked Game Over title with a soft patch that matches the result illustration.
+        /// Inputs: coverRect is the source-art-aligned title slot.
+        /// Output: no return value; draws a title backing without looking like a flat repair block.
+        /// </summary>
+        /// <param name="coverRect">Screen-space title cover.</param>
+        private void DrawArtworkTitleCover(Rect coverRect)
+        {
+            Rect snappedRect = PixelSnapRect(coverRect);
+            Rect shadowRect = new Rect(snappedRect.x + snappedRect.width * 0.006f, snappedRect.y + snappedRect.height * 0.04f, snappedRect.width, snappedRect.height);
+            GUI.DrawTexture(
+                PixelSnapRect(shadowRect),
+                GetRoundedTexture(new Color(0.48f, 0.25f, 0.08f, 0.12f), Color.clear, 42, 0));
+
+            GUI.DrawTexture(
+                snappedRect,
+                GetRoundedTexture(new Color(1f, 0.965f, 0.72f, 1f), new Color(1f, 0.88f, 0.50f, 0.56f), 42, 3));
+
+            Rect shineRect = new Rect(
+                snappedRect.x + snappedRect.width * 0.12f,
+                snappedRect.y + snappedRect.height * 0.11f,
+                snappedRect.width * 0.64f,
+                Mathf.Max(5f, snappedRect.height * 0.08f));
+            GUI.DrawTexture(
+                PixelSnapRect(shineRect),
+                GetRoundedTexture(new Color(1f, 1f, 1f, 0.32f), Color.clear, Mathf.RoundToInt(shineRect.height), 0));
+        }
+
+        /// <summary>
+        /// Purpose: Draws a polished dynamic result icon over the illustrated result panel.
+        /// Inputs: iconRect is the artwork slot and viewModel supplies icon text and accent color.
+        /// Output: no return value; draws a badge that feels integrated with the result art.
+        /// </summary>
+        /// <param name="iconRect">Screen-space icon slot.</param>
+        /// <param name="viewModel">Runtime result content.</param>
+        private void DrawImageResultIconBadge(Rect iconRect, ResultViewModel viewModel)
+        {
+            Rect shadowRect = new Rect(iconRect.x + iconRect.width * 0.07f, iconRect.y + iconRect.height * 0.08f, iconRect.width, iconRect.height);
+            GUI.DrawTexture(shadowRect, GetCircleTexture(new Color(0.06f, 0.22f, 0.34f, 0.22f)));
+
+            Rect rimRect = ScaleRectAroundCenter(iconRect, 1.13f, 1.13f);
+            GUI.DrawTexture(rimRect, GetCircleTexture(new Color(1f, 0.985f, 0.86f, 0.98f)));
+            GUI.DrawTexture(ScaleRectAroundCenter(iconRect, 1.04f, 1.04f), GetCircleTexture(Color.Lerp(viewModel.AccentColor, Color.white, 0.08f)));
+            GUI.DrawTexture(iconRect, GetCircleTexture(viewModel.AccentColor));
+
+            Rect shineRect = new Rect(
+                iconRect.x + iconRect.width * 0.16f,
+                iconRect.y + iconRect.height * 0.14f,
+                iconRect.width * 0.34f,
+                iconRect.height * 0.18f);
+            GUI.DrawTexture(shineRect, GetCircleTexture(new Color(1f, 1f, 1f, 0.34f)));
+
+            DrawLockedLabel(iconRect, viewModel.IconText, resultIconStyle);
         }
 
         /// <summary>
@@ -545,9 +673,131 @@ namespace BubbleTown.UI
         /// <param name="radius">Rounded corner radius.</param>
         private void DrawArtworkTextMask(Rect rect, int radius)
         {
+            Rect snappedRect = PixelSnapRect(rect);
+            int resolvedRadius = radius > 0
+                ? radius
+                : Mathf.RoundToInt(Mathf.Min(snappedRect.width, snappedRect.height) * 0.18f);
+
+            Rect shadowRect = new Rect(
+                snappedRect.x + snappedRect.width * 0.01f,
+                snappedRect.y + snappedRect.height * 0.04f,
+                snappedRect.width,
+                snappedRect.height);
             GUI.DrawTexture(
-                PixelSnapRect(rect),
-                GetRoundedTexture(new Color(1f, 0.94f, 0.68f, 1f), new Color(1f, 0.94f, 0.68f, 1f), Mathf.Max(0, radius), 0));
+                PixelSnapRect(shadowRect),
+                GetRoundedTexture(new Color(0.35f, 0.16f, 0.08f, 0.12f), Color.clear, resolvedRadius, 0));
+
+            GUI.DrawTexture(
+                snappedRect,
+                GetRoundedTexture(new Color(1f, 0.985f, 0.84f, 1f), new Color(1f, 0.62f, 0.42f, 0.34f), resolvedRadius, 2));
+
+            Rect shineRect = new Rect(
+                snappedRect.x + snappedRect.width * 0.06f,
+                snappedRect.y + snappedRect.height * 0.09f,
+                snappedRect.width * 0.84f,
+                Mathf.Max(3f, snappedRect.height * 0.08f));
+            GUI.DrawTexture(
+                PixelSnapRect(shineRect),
+                GetRoundedTexture(new Color(1f, 1f, 1f, 0.22f), Color.clear, Mathf.RoundToInt(shineRect.height), 0));
+        }
+
+        /// <summary>
+        /// Purpose: Resolves a readable outcome text color that stays closer to the illustrated result art.
+        /// Inputs: viewModel supplies current result outcome and accent.
+        /// Output: a saturated but not neon foreground color.
+        /// </summary>
+        /// <param name="viewModel">Runtime result content.</param>
+        /// <returns>Text color for the main result word.</returns>
+        private Color ResolveOutcomeTextColor(ResultViewModel viewModel)
+        {
+            switch (viewModel.Outcome)
+            {
+                case ResultOutcome.Victory:
+                    return new Color(0.05f, 0.55f, 0.78f, 1f);
+                case ResultOutcome.Defeat:
+                    return new Color(0.92f, 0.29f, 0.20f, 1f);
+                case ResultOutcome.Draw:
+                    return new Color(0.95f, 0.52f, 0.08f, 1f);
+                default:
+                    return Color.Lerp(viewModel.AccentColor, new Color(0.11f, 0.28f, 0.42f, 1f), 0.28f);
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Draws candy-style outlined text so dynamic labels feel closer to the painted UI artwork.
+        /// Inputs: rect/text/style define the label; colors define face, outline, and shadow.
+        /// Output: no return value; draws a label with soft outline and shadow.
+        /// </summary>
+        /// <param name="rect">Screen-space label rect.</param>
+        /// <param name="text">Text to draw.</param>
+        /// <param name="style">Base GUI style.</param>
+        /// <param name="faceColor">Main text color.</param>
+        /// <param name="outlineColor">Text outline color.</param>
+        /// <param name="shadowColor">Soft drop shadow color.</param>
+        /// <param name="outlinePixels">Outline radius in screen pixels.</param>
+        private void DrawOutlinedLabel(
+            Rect rect,
+            string text,
+            GUIStyle style,
+            Color faceColor,
+            Color outlineColor,
+            Color shadowColor,
+            int outlinePixels)
+        {
+            if (style == null)
+            {
+                GUI.Label(rect, text);
+                return;
+            }
+
+            Rect snappedRect = PixelSnapRect(rect);
+            if (shadowColor.a > 0f)
+            {
+                DrawColoredLabel(new Rect(snappedRect.x + 1f, snappedRect.y + 3f, snappedRect.width, snappedRect.height), text, style, shadowColor);
+            }
+
+            int radius = Mathf.Max(0, outlinePixels);
+            for (int y = -radius; y <= radius; y++)
+            {
+                for (int x = -radius; x <= radius; x++)
+                {
+                    if (x == 0 && y == 0)
+                    {
+                        continue;
+                    }
+
+                    if (x * x + y * y > radius * radius + radius)
+                    {
+                        continue;
+                    }
+
+                    DrawColoredLabel(new Rect(snappedRect.x + x, snappedRect.y + y, snappedRect.width, snappedRect.height), text, style, outlineColor);
+                }
+            }
+
+            DrawColoredLabel(snappedRect, text, style, faceColor);
+        }
+
+        /// <summary>
+        /// Purpose: Draws one label with a temporary text color without permanently mutating the shared style.
+        /// Inputs: rect/text/style/color describe one label pass.
+        /// Output: no return value; restores the style color after drawing.
+        /// </summary>
+        /// <param name="rect">Screen-space label rect.</param>
+        /// <param name="text">Text to draw.</param>
+        /// <param name="style">GUI style to use.</param>
+        /// <param name="color">Temporary text color.</param>
+        private void DrawColoredLabel(Rect rect, string text, GUIStyle style, Color color)
+        {
+            Color originalColor = style.normal.textColor;
+            LockStyleTextColor(style, color);
+
+            Color previousContentColor = GUI.contentColor;
+            GUI.contentColor = Color.white;
+            GUI.Label(rect, text, style);
+            GUI.contentColor = previousContentColor;
+
+            LockStyleTextColor(style, originalColor);
         }
 
         /// <summary>
@@ -1002,6 +1252,51 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
+        /// Purpose: Chooses a rounded display font when the OS has one, with a safe Unity fallback.
+        /// Inputs: no direct parameters; reads installed OS font names.
+        /// Output: a font suitable for result-screen labels.
+        /// </summary>
+        /// <returns>Rounded result UI font or the default GUI label font.</returns>
+        private Font ResolveResultFont()
+        {
+            if (resultFont != null)
+            {
+                return resultFont;
+            }
+
+            string[] installedFontNames = Font.GetOSInstalledFontNames();
+            for (int candidateIndex = 0; candidateIndex < ResultFontCandidates.Length; candidateIndex++)
+            {
+                string candidate = ResultFontCandidates[candidateIndex];
+                for (int fontIndex = 0; fontIndex < installedFontNames.Length; fontIndex++)
+                {
+                    string installedFontName = installedFontNames[fontIndex];
+                    if (!string.Equals(installedFontName, candidate, System.StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        resultFont = Font.CreateDynamicFontFromOSFont(installedFontName, 24);
+                    }
+                    catch (System.Exception)
+                    {
+                        resultFont = null;
+                    }
+
+                    if (resultFont != null)
+                    {
+                        return resultFont;
+                    }
+                }
+            }
+
+            resultFont = GUI.skin.label.font;
+            return resultFont;
+        }
+
+        /// <summary>
         /// Purpose: Ensures styles exists or is initialized before use.
         /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
         /// Output: no return value; updates component, scene, or game state as needed.
@@ -1022,11 +1317,13 @@ namespace BubbleTown.UI
 
             Color textPrimary = new Color(0.11f, 0.28f, 0.42f, 1f);
             Color textSecondary = new Color(0.23f, 0.45f, 0.55f, 1f);
+            Font uiFont = ResolveResultFont();
 
             cardTitleStyle = new GUIStyle(GUI.skin.label)
             {
                 alignment = TextAnchor.MiddleCenter,
                 clipping = TextClipping.Overflow,
+                font = uiFont,
                 fontSize = 14,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = textSecondary }
@@ -1036,7 +1333,8 @@ namespace BubbleTown.UI
             {
                 alignment = TextAnchor.MiddleCenter,
                 clipping = TextClipping.Overflow,
-                fontSize = 18,
+                font = uiFont,
+                fontSize = 20,
                 fontStyle = FontStyle.Bold,
                 wordWrap = true,
                 normal = { textColor = textPrimary }
@@ -1046,7 +1344,8 @@ namespace BubbleTown.UI
             {
                 alignment = TextAnchor.MiddleCenter,
                 clipping = TextClipping.Overflow,
-                fontSize = 30,
+                font = uiFont,
+                fontSize = 36,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = Color.white }
             };
@@ -1056,7 +1355,8 @@ namespace BubbleTown.UI
             {
                 alignment = TextAnchor.MiddleCenter,
                 clipping = TextClipping.Overflow,
-                fontSize = 36,
+                font = uiFont,
+                fontSize = 44,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = textPrimary }
             };
@@ -1066,6 +1366,7 @@ namespace BubbleTown.UI
             {
                 alignment = TextAnchor.MiddleCenter,
                 clipping = TextClipping.Overflow,
+                font = uiFont,
                 fontSize = 13,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = new Color(1f, 0.97f, 0.78f, 1f) }
@@ -1076,7 +1377,8 @@ namespace BubbleTown.UI
             {
                 alignment = TextAnchor.MiddleLeft,
                 clipping = TextClipping.Overflow,
-                fontSize = 22,
+                font = uiFont,
+                fontSize = 31,
                 fontStyle = FontStyle.Bold,
                 normal = { textColor = textPrimary }
             };
@@ -1086,6 +1388,7 @@ namespace BubbleTown.UI
             {
                 alignment = TextAnchor.MiddleLeft,
                 clipping = TextClipping.Overflow,
+                font = uiFont,
                 fontSize = 13,
                 wordWrap = true,
                 normal = { textColor = textSecondary }
@@ -1096,7 +1399,8 @@ namespace BubbleTown.UI
             {
                 alignment = TextAnchor.UpperLeft,
                 clipping = TextClipping.Overflow,
-                fontSize = 11,
+                font = uiFont,
+                fontSize = 14,
                 wordWrap = true,
                 normal = { textColor = textSecondary }
             };
