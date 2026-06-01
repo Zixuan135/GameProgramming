@@ -12,8 +12,10 @@ The current build is a playable Unity prototype with a complete menu-to-result f
 - Six original chibi hero looks backed by `CharacterData` assets and character prefabs.
 - Three selectable map themes: Candy Park, Snowfield, and Jelly Maze.
 - Runtime-generated 3D map visuals now have stronger theme identity, material contrast, wall readability, and decorative borders.
+- Power-up drops use icon-inspired 3D pickup models that match the illustrated item guide.
 - Battle uses an illustrated full-screen background behind the arena and a Canvas-based left HUD.
 - Menu, guide, settings, character select, map select, difficulty select, battle overlays, item guide, pause menu, and result page use image-driven UI assets when available.
+- The Result screen has a custom illustrated layout with outcome-colored cards, rounded display typography, outlined result labels, and polished retry/main-menu image buttons.
 - Built-in placeholder BGM/SFX cover menu, battle, result, movement, bombs, explosions, pickups, victory, defeat, and button feedback.
 
 ## How To Run
@@ -72,6 +74,8 @@ All three maps are generated at runtime by `MapGenerator`, while `MapManager` ow
 - `Shield`: block one explosion hit.
 - `Invincible`: gain short temporary safety after pickup.
 
+Power-up drops are represented in battle by stylized 3D models inspired by their item-guide icons: bomb slot, blast range, speed boots, shield, and invincible star.
+
 ## UI And Flow
 
 BubbleTown now mixes runtime UI construction with imported image assets stored under `Assets/Resources/UI`.
@@ -80,7 +84,7 @@ BubbleTown now mixes runtime UI construction with imported image assets stored u
 - `SimpleUIFactory` still provides fallback drawing for screens that do not have every image asset loaded.
 - `BattleCanvasHUD` owns the in-battle left HUD, item guide, pause panel, settings overlay, opening prompt, result prompt, and pickup toast.
 - `BattleVisualStyleController` applies map-aware lighting and places the shared illustrated battle background behind the arena.
-- The Result screen intentionally uses its own result artwork instead of the battle background.
+- The Result screen intentionally uses its own result artwork instead of the battle background, then redraws the dynamic outcome area as a clean candy-style card so runtime result text does not overlap baked art.
 
 ## Audio And Settings
 
@@ -133,7 +137,7 @@ Docs/                    Art direction, map theme, and environment decoration no
 
 BubbleTown is a playable vertical-slice prototype rather than a finished game. The main loop is implemented: choose a mode, pick a hero, select a map, enter battle, move on the grid, place bombs, trigger explosions, collect items, resolve the round, and retry or return to the menu.
 
-The visual direction is now much closer to a soft toy-board style: maps have distinct themed materials and props, the battle screen has a dedicated illustrated background and HUD, and the menu flow uses custom image assets. Many 3D assets are still runtime-generated primitives, so future art work can focus on replacing those generated forms with reusable polished models while preserving the current gameplay layout.
+The visual direction is now much closer to a soft toy-board style: maps have distinct themed materials and props, item drops read closer to their illustrated icons, the battle screen has a dedicated illustrated background and HUD, the result page has a cleaner outcome card, and the menu flow uses custom image assets. Many 3D assets are still runtime-generated primitives, so future art work can focus on replacing those generated forms with reusable polished models while preserving the current gameplay layout.
 
 ## Roadmap
 
