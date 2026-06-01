@@ -9,10 +9,11 @@ The current build is a playable Unity prototype with a complete menu-to-result f
 - Built with Unity `2022.3.62f3c1`.
 - Full scene flow: Main Menu, Mode Select, Character Select, Map Select, AI Difficulty Select, Battle, and Result.
 - Three playable modes: SinglePlayer, AI Battle, and Local VS.
-- Six original chibi hero looks backed by `CharacterData` assets and character prefabs.
+- Six original card-inspired chibi hero looks backed by `CharacterData` assets and clearer battle-ready character prefabs.
 - Three selectable map themes: Candy Park, Snowfield, and Jelly Maze.
 - Runtime-generated 3D map visuals now have stronger theme identity, material contrast, wall readability, and decorative borders.
 - Power-up drops use icon-inspired 3D pickup models that match the illustrated item guide.
+- Battle character prefabs use stronger silhouettes, per-character outline materials, larger facial features, and role-specific props that better match the character card artwork.
 - Battle uses an illustrated full-screen background behind the arena and a Canvas-based left HUD.
 - Menu, guide, settings, character select, map select, difficulty select, battle overlays, item guide, pause menu, and result page use image-driven UI assets when available.
 - The Result screen has a custom illustrated layout with outcome-colored cards, rounded display typography, outlined result labels, and polished retry/main-menu image buttons.
@@ -45,16 +46,16 @@ Pause during battle with the on-screen `Pause` button, `Esc`, or `P`. From pause
 
 ## Characters
 
-Players can choose from six original chibi heroes. The current roster focuses on clear silhouettes and visual variety while keeping gameplay stats balanced:
+Players can choose from six original chibi heroes. The current roster focuses on clear silhouettes, readable battle-scale details, and visual variety while keeping gameplay stats balanced:
 
-- `Bubble Ranger`: blue bubble-helmet hero
-- `Bear Blaster`: red bear-suit hero
-- `Frog Hopper`: green frog-hood hero
-- `Gear Kid`: yellow engineer-style hero
-- `Bunny Pop`: pink bunny-ear hero
-- `Star Mage`: purple magic-hat hero
+- `Bubble Ranger`: blue bubble-helmet hero with a glass dome, side pads, tank pack, and bubble cannon.
+- `Bear Blaster`: red bear-suit hero with rounded ears, cream muzzle, paw badges, pouch, and oversized blaster.
+- `Frog Hopper`: green frog-hood hero with large eye bulbs, cheeky face details, jump tank, and pogo prop.
+- `Gear Kid`: yellow engineer-style hero with a safety helmet, gear badges, tool pack, pouch, and chunky wrench.
+- `Bunny Pop`: pink bunny-ear hero with long ears, bow, bunny muzzle, pouch, and candy-like blaster.
+- `Star Mage`: purple magic-hat hero with a broad hat brim, star badges, cape, book, staff orb, and star charm.
 
-The characters are currently built from lightweight Unity prefabs and primitive-based meshes, making them easy to replace later with polished authored models.
+The battle character prefabs are still built from lightweight Unity primitives, but they now use custom fixed materials, darker per-character outline ink, larger face windows, and bolder role props so they read closer to the supplied illustrated role cards. This keeps iteration fast while leaving a clear path to replace the generated forms with authored models later.
 
 ## Maps
 
@@ -137,12 +138,12 @@ Docs/                    Art direction, map theme, and environment decoration no
 
 BubbleTown is a playable vertical-slice prototype rather than a finished game. The main loop is implemented: choose a mode, pick a hero, select a map, enter battle, move on the grid, place bombs, trigger explosions, collect items, resolve the round, and retry or return to the menu.
 
-The visual direction is now much closer to a soft toy-board style: maps have distinct themed materials and props, item drops read closer to their illustrated icons, the battle screen has a dedicated illustrated background and HUD, the result page has a cleaner outcome card, and the menu flow uses custom image assets. Many 3D assets are still runtime-generated primitives, so future art work can focus on replacing those generated forms with reusable polished models while preserving the current gameplay layout.
+The visual direction is now much closer to a soft toy-board style: maps have distinct themed materials and props, item drops read closer to their illustrated icons, battle characters have clearer card-inspired silhouettes, the battle screen has a dedicated illustrated background and HUD, the result page has a cleaner outcome card, and the menu flow uses custom image assets. Many 3D assets are still runtime-generated primitives, so future art work can focus on replacing those generated forms with reusable polished models while preserving the current gameplay layout.
 
 ## Roadmap
 
 - Replace runtime primitive map pieces with authored reusable prefabs while keeping the current Candy Park, Snowfield, and Jelly Maze readability.
-- Polish character models, silhouettes, animations, and selection presentation.
+- Replace generated primitive character forms with authored reusable models while preserving the current card-inspired silhouettes, props, and battle readability.
 - Replace placeholder audio with final original or licensed sound assets.
 - Continue improving AI behavior, difficulty tuning, and local-versus balance.
 - Convert remaining fallback IMGUI pieces into reusable Canvas or prefab-based UI where useful.
