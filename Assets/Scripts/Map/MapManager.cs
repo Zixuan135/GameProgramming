@@ -41,7 +41,11 @@ namespace BubbleTown.Map
         private Vector2Int player2SpawnGrid = new Vector2Int(1, 1);
         private Vector2Int aiSpawnGrid = new Vector2Int(1, 1);
         private Vector2Int singlePlayerGoalGrid = new Vector2Int(1, 1);
+        private Vector2Int singlePlayerTutorialMoveGrid = new Vector2Int(2, 1);
+        private Vector2Int singlePlayerTutorialSoftWallGrid = new Vector2Int(3, 1);
+        private int singlePlayerTutorialRouteGateCount = 1;
         private readonly Dictionary<Vector2Int, GameObject> softWallObjects = new Dictionary<Vector2Int, GameObject>();
+        private readonly List<Vector2Int> singlePlayerTutorialRouteGates = new List<Vector2Int>();
 
         /// <summary>
         /// Purpose: Initializes this component before the scene starts running.
@@ -381,6 +385,107 @@ namespace BubbleTown.Map
             ClearBlockingAt(lowerApproach);
             SetSoftWallGate(leftGate);
             SetSoftWallGate(lowerGate);
+            ApplySinglePlayerTutorialRules();
+        }
+
+        /// <summary>
+        /// Purpose: Shapes the SinglePlayer map into a compact tutorial route while preserving the chosen theme.
+        /// Inputs: no direct parameters; reads spawn, goal, and map bounds.
+        /// Output: no return value; clears a readable route and places several normal soft-wall gates.
+        /// </summary>
+        private void ApplySinglePlayerTutorialRules()
+        {
+            if (GameManager.Instance == null || !GameManager.Instance.IsTutorialMode)
+            {
+                return;
+            }
+
+            Vector2Int spawnGrid = player1SpawnGrid;
+            singlePlayerTutorialMoveGrid = ClampInteriorGrid(spawnGrid + Vector2Int.right);
+            singlePlayerTutorialSoftWallGrid = ClampInteriorGrid(spawnGrid + Vector2Int.right * 2);
+
+            int midX = Mathf.Clamp(mapWidth / 2, spawnGrid.x + 3, Mathf.Max(spawnGrid.x + 3, singlePlayerGoalGrid.x - 2));
+            int midY = Mathf.Clamp(mapHeight / 2, spawnGrid.y + 3, Mathf.Max(spawnGrid.y + 3, singlePlayerGoalGrid.y - 2));
+            Vector2Int bendA = ClampInteriorGrid(new Vector2Int(midX, spawnGrid.y));
+            Vector2Int bendB = ClampInteriorGrid(new Vector2Int(midX, midY));
+            Vector2Int bendC = ClampInteriorGrid(new Vector2Int(singlePlayerGoalGrid.x, midY));
+
+            // Keep the route readable, but block it with normal soft walls so the player practices bombing more than once.
+            ClearTutorialRouteSegment(spawnGrid, bendA);
+            ClearTutorialRouteSegment(bendA, bendB);
+            ClearTutorialRouteSegment(bendB, bendC);
+            ClearTutorialRouteSegment(bendC, singlePlayerGoalGrid);
+
+            ClearBlockingAt(spawnGrid + Vector2Int.up);
+            ClearBlockingAt(singlePlayerTutorialMoveGrid);
+            ClearBlockingAt(singlePlayerTutorialMoveGrid + Vector2Int.up);
+            ClearBlockingAt(singlePlayerTutorialSoftWallGrid + Vector2Int.up);
+
+            singlePlayerTutorialRouteGates.Clear();
+            AddTutorialRouteGate(singlePlayerTutorialSoftWallGrid);
+            AddTutorialRouteGate(ClampInteriorGrid(new Vector2Int(midX, spawnGrid.y + 3)));
+            AddTutorialRouteGate(ClampInteriorGrid(singlePlayerGoalGrid + Vector2Int.down));
+            singlePlayerTutorialRouteGateCount = Mathf.Max(1, singlePlayerTutorialRouteGates.Count);
+        }
+
+        /// <summary>
+        /// Purpose: Clears one straight segment of the guided tutorial route.
+        /// Inputs: start and end are grid cells on the same row or column.
+        /// Output: no return value; clears blocking cells along that segment.
+        /// </summary>
+        /// <param name="start">Segment start.</param>
+        /// <param name="end">Segment end.</param>
+        private void ClearTutorialRouteSegment(Vector2Int start, Vector2Int end)
+        {
+            if (start.x == end.x)
+            {
+                int minY = Mathf.Min(start.y, end.y);
+                int maxY = Mathf.Max(start.y, end.y);
+                for (int y = minY; y <= maxY; y++)
+                {
+                    ClearBlockingAt(new Vector2Int(start.x, y));
+                }
+
+                return;
+            }
+
+            int minX = Mathf.Min(start.x, end.x);
+            int maxX = Mathf.Max(start.x, end.x);
+            for (int x = minX; x <= maxX; x++)
+            {
+                ClearBlockingAt(new Vector2Int(x, start.y));
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Places one normal soft-wall gate on the tutorial route and tracks distinct gates.
+        /// Inputs: gridPos is the desired gate cell.
+        /// Output: no return value; updates tracked gates and the map cell.
+        /// </summary>
+        /// <param name="gridPos">Gate cell.</param>
+        private void AddTutorialRouteGate(Vector2Int gridPos)
+        {
+            if (singlePlayerTutorialRouteGates.Contains(gridPos))
+            {
+                return;
+            }
+
+            SetSoftWallGate(gridPos);
+            singlePlayerTutorialRouteGates.Add(gridPos);
+        }
+
+        /// <summary>
+        /// Purpose: Clamps a grid position so tutorial helper cells stay inside the playable interior.
+        /// Inputs: gridPos is the desired helper cell.
+        /// Output: a safe non-border grid position.
+        /// </summary>
+        /// <param name="gridPos">Desired grid position.</param>
+        /// <returns>Clamped interior grid position.</returns>
+        private Vector2Int ClampInteriorGrid(Vector2Int gridPos)
+        {
+            return new Vector2Int(
+                Mathf.Clamp(gridPos.x, 1, Mathf.Max(1, mapWidth - 2)),
+                Mathf.Clamp(gridPos.y, 1, Mathf.Max(1, mapHeight - 2)));
         }
 
         /// <summary>
@@ -810,6 +915,30 @@ namespace BubbleTown.Map
         public Vector2Int GetSinglePlayerGoalGrid() => singlePlayerGoalGrid;
 
         /// <summary>
+        /// Purpose: Gets the first movement target used by tutorial hints.
+        /// Inputs: no direct parameters; reads generated tutorial data.
+        /// Output: a grid coordinate near the player spawn.
+        /// </summary>
+        /// <returns>Tutorial move target grid.</returns>
+        public Vector2Int GetSinglePlayerTutorialMoveGrid() => singlePlayerTutorialMoveGrid;
+
+        /// <summary>
+        /// Purpose: Gets the soft wall cell used by the tutorial bomb lesson.
+        /// Inputs: no direct parameters; reads generated tutorial data.
+        /// Output: a grid coordinate containing the teaching soft wall.
+        /// </summary>
+        /// <returns>Tutorial soft wall grid.</returns>
+        public Vector2Int GetSinglePlayerTutorialSoftWallGrid() => singlePlayerTutorialSoftWallGrid;
+
+        /// <summary>
+        /// Purpose: Gets how many normal soft-wall gates are placed on the tutorial route.
+        /// Inputs: no direct parameters; reads generated tutorial route state.
+        /// Output: count used by the tutorial objective progress.
+        /// </summary>
+        /// <returns>Tutorial route gate count.</returns>
+        public int GetSinglePlayerTutorialRouteGateCount() => singlePlayerTutorialRouteGateCount;
+
+        /// <summary>
         /// Purpose: Returns whether this object is single player goal.
         /// Inputs: `gridPos`; may also read serialized fields and current runtime state.
         /// Output: a `bool` value.
@@ -819,6 +948,30 @@ namespace BubbleTown.Map
         public bool IsSinglePlayerGoal(Vector2Int gridPos)
         {
             return gridPos == singlePlayerGoalGrid;
+        }
+
+        /// <summary>
+        /// Purpose: Returns whether the grid cell is the tutorial soft wall.
+        /// Inputs: gridPos is the queried cell.
+        /// Output: true when it matches the tutorial teaching wall.
+        /// </summary>
+        /// <param name="gridPos">Grid position to test.</param>
+        /// <returns>True when this is the tutorial soft wall.</returns>
+        public bool IsSinglePlayerTutorialSoftWall(Vector2Int gridPos)
+        {
+            return gridPos == singlePlayerTutorialSoftWallGrid;
+        }
+
+        /// <summary>
+        /// Purpose: Returns whether the grid cell is one of the normal soft-wall gates on the tutorial route.
+        /// Inputs: gridPos is the queried cell.
+        /// Output: true when it belongs to the tracked tutorial route gate list.
+        /// </summary>
+        /// <param name="gridPos">Grid position to test.</param>
+        /// <returns>True when this is a tutorial route gate.</returns>
+        public bool IsSinglePlayerTutorialRouteGate(Vector2Int gridPos)
+        {
+            return singlePlayerTutorialRouteGates.Contains(gridPos);
         }
 
         /// <summary>

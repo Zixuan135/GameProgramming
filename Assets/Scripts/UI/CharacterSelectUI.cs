@@ -9,7 +9,7 @@ namespace BubbleTown.UI
 {
     /// <summary>
     /// Lightweight character selection screen between mode select and map select.
-    /// It supports one selected character for Solo/AIBattle and separate P1/P2
+    /// It supports one selected character for Tutorial/AIBattle and separate P1/P2
     /// selections for LocalVS.
     /// </summary>
     public class CharacterSelectUI : MonoBehaviour

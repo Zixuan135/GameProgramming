@@ -3,6 +3,7 @@ using BubbleTown.Characters;
 using BubbleTown.Core;
 using BubbleTown.Core.Enums;
 using BubbleTown.Gameplay;
+using BubbleTown.Items;
 using BubbleTown.Map;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -15,12 +16,24 @@ namespace BubbleTown.Managers
     /// </summary>
     public class GameManager : MonoBehaviour
     {
+        private enum TutorialStep
+        {
+            Move = 0,
+            PlaceBomb = 1,
+            RunAway = 2,
+            BreakSoftWall = 3,
+            PickUpItem = 4,
+            ReachExit = 5,
+            Complete = 6
+        }
+
         private const string RuntimeObjectName = "GameManager";
         private const string Player1ObjectName = "Player1";
         private const string Player2ObjectName = "Player2";
         private const string AIObjectName = "AIPlayer";
         private const string CharactersRootName = "CharactersRoot";
         private const string BombsRootName = "BombsRoot";
+        private const int TutorialPlayableStepCount = 6;
 
         private static GameManager instance;
         private static bool isQuitting;
@@ -81,6 +94,16 @@ namespace BubbleTown.Managers
         [SerializeField, Min(0)] private int singlePlayerCurrentGoalDistance;
         [SerializeField] private bool singlePlayerObjectiveComplete;
 
+        [Header("Tutorial Mode")]
+        [SerializeField] private ItemType tutorialGuaranteedItemType = ItemType.MoveSpeedUp;
+        [SerializeField] private TutorialStep tutorialStep = TutorialStep.Move;
+        [SerializeField] private Vector2Int tutorialMoveTargetGrid = new Vector2Int(2, 1);
+        [SerializeField] private Vector2Int tutorialSoftWallGrid = new Vector2Int(3, 1);
+        [SerializeField] private Vector2Int tutorialLastBombGrid = new Vector2Int(-1, -1);
+        [SerializeField] private bool tutorialBombPlaced;
+        [SerializeField] private bool tutorialSoftWallCleared;
+        [SerializeField] private bool tutorialItemStepSkipped;
+
         [Header("Character Selection")]
         [SerializeField] private string selectedPlayer1CharacterId = "bubble_ranger";
         [SerializeField] private string selectedPlayer2CharacterId = "bear_blaster";
@@ -102,6 +125,8 @@ namespace BubbleTown.Managers
         private BattleMapType lastBattleSetupMapType;
         private AIDifficulty lastBattleSetupAIDifficulty;
         private MapManager subscribedSinglePlayerObjectiveMapManager;
+        private CharacterBase subscribedTutorialPlayer;
+        private bool tutorialItemPickupSubscribed;
 
         public GameMode CurrentGameMode => currentGameMode;
         public BattleMapType CurrentMapType => currentMapType;
@@ -129,14 +154,25 @@ namespace BubbleTown.Managers
         public int SinglePlayerSoftWallsCleared => singlePlayerSoftWallsCleared;
         public Vector2Int SinglePlayerGoalGrid => singlePlayerGoalGrid;
         public int SinglePlayerGoalDistance => Mathf.Max(0, singlePlayerCurrentGoalDistance);
-        public float SinglePlayerRouteProgress => singlePlayerStartGoalDistance > 0
+        public bool IsTutorialMode => currentGameMode == GameMode.SinglePlayer;
+        public ItemType TutorialGuaranteedItemType => tutorialGuaranteedItemType;
+        public Vector2Int TutorialMoveTargetGrid => tutorialMoveTargetGrid;
+        public Vector2Int TutorialSoftWallGrid => tutorialSoftWallGrid;
+        public float SinglePlayerRouteProgress => IsTutorialMode
+            ? ResolveTutorialProgress()
+            : singlePlayerStartGoalDistance > 0
             ? 1f - Mathf.Clamp01((float)singlePlayerCurrentGoalDistance / singlePlayerStartGoalDistance)
             : singlePlayerObjectiveComplete ? 1f : 0f;
         public bool IsSinglePlayerObjectiveComplete => IsSinglePlayerObjectiveEnabled && singlePlayerObjectiveComplete;
-        public string SinglePlayerObjectiveLabel => "Reach Exit";
-        public string SinglePlayerObjectiveProgressLabel => singlePlayerObjectiveComplete
+        public string SinglePlayerObjectiveLabel => IsTutorialMode ? ResolveTutorialObjectiveLabel() : "Reach Exit";
+        public string SinglePlayerObjectiveProgressLabel => IsTutorialMode
+            ? ResolveTutorialProgressLabel()
+            : singlePlayerObjectiveComplete
             ? "EXIT REACHED"
             : $"{SinglePlayerGoalDistance} tiles";
+        public string SinglePlayerObjectiveHintLabel => IsTutorialMode
+            ? ResolveTutorialHintLabel()
+            : "Break soft walls, open the route, and reach the glowing exit.";
         public CharacterData SelectedPlayer1Character
         {
             get
@@ -203,6 +239,16 @@ namespace BubbleTown.Managers
         }
 
         /// <summary>
+        /// Purpose: Advances lightweight tutorial objectives while the battle runs.
+        /// Inputs: no direct parameters; reads current player, map, and tutorial state.
+        /// Output: no return value; moves the tutorial objective to the next step when conditions are met.
+        /// </summary>
+        private void Update()
+        {
+            TickTutorialObjective();
+        }
+
+        /// <summary>
         /// Purpose: Cleans up subscriptions or runtime state when this component becomes inactive.
         /// Inputs: no direct parameters; may also read serialized fields and current runtime state.
         /// Output: no return value; updates component, scene, or game state as needed.
@@ -211,6 +257,7 @@ namespace BubbleTown.Managers
         {
             SceneManager.sceneLoaded -= OnSceneLoaded;
             UnsubscribeSinglePlayerObjectiveMap();
+            UnsubscribeTutorialObjectiveEvents();
         }
 
         /// <summary>
@@ -609,6 +656,7 @@ namespace BubbleTown.Managers
             SetupPlayer1(bombSpawnRoot, bombPrefab);
             SetupPlayer2(bombSpawnRoot, bombPrefab);
             SetupAIPlayer(bombSpawnRoot, bombPrefab);
+            ConfigureTutorialObjectiveRuntime();
 
             currentGameState = GameState.BattlePreparing;
             StoreBattleSetupSnapshot();
@@ -619,7 +667,7 @@ namespace BubbleTown.Managers
         }
 
         /// <summary>
-        /// Purpose: Prepares the Solo objective that asks the player to open a route through soft walls to the exit.
+        /// Purpose: Prepares the Tutorial objective that teaches movement, bombs, pickups, and the exit route.
         /// Inputs: no direct parameters; reads the active map, spawn grid, goal grid, and configured soft-wall target.
         /// Output: no return value; stores objective counters and subscribes to soft-wall destruction events.
         /// </summary>
@@ -633,13 +681,18 @@ namespace BubbleTown.Managers
             }
 
             int availableSoftWalls = activeMapManager.CountSoftWalls();
-            activeSinglePlayerSoftWallTarget = availableSoftWalls > 0
+            activeSinglePlayerSoftWallTarget = IsTutorialMode && availableSoftWalls > 0
+                ? Mathf.Clamp(activeMapManager.GetSinglePlayerTutorialRouteGateCount(), 1, availableSoftWalls)
+                : availableSoftWalls > 0
                 ? Mathf.Clamp(singlePlayerSoftWallTarget, 1, availableSoftWalls)
                 : 0;
             singlePlayerGoalGrid = activeMapManager.GetSinglePlayerGoalGrid();
+            tutorialMoveTargetGrid = activeMapManager.GetSinglePlayerTutorialMoveGrid();
+            tutorialSoftWallGrid = activeMapManager.GetSinglePlayerTutorialSoftWallGrid();
             // Manhattan distance is enough here because movement is four-directional on a grid.
             singlePlayerStartGoalDistance = CalculateGridDistance(activeMapManager.GetPlayer1SpawnGrid(), singlePlayerGoalGrid);
             singlePlayerCurrentGoalDistance = singlePlayerStartGoalDistance;
+            tutorialStep = IsTutorialMode ? TutorialStep.Move : TutorialStep.ReachExit;
 
             subscribedSinglePlayerObjectiveMapManager = activeMapManager;
             subscribedSinglePlayerObjectiveMapManager.SoftWallDestroyed += HandleSinglePlayerSoftWallDestroyed;
@@ -658,12 +711,20 @@ namespace BubbleTown.Managers
         private void ResetSinglePlayerObjective()
         {
             UnsubscribeSinglePlayerObjectiveMap();
+            UnsubscribeTutorialObjectiveEvents();
             activeSinglePlayerSoftWallTarget = 0;
             singlePlayerSoftWallsCleared = 0;
             singlePlayerGoalGrid = new Vector2Int(1, 1);
             singlePlayerStartGoalDistance = 0;
             singlePlayerCurrentGoalDistance = 0;
             singlePlayerObjectiveComplete = false;
+            tutorialStep = TutorialStep.Move;
+            tutorialMoveTargetGrid = new Vector2Int(2, 1);
+            tutorialSoftWallGrid = new Vector2Int(3, 1);
+            tutorialLastBombGrid = new Vector2Int(-1, -1);
+            tutorialBombPlaced = false;
+            tutorialSoftWallCleared = false;
+            tutorialItemStepSkipped = false;
         }
 
         /// <summary>
@@ -679,7 +740,25 @@ namespace BubbleTown.Managers
                 return;
             }
 
-            singlePlayerSoftWallsCleared = Mathf.Min(SinglePlayerSoftWallTarget, singlePlayerSoftWallsCleared + 1);
+            bool countsTowardObjective = !IsTutorialMode ||
+                activeMapManager == null ||
+                activeMapManager.IsSinglePlayerTutorialRouteGate(gridPosition);
+            if (countsTowardObjective)
+            {
+                singlePlayerSoftWallsCleared = Mathf.Min(SinglePlayerSoftWallTarget, singlePlayerSoftWallsCleared + 1);
+            }
+
+            if (IsTutorialMode)
+            {
+                tutorialSoftWallCleared = countsTowardObjective || tutorialSoftWallCleared;
+                if (countsTowardObjective && (tutorialStep == TutorialStep.BreakSoftWall || tutorialStep == TutorialStep.RunAway))
+                {
+                    AdvanceTutorialStep(ShouldSkipTutorialItemStep(gridPosition)
+                        ? TutorialStep.ReachExit
+                        : TutorialStep.PickUpItem);
+                }
+            }
+
             RefreshSinglePlayerRouteObjective();
 
             if (logBattleSetup)
@@ -701,11 +780,349 @@ namespace BubbleTown.Managers
             }
 
             singlePlayerCurrentGoalDistance = CalculateGridDistance(player1.CurrentGridPosition, singlePlayerGoalGrid);
+            if (IsTutorialMode && tutorialStep != TutorialStep.ReachExit && tutorialStep != TutorialStep.Complete)
+            {
+                return;
+            }
+
             if (activeMapManager.IsSinglePlayerGoal(player1.CurrentGridPosition))
             {
                 singlePlayerObjectiveComplete = true;
                 singlePlayerCurrentGoalDistance = 0;
+                if (IsTutorialMode)
+                {
+                    AdvanceTutorialStep(TutorialStep.Complete);
+                }
             }
+        }
+
+        /// <summary>
+        /// Purpose: Connects runtime tutorial events after player objects are configured for battle.
+        /// Inputs: no direct parameters; reads current player and item pickup event state.
+        /// Output: no return value; subscribes to player/item callbacks when tutorial mode is active.
+        /// </summary>
+        private void ConfigureTutorialObjectiveRuntime()
+        {
+            if (!IsTutorialMode || player1 == null)
+            {
+                return;
+            }
+
+            SubscribeTutorialObjectiveEvents();
+        }
+
+        /// <summary>
+        /// Purpose: Advances the tutorial from polling-friendly state such as movement and safe distance.
+        /// Inputs: no direct parameters; reads player position, current step, and map item state.
+        /// Output: no return value; updates the current tutorial step when its goal is satisfied.
+        /// </summary>
+        private void TickTutorialObjective()
+        {
+            if (!IsTutorialMode ||
+                currentGameState == GameState.BattleFinished ||
+                player1 == null ||
+                activeMapManager == null ||
+                singlePlayerObjectiveComplete)
+            {
+                return;
+            }
+
+            singlePlayerCurrentGoalDistance = CalculateGridDistance(player1.CurrentGridPosition, singlePlayerGoalGrid);
+            switch (tutorialStep)
+            {
+                case TutorialStep.Move:
+                    if (player1.CurrentGridPosition == tutorialMoveTargetGrid ||
+                        player1.CurrentGridPosition != activeMapManager.GetPlayer1SpawnGrid())
+                    {
+                        AdvanceTutorialStep(TutorialStep.PlaceBomb);
+                    }
+                    break;
+                case TutorialStep.RunAway:
+                    if (tutorialBombPlaced && IsPlayerSafeFromTutorialBomb())
+                    {
+                        AdvanceTutorialStep(TutorialStep.BreakSoftWall);
+                    }
+                    break;
+                case TutorialStep.PickUpItem:
+                    if (tutorialSoftWallCleared && ShouldSkipTutorialItemStep(tutorialSoftWallGrid))
+                    {
+                        AdvanceTutorialStep(TutorialStep.ReachExit);
+                    }
+                    break;
+                case TutorialStep.ReachExit:
+                    RefreshSinglePlayerRouteObjective();
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Subscribes to callbacks used by the tutorial step tracker.
+        /// Inputs: no direct parameters; reads player1 and static item pickup event.
+        /// Output: no return value; updates subscription state.
+        /// </summary>
+        private void SubscribeTutorialObjectiveEvents()
+        {
+            if (subscribedTutorialPlayer == player1 && tutorialItemPickupSubscribed)
+            {
+                return;
+            }
+
+            UnsubscribeTutorialObjectiveEvents();
+            subscribedTutorialPlayer = player1;
+            subscribedTutorialPlayer.BombPlaced += HandleTutorialBombPlaced;
+            ItemBase.ItemPickedUp += HandleTutorialItemPickedUp;
+            tutorialItemPickupSubscribed = true;
+        }
+
+        /// <summary>
+        /// Purpose: Unsubscribes tutorial callbacks to avoid stale scene references.
+        /// Inputs: no direct parameters; reads cached subscription fields.
+        /// Output: no return value; updates subscription state.
+        /// </summary>
+        private void UnsubscribeTutorialObjectiveEvents()
+        {
+            if (subscribedTutorialPlayer != null)
+            {
+                subscribedTutorialPlayer.BombPlaced -= HandleTutorialBombPlaced;
+                subscribedTutorialPlayer = null;
+            }
+
+            if (tutorialItemPickupSubscribed)
+            {
+                ItemBase.ItemPickedUp -= HandleTutorialItemPickedUp;
+                tutorialItemPickupSubscribed = false;
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Handles the first player bomb placement for tutorial progression.
+        /// Inputs: sourceCharacter is the character that placed a bomb.
+        /// Output: no return value; updates the tutorial step and cached bomb grid.
+        /// </summary>
+        /// <param name="sourceCharacter">Character that placed the bomb.</param>
+        private void HandleTutorialBombPlaced(CharacterBase sourceCharacter)
+        {
+            if (!IsTutorialMode || sourceCharacter != player1)
+            {
+                return;
+            }
+
+            tutorialBombPlaced = true;
+            tutorialLastBombGrid = sourceCharacter.CurrentGridPosition;
+            if (tutorialStep == TutorialStep.Move || tutorialStep == TutorialStep.PlaceBomb)
+            {
+                AdvanceTutorialStep(TutorialStep.RunAway);
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Handles tutorial item pickup progression.
+        /// Inputs: character and item come from the shared item system pickup callback.
+        /// Output: no return value; advances to the exit step after the tutorial item is collected.
+        /// </summary>
+        /// <param name="character">Character that picked up the item.</param>
+        /// <param name="item">Picked item.</param>
+        private void HandleTutorialItemPickedUp(CharacterBase character, ItemBase item)
+        {
+            if (!IsTutorialMode || character != player1 || tutorialStep != TutorialStep.PickUpItem)
+            {
+                return;
+            }
+
+            AdvanceTutorialStep(TutorialStep.ReachExit);
+        }
+
+        /// <summary>
+        /// Purpose: Updates the current tutorial step without moving backwards.
+        /// Inputs: nextStep is the requested new state.
+        /// Output: no return value; updates serialized tutorial state.
+        /// </summary>
+        /// <param name="nextStep">Requested tutorial step.</param>
+        private void AdvanceTutorialStep(TutorialStep nextStep)
+        {
+            if (nextStep <= tutorialStep)
+            {
+                return;
+            }
+
+            tutorialStep = nextStep;
+            if (tutorialStep == TutorialStep.Complete)
+            {
+                singlePlayerObjectiveComplete = true;
+                singlePlayerCurrentGoalDistance = 0;
+            }
+
+            if (logBattleSetup)
+            {
+                Debug.Log($"[GameManager] Tutorial step: {tutorialStep}");
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Determines if the player is outside the simple cross-blast lesson line.
+        /// Inputs: no direct parameters; reads cached bomb grid, player position, and bomb range.
+        /// Output: true when the player has left the cached bomb's row/column danger line.
+        /// </summary>
+        /// <returns>True when the player is safe from the tutorial bomb line.</returns>
+        private bool IsPlayerSafeFromTutorialBomb()
+        {
+            if (tutorialLastBombGrid.x < 0 || player1 == null)
+            {
+                return false;
+            }
+
+            Vector2Int playerGrid = player1.CurrentGridPosition;
+            int dx = Mathf.Abs(playerGrid.x - tutorialLastBombGrid.x);
+            int dy = Mathf.Abs(playerGrid.y - tutorialLastBombGrid.y);
+            if (dx + dy == 0)
+            {
+                return false;
+            }
+
+            int range = Mathf.Max(1, player1.BombRange);
+            bool onHorizontalBlastLine = dy == 0 && dx <= range;
+            bool onVerticalBlastLine = dx == 0 && dy <= range;
+            return !onHorizontalBlastLine && !onVerticalBlastLine;
+        }
+
+        /// <summary>
+        /// Purpose: Returns whether the pickup tutorial step should be skipped because no item exists.
+        /// Inputs: gridPosition identifies the soft wall cell that should contain the guaranteed item.
+        /// Output: true when no item is registered on that grid cell.
+        /// </summary>
+        /// <param name="gridPosition">Grid position to inspect.</param>
+        /// <returns>True if the item step should be skipped.</returns>
+        private bool ShouldSkipTutorialItemStep(Vector2Int gridPosition)
+        {
+            if (activeMapManager == null)
+            {
+                tutorialItemStepSkipped = true;
+                return true;
+            }
+
+            GridCell cell = activeMapManager.GetCell(gridPosition);
+            bool shouldSkip = cell == null || !cell.HasItem;
+            tutorialItemStepSkipped = shouldSkip;
+            return shouldSkip;
+        }
+
+        /// <summary>
+        /// Purpose: Resolves the compact tutorial objective title for HUD.
+        /// Inputs: no direct parameters; reads current tutorial step.
+        /// Output: short player-facing objective label.
+        /// </summary>
+        /// <returns>Current tutorial objective label.</returns>
+        private string ResolveTutorialObjectiveLabel()
+        {
+            switch (tutorialStep)
+            {
+                case TutorialStep.Move:
+                    return "Move";
+                case TutorialStep.PlaceBomb:
+                    return "Place Bomb";
+                case TutorialStep.RunAway:
+                    return "Run Away";
+                case TutorialStep.BreakSoftWall:
+                    return "Break Wall";
+                case TutorialStep.PickUpItem:
+                    return "Pick Up";
+                case TutorialStep.ReachExit:
+                    return "Clear Route";
+                default:
+                    return "Tutorial Clear";
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Resolves the compact tutorial hint for HUD.
+        /// Inputs: no direct parameters; reads current tutorial step and route distance.
+        /// Output: short player-facing objective detail.
+        /// </summary>
+        /// <returns>Current tutorial progress text.</returns>
+        private string ResolveTutorialProgressLabel()
+        {
+            switch (tutorialStep)
+            {
+                case TutorialStep.Move:
+                    return "WASD";
+                case TutorialStep.PlaceBomb:
+                    return "SPACE";
+                case TutorialStep.RunAway:
+                    return "SAFE TILE";
+                case TutorialStep.BreakSoftWall:
+                    return "WAIT";
+                case TutorialStep.PickUpItem:
+                    return tutorialItemStepSkipped ? "SKIPPED" : "GRAB IT";
+                case TutorialStep.ReachExit:
+                    return singlePlayerObjectiveComplete ? "DONE" : "KEEP GOING";
+                default:
+                    return "DONE";
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Resolves the full tutorial instruction shown in the battle overlay.
+        /// Inputs: no direct parameters; reads current tutorial step.
+        /// Output: one clear player-facing sentence for the current step.
+        /// </summary>
+        /// <returns>Current tutorial instruction text.</returns>
+        private string ResolveTutorialHintLabel()
+        {
+            switch (tutorialStep)
+            {
+                case TutorialStep.Move:
+                    return "Use WASD to step onto the glowing arrow tile.";
+                case TutorialStep.PlaceBomb:
+                    return "Stand beside the nearby soft wall and press SPACE.";
+                case TutorialStep.RunAway:
+                    return "Move off the bomb row or column before it pops.";
+                case TutorialStep.BreakSoftWall:
+                    return "Wait for the blast to break the soft wall.";
+                case TutorialStep.PickUpItem:
+                    return tutorialItemStepSkipped
+                        ? "No item dropped this time. Follow the path to the exit."
+                        : "Walk onto the dropped power-up to collect it.";
+                case TutorialStep.ReachExit:
+                    return "Keep bombing soft walls on the route and reach the glowing exit.";
+                default:
+                    return "Tutorial complete. Nice and tidy.";
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Resolves tutorial progress as a normalized HUD fill amount.
+        /// Inputs: no direct parameters; reads current tutorial step and exit route progress.
+        /// Output: value from 0 to 1.
+        /// </summary>
+        /// <returns>Normalized tutorial progress.</returns>
+        private float ResolveTutorialProgress()
+        {
+            if (tutorialStep == TutorialStep.Complete || singlePlayerObjectiveComplete)
+            {
+                return 1f;
+            }
+
+            float stepIndex = Mathf.Clamp((int)tutorialStep, 0, TutorialPlayableStepCount - 1);
+            float baseProgress = stepIndex / TutorialPlayableStepCount;
+            if (tutorialStep != TutorialStep.ReachExit || singlePlayerStartGoalDistance <= 0)
+            {
+                return Mathf.Clamp01(baseProgress + 0.05f);
+            }
+
+            float routeProgress = 1f - Mathf.Clamp01((float)singlePlayerCurrentGoalDistance / singlePlayerStartGoalDistance);
+            return Mathf.Clamp01(Mathf.Lerp(baseProgress, 1f, routeProgress));
+        }
+
+        /// <summary>
+        /// Purpose: Checks whether a grid cell is the tutorial soft wall used for the guaranteed pickup.
+        /// Inputs: gridPosition is the soft wall cell being queried.
+        /// Output: true when the current mode is tutorial and the grid matches the tutorial wall.
+        /// </summary>
+        /// <param name="gridPosition">Grid position to test.</param>
+        /// <returns>True for the tutorial soft wall cell.</returns>
+        public bool IsTutorialSoftWallGrid(Vector2Int gridPosition)
+        {
+            return IsTutorialMode && gridPosition == tutorialSoftWallGrid;
         }
 
         /// <summary>

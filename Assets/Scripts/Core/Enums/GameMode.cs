@@ -7,7 +7,7 @@ namespace BubbleTown.Core.Enums
     /// </summary>
     public enum GameMode
     {
-        /// <summary>One player clears the route objective alone.</summary>
+        /// <summary>One player plays the guided tutorial route.</summary>
         SinglePlayer = 0,
 
         /// <summary>One player fights an AI opponent.</summary>

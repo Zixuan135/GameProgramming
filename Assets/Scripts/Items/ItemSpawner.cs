@@ -1,6 +1,7 @@
 using System;
 using BubbleTown.Core;
 using BubbleTown.Core.Enums;
+using BubbleTown.Managers;
 using BubbleTown.Map;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -101,7 +102,8 @@ namespace BubbleTown.Items
                 return;
             }
 
-            bool spawned = TrySpawnRandomItemAtGrid(gridPosition, out ItemBase spawnedItem);
+            bool spawned = TrySpawnTutorialItemAtGrid(gridPosition, out ItemBase spawnedItem) ||
+                TrySpawnRandomItemAtGrid(gridPosition, out spawnedItem);
             if (!logDropResults)
             {
                 return;
@@ -109,6 +111,32 @@ namespace BubbleTown.Items
 
             string itemName = spawnedItem != null ? spawnedItem.ItemType.ToString() : "None";
             Debug.Log($"[ItemSpawner] Soft wall destroyed at {gridPosition}. Spawned: {spawned}. Item: {itemName}");
+        }
+
+        /// <summary>
+        /// Purpose: Guarantees the tutorial teaching wall drops a readable power-up.
+        /// Inputs: gridPosition identifies the soft wall that was destroyed.
+        /// Output: true when a tutorial item was spawned.
+        /// </summary>
+        /// <param name="gridPosition">Destroyed soft wall grid position.</param>
+        /// <param name="spawnedItem">Spawned tutorial item, or null.</param>
+        /// <returns>True if a tutorial item was spawned.</returns>
+        private bool TrySpawnTutorialItemAtGrid(Vector2Int gridPosition, out ItemBase spawnedItem)
+        {
+            spawnedItem = null;
+            GameManager gameManager = GameManager.Instance;
+            if (gameManager == null || !gameManager.IsTutorialMode || !gameManager.IsTutorialSoftWallGrid(gridPosition))
+            {
+                return false;
+            }
+
+            ItemSpawnDefinition definition = FindDefinition(gameManager.TutorialGuaranteedItemType) ?? FindFirstValidDefinition();
+            if (definition == null)
+            {
+                return false;
+            }
+
+            return TrySpawnItemAtGrid(definition.ItemType, gridPosition, out spawnedItem);
         }
 
         /// <summary>
@@ -351,6 +379,31 @@ namespace BubbleTown.Items
 
                 roll -= definition.Weight;
                 if (roll <= 0f)
+                {
+                    return definition;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Purpose: Finds the first configured item as a deterministic tutorial fallback.
+        /// Inputs: no direct parameters; reads serialized item definitions.
+        /// Output: a valid item definition, or null when none exists.
+        /// </summary>
+        /// <returns>First valid item definition.</returns>
+        private ItemSpawnDefinition FindFirstValidDefinition()
+        {
+            if (itemDefinitions == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < itemDefinitions.Length; i++)
+            {
+                ItemSpawnDefinition definition = itemDefinitions[i];
+                if (definition != null && definition.IsValid)
                 {
                     return definition;
                 }

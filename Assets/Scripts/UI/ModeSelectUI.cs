@@ -144,7 +144,8 @@ namespace BubbleTown.UI
             Rect localRect = GetNormalizedRect(backgroundRect, 0.650f, 0.428f, 0.279f, 0.366f);
             Rect backRect = GetNormalizedRect(backgroundRect, 0.272f, 0.845f, 0.456f, 0.100f);
 
-            if (DrawImageCardButton(singleRect, singlePlayerTexture, 0f))
+            bool singleClicked = DrawImageCardButton(singleRect, singlePlayerTexture, 0f);
+            if (singleClicked)
             {
                 OnSelectSinglePlayer();
             }
@@ -387,9 +388,9 @@ namespace BubbleTown.UI
             GUILayout.BeginHorizontal();
 
             if (SimpleUIFactory.CompactModeCard(
-                "Single Player",
-                "P1",
-                "Practice movement, bombs, items, and map rules alone.",
+                "Tutorial",
+                "101",
+                "Learn movement, bombs, items, and the exit goal step by step.",
                 singlePlayerColor))
             {
                 OnSelectSinglePlayer();
@@ -427,9 +428,9 @@ namespace BubbleTown.UI
         private void DrawModeCardsVertical()
         {
             if (SimpleUIFactory.CompactModeCard(
-                "Single Player",
-                "P1",
-                "Practice movement, bombs, items, and map rules alone.",
+                "Tutorial",
+                "101",
+                "Learn movement, bombs, items, and the exit goal step by step.",
                 singlePlayerColor))
             {
                 OnSelectSinglePlayer();

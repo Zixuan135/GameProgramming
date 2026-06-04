@@ -100,10 +100,15 @@ namespace BubbleTown.UI
         private RectTransform pausePanel;
         private RectTransform settingsPanel;
         private RectTransform itemGuidePanel;
+        private RectTransform tutorialPromptPanel;
         private RectTransform openingPromptPanel;
         private RectTransform resultPromptPanel;
         private RectTransform pickupToastPanel;
         private RawImage hudBackdropImage;
+        private Image tutorialPromptImage;
+        private Image tutorialPromptStripeImage;
+        private Text tutorialPromptTitleText;
+        private Text tutorialPromptBodyText;
         private Text openingTitleText;
         private Text openingBodyText;
         private Image openingAccentImage;
@@ -291,13 +296,16 @@ namespace BubbleTown.UI
             pausePanel = CreatePanel("PausePanel", overlayRoot, Color.clear, Color.clear);
             settingsPanel = CreatePanel("SettingsPanel", overlayRoot, new Color(1f, 0.96f, 0.72f, 0.98f), player1Color);
             itemGuidePanel = CreatePanel("ItemGuidePanel", overlayRoot, Color.clear, Color.clear);
+            tutorialPromptPanel = CreatePanel("TutorialPromptPanel", overlayRoot, new Color(1f, 0.96f, 0.72f, 0.97f), player1Color);
             openingPromptPanel = CreatePanel("OpeningPromptPanel", overlayRoot, new Color(1f, 0.96f, 0.72f, 0.98f), neutralColor);
             resultPromptPanel = CreatePanel("ResultPromptPanel", overlayRoot, new Color(1f, 0.96f, 0.72f, 0.98f), orangeColor);
             pickupToastPanel = CreatePanel("PickupToastPanel", overlayRoot, new Color(1f, 0.94f, 0.55f, 0.98f), Color.white);
+            SetRaycastTarget(tutorialPromptPanel, false);
 
             BuildPausePanel();
             BuildSettingsPanel();
             BuildItemGuidePanel();
+            BuildTutorialPromptPanel();
             BuildOpeningPromptPanel();
             BuildResultPromptPanel();
             BuildPickupToastPanel();
@@ -323,7 +331,7 @@ namespace BubbleTown.UI
         /// </summary>
         private void BuildObjectivePanel()
         {
-            objectiveTitleText = CreateText("ObjectiveTitle", objectivePanel, "Reach Exit", 14, FontStyle.Bold, textPrimary, TextAnchor.MiddleLeft);
+            objectiveTitleText = CreateText("ObjectiveTitle", objectivePanel, "Tutorial", 14, FontStyle.Bold, textPrimary, TextAnchor.MiddleLeft);
             SetRelativeRect(objectiveTitleText.rectTransform, 0.05f, 0.16f, 0.44f, 0.3f);
 
             objectiveValueText = CreateText("ObjectiveValue", objectivePanel, "0 tiles", 13, FontStyle.Bold, textPrimary, TextAnchor.MiddleRight);
@@ -500,6 +508,29 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
+        /// Purpose: Builds the persistent tutorial step prompt shown during SinglePlayer.
+        /// Inputs: no direct parameters; creates a compact non-blocking prompt panel.
+        /// Output: no return value; caches prompt labels and accent images.
+        /// </summary>
+        private void BuildTutorialPromptPanel()
+        {
+            tutorialPromptImage = tutorialPromptPanel.GetComponent<Image>();
+            tutorialPromptStripeImage = CreateImage("TutorialPromptStripe", tutorialPromptPanel, player1Color);
+            tutorialPromptStripeImage.raycastTarget = false;
+            SetTopLeft(tutorialPromptStripeImage.rectTransform, 0f, 0f, 10f, 104f);
+
+            tutorialPromptTitleText = CreateText("TutorialPromptTitle", tutorialPromptPanel, "Tutorial", 22, FontStyle.Bold, textPrimary, TextAnchor.MiddleLeft);
+            tutorialPromptTitleText.horizontalOverflow = HorizontalWrapMode.Overflow;
+            tutorialPromptTitleText.verticalOverflow = VerticalWrapMode.Overflow;
+            SetTopLeft(tutorialPromptTitleText.rectTransform, 24f, 12f, 420f, 32f);
+
+            tutorialPromptBodyText = CreateText("TutorialPromptBody", tutorialPromptPanel, "Follow the glowing marker.", 15, FontStyle.Bold, textSecondary, TextAnchor.UpperLeft);
+            tutorialPromptBodyText.horizontalOverflow = HorizontalWrapMode.Wrap;
+            tutorialPromptBodyText.verticalOverflow = VerticalWrapMode.Overflow;
+            SetTopLeft(tutorialPromptBodyText.rectTransform, 24f, 48f, 430f, 48f);
+        }
+
+        /// <summary>
         /// Purpose: Builds the Ready/Go prompt overlay.
         /// Inputs: no direct parameters; creates prompt labels and accent frame.
         /// Output: no return value; caches prompt text and accent Image references.
@@ -595,6 +626,7 @@ namespace BubbleTown.UI
             RefreshPausePanel(showPause);
             RefreshSettingsPanel(false);
             RefreshItemGuidePanel(showGuide);
+            RefreshTutorialPrompt(gameManager, !showPause && !showSettings && !showGuide);
             RefreshOpeningPrompt(gameManager, !showPause && !showSettings && !showGuide);
             RefreshResultPrompt(!showPause && !showSettings);
             RefreshPickupToast(!showPause && !showSettings && !showGuide);
@@ -822,6 +854,54 @@ namespace BubbleTown.UI
         }
 
         /// <summary>
+        /// Purpose: Shows the current tutorial step as a prominent non-blocking prompt.
+        /// Inputs: gameManager supplies tutorial text; allowVisible hides it behind modal overlays.
+        /// Output: no return value; updates panel visibility, text, color, and responsive position.
+        /// </summary>
+        /// <param name="gameManager">Current game state source.</param>
+        /// <param name="allowVisible">False when a modal overlay should take priority.</param>
+        private void RefreshTutorialPrompt(GameManager gameManager, bool allowVisible)
+        {
+            bool resultVisible = owner != null && owner.IsResultPromptVisible;
+            bool visible = allowVisible &&
+                !resultVisible &&
+                gameManager != null &&
+                gameManager.IsTutorialMode &&
+                gameManager.CurrentGameState != GameState.BattleFinished;
+            SetPanelActive(tutorialPromptPanel, visible);
+            if (!visible)
+            {
+                return;
+            }
+
+            float safeWidth = Mathf.Max(LeftHudWidth + LeftHudX * 2f, Screen.width * 0.32f);
+            float availableWidth = Mathf.Max(300f, Screen.width - safeWidth - 56f);
+            float panelWidth = Mathf.Min(620f, availableWidth);
+            float panelHeight = 110f;
+            float promptX = safeWidth + 24f;
+            SetTopLeft(tutorialPromptPanel, promptX, 24f, panelWidth, panelHeight);
+
+            string title = gameManager.SinglePlayerObjectiveLabel + "  " + gameManager.SinglePlayerObjectiveProgressLabel;
+            SetText(tutorialPromptTitleText, title);
+            SetText(tutorialPromptBodyText, gameManager.SinglePlayerObjectiveHintLabel);
+            SetTopLeft(tutorialPromptTitleText.rectTransform, 24f, 12f, panelWidth - 46f, 32f);
+            SetTopLeft(tutorialPromptBodyText.rectTransform, 24f, 48f, panelWidth - 46f, 52f);
+
+            Color accent = ResolveTutorialPromptAccent(gameManager.SinglePlayerObjectiveLabel);
+            if (tutorialPromptStripeImage != null)
+            {
+                SetTopLeft(tutorialPromptStripeImage.rectTransform, 0f, 0f, 10f, panelHeight);
+                tutorialPromptStripeImage.color = accent;
+            }
+
+            if (tutorialPromptImage != null)
+            {
+                float pulse = 0.02f + Mathf.Sin(Time.unscaledTime * 4.6f) * 0.015f;
+                tutorialPromptImage.color = new Color(1f, 0.96f, 0.72f, 0.95f + pulse);
+            }
+        }
+
+        /// <summary>
         /// Purpose: Shows Ready/Go as a Canvas prompt.
         /// Inputs: gameManager supplies protection timer; allowVisible hides prompt behind blocking overlays.
         /// Output: no return value; updates prompt text, color, position, and pulse scale.
@@ -907,6 +987,38 @@ namespace BubbleTown.UI
             {
                 pickupToastImage.color = owner.PickupToastColor;
             }
+        }
+
+        /// <summary>
+        /// Purpose: Picks a friendly accent color for the visible tutorial step.
+        /// Inputs: objective label is the current compact tutorial step name.
+        /// Output: color used by the tutorial prompt stripe.
+        /// </summary>
+        /// <param name="objectiveLabel">Current tutorial step label.</param>
+        /// <returns>Accent color matching the tutorial step.</returns>
+        private Color ResolveTutorialPromptAccent(string objectiveLabel)
+        {
+            if (string.IsNullOrEmpty(objectiveLabel))
+            {
+                return player1Color;
+            }
+
+            if (objectiveLabel.Contains("Bomb") || objectiveLabel.Contains("Wall"))
+            {
+                return orangeColor;
+            }
+
+            if (objectiveLabel.Contains("Pick"))
+            {
+                return greenColor;
+            }
+
+            if (objectiveLabel.Contains("Exit") || objectiveLabel.Contains("Clear"))
+            {
+                return purpleColor;
+            }
+
+            return player1Color;
         }
 
         /// <summary>
@@ -1646,7 +1758,7 @@ namespace BubbleTown.UI
                 case GameMode.LocalVS:
                     return "VS";
                 default:
-                    return "Solo";
+                    return "Tutorial";
             }
         }
 
