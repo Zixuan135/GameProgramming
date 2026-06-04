@@ -141,6 +141,7 @@ namespace BubbleTown.Map
 
             GenerateGridVisuals(mapManager, groundRoot, hardWallRoot, softWallRoot, visualTheme);
             GenerateSinglePlayerGoalVisual(mapManager, goalRoot, visualTheme);
+            GenerateSinglePlayerTutorialHints(mapManager, goalRoot, visualTheme);
             if (generateDecorations)
             {
                 GenerateDecorations(mapType, visualTheme, decorationRoot);
@@ -325,6 +326,56 @@ namespace BubbleTown.Map
             CreatePrimitiveChild(goalTransform, "SparkleOrb_Right", PrimitiveType.Sphere, new Vector3(0.34f, 0.46f, -0.24f), new Vector3(0.16f, 0.16f, 0.16f), flagMaterial);
 
             AddDecorationAnimation(goal, goalTransform, true, 0.05f, 2.4f, new Vector3(0f, 42f, 0f), true, 0.055f, 3.1f);
+        }
+
+        /// <summary>
+        /// Purpose: Adds lightweight world-space hints for the Tutorial version of SinglePlayer.
+        /// Inputs: mapManager supplies tutorial cells; visualTheme chooses matching materials.
+        /// Output: no return value; creates generated hint objects under the goal root.
+        /// </summary>
+        /// <param name="mapManager">Gameplay map source.</param>
+        /// <param name="hintRoot">Parent used for generated hint objects.</param>
+        /// <param name="visualTheme">Active map visual theme.</param>
+        private void GenerateSinglePlayerTutorialHints(MapManager mapManager, Transform hintRoot, MapVisualTheme visualTheme)
+        {
+            if (mapManager == null || hintRoot == null || GameManager.Instance == null || !GameManager.Instance.IsTutorialMode)
+            {
+                return;
+            }
+
+            CreateTutorialMoveHint(hintRoot, mapManager.GridToWorld(mapManager.GetSinglePlayerTutorialMoveGrid()), visualTheme);
+        }
+
+        /// <summary>
+        /// Purpose: Creates the first movement hint tile.
+        /// Inputs: parent receives the generated object, worldPosition is the target cell, visualTheme chooses colors.
+        /// Output: no return value; creates a small animated marker.
+        /// </summary>
+        /// <param name="parent">Parent transform.</param>
+        /// <param name="worldPosition">World position of the move target.</param>
+        /// <param name="visualTheme">Active map visual theme.</param>
+        private void CreateTutorialMoveHint(Transform parent, Vector3 worldPosition, MapVisualTheme visualTheme)
+        {
+            GameObject hint = new GameObject("TutorialHint_MoveHere");
+            Transform hintTransform = hint.transform;
+            hintTransform.SetParent(parent);
+            hintTransform.position = worldPosition;
+            hintTransform.rotation = Quaternion.identity;
+
+            Material accentMaterial = ResolveGoalAccentMaterial(visualTheme);
+            Material baseMaterial = ResolveGoalBaseMaterial(visualTheme);
+            Material cream = GetCreamMaterial();
+            CreatePrimitiveChild(hintTransform, "MoveGlowPad", PrimitiveType.Cylinder, new Vector3(0f, 0.2f, 0f), new Vector3(0.94f, 0.026f, 0.94f), baseMaterial);
+            CreatePrimitiveChild(hintTransform, "MoveRing", PrimitiveType.Cylinder, new Vector3(0f, 0.245f, 0f), new Vector3(0.68f, 0.022f, 0.68f), accentMaterial);
+            CreatePrimitiveChild(hintTransform, "MoveBeaconStem", PrimitiveType.Cylinder, new Vector3(0f, 0.68f, 0f), new Vector3(0.035f, 0.44f, 0.035f), cream);
+            CreatePrimitiveChild(hintTransform, "MoveBeaconOrb", PrimitiveType.Sphere, new Vector3(0f, 1.18f, 0f), new Vector3(0.24f, 0.24f, 0.24f), accentMaterial);
+            GameObject arrowStem = CreatePrimitiveChild(hintTransform, "MoveArrow_Stem", PrimitiveType.Cube, new Vector3(0f, 0.305f, 0.13f), new Vector3(0.18f, 0.035f, 0.48f), accentMaterial);
+            arrowStem.transform.localEulerAngles = new Vector3(0f, 0f, 0f);
+            GameObject arrowHeadA = CreatePrimitiveChild(hintTransform, "MoveArrow_HeadA", PrimitiveType.Cube, new Vector3(-0.12f, 0.315f, 0.34f), new Vector3(0.16f, 0.035f, 0.28f), accentMaterial);
+            arrowHeadA.transform.localEulerAngles = new Vector3(0f, 38f, 0f);
+            GameObject arrowHeadB = CreatePrimitiveChild(hintTransform, "MoveArrow_HeadB", PrimitiveType.Cube, new Vector3(0.12f, 0.315f, 0.34f), new Vector3(0.16f, 0.035f, 0.28f), accentMaterial);
+            arrowHeadB.transform.localEulerAngles = new Vector3(0f, -38f, 0f);
+            AddDecorationAnimation(hint, hintTransform, true, 0.045f, 2.2f, Vector3.zero, true, 0.06f, 2.8f);
         }
 
         /// <summary>

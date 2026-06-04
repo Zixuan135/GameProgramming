@@ -11,7 +11,7 @@ namespace BubbleTown.Core.Enums
         /// <summary>The main title screen is currently active.</summary>
         MainMenu = 1,
 
-        /// <summary>The player is choosing between Solo, AI Battle, and Local VS.</summary>
+        /// <summary>The player is choosing between Tutorial, AI Battle, and Local VS.</summary>
         ModeSelect = 2,
 
         /// <summary>The player is choosing which map layout to play.</summary>

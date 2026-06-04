@@ -876,7 +876,14 @@ namespace BubbleTown.UI
             }
             else if (!player1Alive)
             {
-                QueueResult("Game Over", "Player1 was caught by an explosion.", "None");
+                if (gameManager.IsTutorialMode)
+                {
+                    QueueResult("Try Again", "That blast caught Player1. Retry the lesson when ready.", "None");
+                }
+                else
+                {
+                    QueueResult("Game Over", "Player1 was caught by an explosion.", "None");
+                }
             }
             else if (gameManager.CurrentGameMode == GameMode.SinglePlayer)
             {
@@ -884,8 +891,10 @@ namespace BubbleTown.UI
                 if (gameManager.IsSinglePlayerObjectiveComplete)
                 {
                     QueueResult(
-                        "Objective Clear",
-                        "Player1 opened a path through the soft walls and reached the exit.",
+                        gameManager.IsTutorialMode ? "Tutorial Complete" : "Objective Clear",
+                        gameManager.IsTutorialMode
+                            ? "Player1 learned movement, bombs, items, and reached the exit."
+                            : "Player1 opened a path through the soft walls and reached the exit.",
                         "Player1");
                 }
             }
@@ -1957,7 +1966,7 @@ namespace BubbleTown.UI
                 case GameMode.LocalVS:
                     return "VS";
                 default:
-                    return "Solo";
+                    return "Tutorial";
             }
         }
 
