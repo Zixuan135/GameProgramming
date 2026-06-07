@@ -10,6 +10,9 @@ namespace BubbleTown.UI
     /// </summary>
     public static class SimpleUIFactory
     {
+        /// <summary>
+        /// Small map preview patterns used by menu cards and guide panels.
+        /// </summary>
         public enum MapPreviewPattern
         {
             Balanced,
@@ -17,6 +20,9 @@ namespace BubbleTown.UI
             Maze
         }
 
+        /// <summary>
+        /// Icon variants used by main-menu buttons.
+        /// </summary>
         public enum MenuButtonIcon
         {
             Play,
@@ -58,6 +64,9 @@ namespace BubbleTown.UI
         private static GUIStyle settingsFeedbackStyle;
         private static GUIStyle invisibleButtonStyle;
 
+        /// <summary>
+        /// Decorative icon variants used inside menu cards.
+        /// </summary>
         private enum MenuDecorationIcon
         {
             Bomb,
@@ -65,6 +74,9 @@ namespace BubbleTown.UI
             PowerUp
         }
 
+        /// <summary>
+        /// Icon variants used by guide modal rows.
+        /// </summary>
         private enum GuideRowIcon
         {
             PlayerOne,

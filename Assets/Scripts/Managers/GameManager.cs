@@ -16,6 +16,9 @@ namespace BubbleTown.Managers
     /// </summary>
     public class GameManager : MonoBehaviour
     {
+        /// <summary>
+        /// Ordered milestones used by single-player tutorial mode to select the current HUD guidance.
+        /// </summary>
         private enum TutorialStep
         {
             Move = 0,

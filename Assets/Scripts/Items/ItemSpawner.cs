@@ -14,6 +14,9 @@ namespace BubbleTown.Items
     /// </summary>
     public class ItemSpawner : MonoBehaviour
     {
+        /// <summary>
+        /// Serializable weighted entry that links one item type to the prefab used when it drops.
+        /// </summary>
         [Serializable]
         public class ItemSpawnDefinition
         {

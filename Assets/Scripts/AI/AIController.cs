@@ -81,6 +81,9 @@ namespace BubbleTown.AI
         public Vector2Int CurrentStrategicTarget => currentStrategicTarget;
         public AIDifficulty CurrentDifficulty => currentDifficulty;
 
+        /// <summary>
+        /// Bundles one difficulty profile so AI tuning can be copied into serialized behavior fields together.
+        /// </summary>
         private struct DifficultyPreset
         {
             public float MoveDecisionInterval;
@@ -148,6 +151,9 @@ namespace BubbleTown.AI
             }
         }
 
+        /// <summary>
+        /// Stores one breadth-first-search node while the AI looks for a safe movement route.
+        /// </summary>
         private struct EscapeSearchNode
         {
             public Vector2Int Position;
