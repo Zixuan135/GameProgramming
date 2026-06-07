@@ -11,6 +11,9 @@ namespace BubbleTown.Map
     /// </summary>
     public class MapGenerator : MonoBehaviour
     {
+        /// <summary>
+        /// Internal visual theme variants used to map selected gameplay maps to generated 3D art styles.
+        /// </summary>
         private enum MapVisualTheme
         {
             CandyPark,

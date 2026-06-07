@@ -62,6 +62,9 @@ namespace BubbleTown.UI
         private bool texturesLoaded;
         private float shownAtTime;
 
+        /// <summary>
+        /// Normalized outcome categories used to choose result text, accent color, and audio feedback.
+        /// </summary>
         private enum ResultOutcome
         {
             Pending,
@@ -71,6 +74,9 @@ namespace BubbleTown.UI
             Complete
         }
 
+        /// <summary>
+        /// View-only data collected before drawing the result screen with immediate-mode GUI.
+        /// </summary>
         private struct ResultViewModel
         {
             public bool HasResult;

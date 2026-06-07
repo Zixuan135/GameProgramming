@@ -16,6 +16,9 @@ namespace BubbleTown.Items
 
         private static readonly Dictionary<string, Material> RuntimeMaterials = new Dictionary<string, Material>();
 
+        /// <summary>
+        /// Stores the runtime material colors used to build one illustrated pickup card.
+        /// </summary>
         private struct ItemPalette
         {
             public Color Card;
@@ -27,6 +30,19 @@ namespace BubbleTown.Items
             public Color IconDark;
             public Color Glow;
 
+            /// <summary>
+            /// Purpose: Packages the card, icon, rim, highlight, and glow colors for one item type.
+            /// Inputs: palette colors used by card layers, icon parts, and feedback glow.
+            /// Output: returns an ItemPalette value consumed by item-card mesh builders.
+            /// </summary>
+            /// <param name="card">Main face color of the item card.</param>
+            /// <param name="cardDark">Dark backing color for depth and shadow.</param>
+            /// <param name="cardEdge">Colored edge accent around the card.</param>
+            /// <param name="rim">Light rim color used for sticker borders and icon highlights.</param>
+            /// <param name="highlight">Soft shine color used on the card and icon.</param>
+            /// <param name="icon">Primary icon color.</param>
+            /// <param name="iconDark">Darker icon color used for outlines and shadows.</param>
+            /// <param name="glow">Glow color used by feedback and floor accents.</param>
             public ItemPalette(
                 Color card,
                 Color cardDark,
@@ -82,6 +98,13 @@ namespace BubbleTown.Items
             }
         }
 
+        /// <summary>
+        /// Purpose: Recreates the child transform that owns the visual-only pickup meshes.
+        /// Inputs: itemTransform is the spawned item root that should keep gameplay components.
+        /// Output: returns a clean VisualRoot transform parented under the item.
+        /// </summary>
+        /// <param name="itemTransform">Spawned item transform that receives the visual root.</param>
+        /// <returns>a clean VisualRoot transform parented under the item.</returns>
         private static Transform RecreateVisualRoot(Transform itemTransform)
         {
             Transform oldRoot = itemTransform.Find(VisualRootName);
@@ -100,6 +123,13 @@ namespace BubbleTown.Items
             return visualRoot;
         }
 
+        /// <summary>
+        /// Purpose: Builds the layered square card base shared by every pickup type.
+        /// Inputs: root receives generated meshes, and palette supplies the card colors.
+        /// Output: no return value; appends card, rim, shine, shadow, and glow parts.
+        /// </summary>
+        /// <param name="root">Visual root that receives generated card pieces.</param>
+        /// <param name="palette">Color palette for the current item type.</param>
         private static void BuildCard(Transform root, ItemPalette palette)
         {
             Material shadow = GetMaterial("Card_Shadow", new Color(0.08f, 0.12f, 0.18f, 1f), false, 0f, 0.18f);
@@ -126,11 +156,29 @@ namespace BubbleTown.Items
             AddCardCorner(root, "SouthWest", -0.38f, -0.38f, edge);
         }
 
+        /// <summary>
+        /// Purpose: Adds one rounded corner accent to the pickup card.
+        /// Inputs: root, suffix, local x/z coordinates, and the corner material.
+        /// Output: no return value; appends one corner mesh to the card.
+        /// </summary>
+        /// <param name="root">Visual root that receives the corner piece.</param>
+        /// <param name="suffix">Name suffix used to keep generated objects readable.</param>
+        /// <param name="x">Local x coordinate of the corner.</param>
+        /// <param name="z">Local z coordinate of the corner.</param>
+        /// <param name="material">Material applied to the corner mesh.</param>
         private static void AddCardCorner(Transform root, string suffix, float x, float z, Material material)
         {
             CreatePart(root, "Card_Corner_" + suffix, PrimitiveType.Sphere, new Vector3(x, CardTopY + 0.03f, z), new Vector3(0.09f, 0.035f, 0.09f), material);
         }
 
+        /// <summary>
+        /// Purpose: Chooses the icon builder that matches the gameplay item type.
+        /// Inputs: root receives generated meshes, itemType selects the icon, and palette supplies colors.
+        /// Output: no return value; appends the selected icon to the item card.
+        /// </summary>
+        /// <param name="root">Visual root that receives generated icon pieces.</param>
+        /// <param name="itemType">Gameplay item type to visualize.</param>
+        /// <param name="palette">Color palette for the current item type.</param>
         private static void BuildIcon(Transform root, ItemType itemType, ItemPalette palette)
         {
             switch (itemType)
@@ -156,6 +204,13 @@ namespace BubbleTown.Items
             }
         }
 
+        /// <summary>
+        /// Purpose: Builds the bomb-count-up icon using bomb, fuse, sparkle, and plus-sign pieces.
+        /// Inputs: root receives generated meshes, and palette supplies icon accent colors.
+        /// Output: no return value; appends the complete bomb-count icon.
+        /// </summary>
+        /// <param name="root">Visual root that receives generated icon pieces.</param>
+        /// <param name="palette">Color palette for the bomb-count item card.</param>
         private static void BuildBombCountIcon(Transform root, ItemPalette palette)
         {
             Material bomb = GetMaterial("Bomb_Body", new Color(0.1f, 0.24f, 0.46f, 1f), false, 0f, 0.58f);
@@ -177,6 +232,13 @@ namespace BubbleTown.Items
             CreatePart(root, "Bomb_WhiteSticker", PrimitiveType.Cube, new Vector3(-0.06f, IconY + 0.16f, -0.24f), new Vector3(0.2f, 0.02f, 0.045f), GetMaterial("Sticker_White", palette.Rim, false, 0f, 0.18f), new Vector3(0f, -14f, 0f));
         }
 
+        /// <summary>
+        /// Purpose: Builds the explosion-range-up icon with a burst, arrows, and dotted ring.
+        /// Inputs: root receives generated meshes, and palette supplies orange blast colors.
+        /// Output: no return value; appends the complete blast-range icon.
+        /// </summary>
+        /// <param name="root">Visual root that receives generated icon pieces.</param>
+        /// <param name="palette">Color palette for the blast-range item card.</param>
         private static void BuildBlastRangeIcon(Transform root, ItemPalette palette)
         {
             Material cream = GetMaterial("Blast_Cream", palette.Rim, true, 0.2f, 0.24f);
@@ -202,6 +264,13 @@ namespace BubbleTown.Items
             CreateArrow(root, "Blast_West", new Vector3(-0.2f, IconY + 0.12f, 0f), 270f, cream, gold);
         }
 
+        /// <summary>
+        /// Purpose: Builds the move-speed-up icon with a green boot, wing, motion lines, and sparkle.
+        /// Inputs: root receives generated meshes, and palette supplies speed item colors.
+        /// Output: no return value; appends the complete speed-boot icon.
+        /// </summary>
+        /// <param name="root">Visual root that receives generated icon pieces.</param>
+        /// <param name="palette">Color palette for the speed item card.</param>
         private static void BuildSpeedBootIcon(Transform root, ItemPalette palette)
         {
             Transform shoe = CreateGroup(root, "SpeedBootIcon", new Vector3(0.05f, 0f, 0.01f), new Vector3(0f, -30f, 0f));
@@ -236,6 +305,13 @@ namespace BubbleTown.Items
                 GetMaterial("Speed_SparkFace", palette.Rim, true, 0.18f, 0.2f));
         }
 
+        /// <summary>
+        /// Purpose: Builds the shield icon with layered shield plates, shine, bubbles, and sparkles.
+        /// Inputs: root receives generated meshes, and palette supplies shield item colors.
+        /// Output: no return value; appends the complete shield icon.
+        /// </summary>
+        /// <param name="root">Visual root that receives generated icon pieces.</param>
+        /// <param name="palette">Color palette for the shield item card.</param>
         private static void BuildShieldIcon(Transform root, ItemPalette palette)
         {
             Material rim = GetMaterial("Shield_Rim", palette.Rim, false, 0f, 0.22f);
@@ -259,6 +335,13 @@ namespace BubbleTown.Items
             CreatePart(root, "Shield_Bubble_B", PrimitiveType.Sphere, new Vector3(0.36f, IconY + 0.16f, 0.18f), new Vector3(0.045f, 0.026f, 0.045f), shine);
         }
 
+        /// <summary>
+        /// Purpose: Builds the temporary-invincibility icon with a glowing star and radiating sparkles.
+        /// Inputs: root receives generated meshes, and palette supplies purple star colors.
+        /// Output: no return value; appends the complete invincibility icon.
+        /// </summary>
+        /// <param name="root">Visual root that receives generated icon pieces.</param>
+        /// <param name="palette">Color palette for the invincibility item card.</param>
         private static void BuildInvincibleIcon(Transform root, ItemPalette palette)
         {
             Material purpleEdge = GetMaterial("Invincible_PurpleEdge", palette.IconDark, false, 0f, 0.28f);
@@ -282,11 +365,29 @@ namespace BubbleTown.Items
             CreateFlatSparkle(root, "Invincible_Spark_SE", new Vector3(0.31f, IconY + 0.13f, -0.28f), 0.09f, purpleEdge, white);
         }
 
+        /// <summary>
+        /// Purpose: Builds a generic plus icon when an item type has no specialized art.
+        /// Inputs: root receives generated meshes, and palette supplies fallback colors.
+        /// Output: no return value; appends the fallback icon to the card.
+        /// </summary>
+        /// <param name="root">Visual root that receives generated icon pieces.</param>
+        /// <param name="palette">Color palette for the fallback item card.</param>
         private static void BuildFallbackIcon(Transform root, ItemPalette palette)
         {
             CreateFlatPlus(root, "FallbackPlus", new Vector3(0f, IconY + 0.1f, 0f), 0.28f, GetMaterial("Fallback_Dark", palette.IconDark, false, 0f, 0.2f), GetMaterial("Fallback_Icon", palette.Icon, true, 0.3f, 0.28f));
         }
 
+        /// <summary>
+        /// Purpose: Creates one flat arrow from a stem and two angled head pieces.
+        /// Inputs: root, name, center, angle, stem material, and head material.
+        /// Output: no return value; appends the arrow parts under root.
+        /// </summary>
+        /// <param name="root">Parent transform for the arrow pieces.</param>
+        /// <param name="name">Base name for generated arrow parts.</param>
+        /// <param name="center">Local center position for the arrow stem.</param>
+        /// <param name="angle">Y-axis angle in degrees.</param>
+        /// <param name="stemMaterial">Material applied to the arrow stem.</param>
+        /// <param name="headMaterial">Material applied to the arrow head pieces.</param>
         private static void CreateArrow(Transform root, string name, Vector3 center, float angle, Material stemMaterial, Material headMaterial)
         {
             CreatePart(root, name + "_Stem", PrimitiveType.Cube, center, new Vector3(0.055f, 0.02f, 0.22f), stemMaterial, new Vector3(0f, angle, 0f));
@@ -295,6 +396,16 @@ namespace BubbleTown.Items
             CreatePart(root, name + "_Head_B", PrimitiveType.Cube, center + tipOffset + Quaternion.Euler(0f, angle, 0f) * new Vector3(0.04f, 0f, -0.035f), new Vector3(0.05f, 0.02f, 0.13f), headMaterial, new Vector3(0f, angle - 32f, 0f));
         }
 
+        /// <summary>
+        /// Purpose: Creates one layered shield silhouette from simple primitive parts.
+        /// Inputs: parent, name, vertical position, scale, and material.
+        /// Output: no return value; appends shield shape parts under parent.
+        /// </summary>
+        /// <param name="parent">Parent transform for the shield shape.</param>
+        /// <param name="name">Base name for generated shield parts.</param>
+        /// <param name="y">Local y position for the shield layer.</param>
+        /// <param name="scale">Uniform size multiplier for the shield layer.</param>
+        /// <param name="material">Material applied to every part in this shield layer.</param>
         private static void CreateShieldShape(Transform parent, string name, float y, float scale, Material material)
         {
             CreatePart(parent, name + "_Top", PrimitiveType.Cube, new Vector3(0f, y, 0.12f), new Vector3(0.34f * scale, 0.028f, 0.22f * scale), material);
@@ -303,6 +414,17 @@ namespace BubbleTown.Items
             CreatePart(parent, name + "_Point", PrimitiveType.Cube, new Vector3(0f, y, -0.22f * scale), new Vector3(0.21f * scale, 0.028f, 0.21f * scale), material, new Vector3(0f, 45f, 0f));
         }
 
+        /// <summary>
+        /// Purpose: Creates a flat plus sign with a darker backing and brighter face.
+        /// Inputs: parent, name, center, size, backing material, and face material.
+        /// Output: no return value; appends plus-sign pieces under parent.
+        /// </summary>
+        /// <param name="parent">Parent transform for the plus sign.</param>
+        /// <param name="name">Base name for generated plus parts.</param>
+        /// <param name="center">Local center position for the plus sign.</param>
+        /// <param name="size">Overall plus-sign size.</param>
+        /// <param name="backMaterial">Material applied to backing pieces.</param>
+        /// <param name="faceMaterial">Material applied to face pieces.</param>
         private static void CreateFlatPlus(Transform parent, string name, Vector3 center, float size, Material backMaterial, Material faceMaterial)
         {
             CreatePart(parent, name + "_Back_H", PrimitiveType.Cube, center + Vector3.down * 0.012f, new Vector3(size * 1.05f, 0.024f, size * 0.34f), backMaterial);
@@ -311,6 +433,17 @@ namespace BubbleTown.Items
             CreatePart(parent, name + "_Face_V", PrimitiveType.Cube, center + Vector3.up * 0.013f, new Vector3(size * 0.28f, 0.022f, size * 0.86f), faceMaterial);
         }
 
+        /// <summary>
+        /// Purpose: Creates a flat sparkle by combining a plus sign with diagonal shine strokes.
+        /// Inputs: parent, name, center, size, backing material, and face material.
+        /// Output: no return value; appends sparkle pieces under parent.
+        /// </summary>
+        /// <param name="parent">Parent transform for the sparkle.</param>
+        /// <param name="name">Base name for generated sparkle parts.</param>
+        /// <param name="center">Local center position for the sparkle.</param>
+        /// <param name="size">Overall sparkle size.</param>
+        /// <param name="backMaterial">Material applied to backing pieces.</param>
+        /// <param name="faceMaterial">Material applied to face pieces.</param>
         private static void CreateFlatSparkle(Transform parent, string name, Vector3 center, float size, Material backMaterial, Material faceMaterial)
         {
             CreateFlatPlus(parent, name + "_Plus", center, size, backMaterial, faceMaterial);
@@ -318,6 +451,16 @@ namespace BubbleTown.Items
             CreatePart(parent, name + "_Diag_B", PrimitiveType.Cube, center + Vector3.up * 0.019f, new Vector3(size * 0.22f, 0.018f, size * 0.78f), faceMaterial, new Vector3(0f, -45f, 0f));
         }
 
+        /// <summary>
+        /// Purpose: Creates a flat toy star from a round core and five blocky points.
+        /// Inputs: parent, name, center, size, and material.
+        /// Output: no return value; appends star pieces under parent.
+        /// </summary>
+        /// <param name="parent">Parent transform for the star.</param>
+        /// <param name="name">Base name for generated star parts.</param>
+        /// <param name="center">Local center position for the star.</param>
+        /// <param name="size">Overall star size.</param>
+        /// <param name="material">Material applied to the star pieces.</param>
         private static void CreateFlatStar(Transform parent, string name, Vector3 center, float size, Material material)
         {
             CreatePart(parent, name + "_Core", PrimitiveType.Sphere, center, new Vector3(size * 0.72f, 0.045f, size * 0.72f), material);
@@ -329,6 +472,16 @@ namespace BubbleTown.Items
             }
         }
 
+        /// <summary>
+        /// Purpose: Creates a transform group used to rotate or offset related icon pieces together.
+        /// Inputs: parent, group name, local position, and local Euler rotation.
+        /// Output: returns the new child group transform.
+        /// </summary>
+        /// <param name="parent">Parent transform for the group.</param>
+        /// <param name="name">Name assigned to the new group object.</param>
+        /// <param name="localPosition">Local position assigned to the group.</param>
+        /// <param name="localEulerAngles">Local Euler rotation assigned to the group.</param>
+        /// <returns>the new child group transform.</returns>
         private static Transform CreateGroup(Transform parent, string name, Vector3 localPosition, Vector3 localEulerAngles)
         {
             GameObject groupObject = new GameObject(name);
@@ -340,6 +493,19 @@ namespace BubbleTown.Items
             return group;
         }
 
+        /// <summary>
+        /// Purpose: Creates one primitive mesh part for a generated pickup visual.
+        /// Inputs: parent, name, primitive type, local transform values, material, and optional rotation.
+        /// Output: returns the generated GameObject with rendering kept and collision removed.
+        /// </summary>
+        /// <param name="parent">Parent transform for the generated part.</param>
+        /// <param name="name">Name assigned to the generated part.</param>
+        /// <param name="primitiveType">Unity primitive mesh type to create.</param>
+        /// <param name="localPosition">Local position assigned to the generated part.</param>
+        /// <param name="localScale">Local scale assigned to the generated part.</param>
+        /// <param name="material">Material assigned to the part renderer.</param>
+        /// <param name="localEulerAngles">Optional local Euler rotation for the part.</param>
+        /// <returns>the generated GameObject with rendering kept and collision removed.</returns>
         private static GameObject CreatePart(
             Transform parent,
             string name,
@@ -372,6 +538,13 @@ namespace BubbleTown.Items
             return child;
         }
 
+        /// <summary>
+        /// Purpose: Resolves the illustrated-card palette for a gameplay item type.
+        /// Inputs: itemType selects the color family.
+        /// Output: returns the palette used by card and icon builders.
+        /// </summary>
+        /// <param name="itemType">Gameplay item type to visualize.</param>
+        /// <returns>the palette used by card and icon builders.</returns>
         private static ItemPalette ResolvePalette(ItemType itemType)
         {
             switch (itemType)
@@ -439,6 +612,17 @@ namespace BubbleTown.Items
             }
         }
 
+        /// <summary>
+        /// Purpose: Gets or creates a cached runtime material for generated pickup meshes.
+        /// Inputs: key identifies the cache entry, color configures the material, and emission/smoothness tune the finish.
+        /// Output: returns a reusable material instance hidden from scene saving.
+        /// </summary>
+        /// <param name="key">Unique cache key for the material.</param>
+        /// <param name="color">Base color assigned to the material.</param>
+        /// <param name="useEmission">Whether to enable emissive color when supported.</param>
+        /// <param name="emissionIntensity">Multiplier for the emission color.</param>
+        /// <param name="smoothness">Smoothness value clamped into the shader's supported range.</param>
+        /// <returns>a reusable material instance hidden from scene saving.</returns>
         private static Material GetMaterial(string key, Color color, bool useEmission, float emissionIntensity, float smoothness)
         {
             if (RuntimeMaterials.TryGetValue(key, out Material existingMaterial) && existingMaterial != null)
@@ -499,6 +683,13 @@ namespace BubbleTown.Items
             return material;
         }
 
+        /// <summary>
+        /// Purpose: Converts an RGB color into a compact material-cache suffix.
+        /// Inputs: color supplies the RGB channels to encode.
+        /// Output: returns a six-character hexadecimal RGB key.
+        /// </summary>
+        /// <param name="color">Color whose RGB channels should be encoded.</param>
+        /// <returns>a six-character hexadecimal RGB key.</returns>
         private static string ColorKey(Color color)
         {
             return Mathf.RoundToInt(color.r * 255f).ToString("X2") +
@@ -506,6 +697,12 @@ namespace BubbleTown.Items
                    Mathf.RoundToInt(color.b * 255f).ToString("X2");
         }
 
+        /// <summary>
+        /// Purpose: Destroys generated visual-only objects using the safe API for play mode or edit mode.
+        /// Inputs: target is the object to remove.
+        /// Output: no return value; removes the target when it exists.
+        /// </summary>
+        /// <param name="target">Unity object to destroy.</param>
         private static void DestroyObject(Object target)
         {
             if (target == null)
