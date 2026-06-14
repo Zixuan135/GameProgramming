@@ -139,6 +139,15 @@ Docs/                    Art direction, map theme, and environment decoration no
 - `Docs/SnowfieldPlayground_MapTheme.md`: Snowfield theme reference.
 - `Docs/JellyMaze_MapTheme.md`: Jelly Maze theme reference.
 - `Docs/EnvironmentDecorationGuide.md`: decoration placement and readability notes.
+- `Docs/FinalTestingChecklist.md`: final manual build and playtest checklist for submission evidence.
+
+## Testing, Accessibility, And Safety
+
+BubbleTown is prepared as a playable vertical slice, with final manual validation tracked in `Docs/FinalTestingChecklist.md`. The checklist covers build launch, Tutorial, AI Battle, Local VS, map themes, bombs, explosions, item pickups, HUD/result UI, audio, settings, and common regression checks. The current project does not include automated Unity play-mode tests yet, so the final submission should include a completed manual pass through that checklist.
+
+Player-facing accessibility support is intentionally lightweight but present: master/BGM/SFX volume sliders, BGM/SFX mute toggles, a screen-shake toggle, readable HUD labels, a guided Tutorial route, and pause/settings access during battle. The main limitation is that controls are keyboard-focused and not currently remappable through an in-game menu.
+
+For legal, ethical, social, and security considerations, BubbleTown uses original chibi characters and toy-board themes, avoids online accounts or networking, and stores only local settings through `PlayerPrefs`. Placeholder audio and any imported image/audio assets should be replaced, credited, or confirmed as licensed before public release.
 
 ## Current Prototype Status
 
