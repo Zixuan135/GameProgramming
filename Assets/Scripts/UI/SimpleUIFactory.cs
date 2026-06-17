@@ -43,6 +43,8 @@ namespace BubbleTown.UI
         private const float GuideCloseButtonFloatAmount = 0.006f;
         private const float SettingsImageButtonFloatSpeed = 2.8f;
         private const float SettingsImageButtonFloatAmount = 0.006f;
+        private const float SettingsArtworkWidth = 1448f;
+        private const float MaximumModalTextScale = 2.4f;
 
         private static GUIStyle titleStyle;
         private static GUIStyle titleShadowStyle;
@@ -98,6 +100,7 @@ namespace BubbleTown.UI
         private static Texture2D settingsRestoreDefaultsButtonTexture;
         private static Texture2D settingsSfxPreviewButtonTexture;
         private static bool settingsTexturesLoaded;
+        private static float imageModalTextScale = 1f;
 
         private static readonly Color PanelFill = new Color(1f, 0.96f, 0.72f, 0.96f);
         private static readonly Color PanelBorder = new Color(0.2f, 0.58f, 0.82f, 1f);
@@ -714,6 +717,8 @@ namespace BubbleTown.UI
                 Mathf.Max(1f, screenRect.height - 20f));
             Rect settingsRect = CalculateAspectFitRect(settingsModalTexture, modalBounds);
             settingsRect = PixelSnapRect(settingsRect);
+            float previousModalTextScale = imageModalTextScale;
+            imageModalTextScale = RuntimeUIScaler.ResolveArtworkScale(settingsRect.width, SettingsArtworkWidth, 1f, MaximumModalTextScale);
 
             GUI.DrawTexture(settingsRect, settingsModalTexture, ScaleMode.StretchToFill, false);
 
@@ -762,12 +767,14 @@ namespace BubbleTown.UI
                 ShowSettingsFeedback("Defaults restored and saved", new Color(1f, 0.62f, 0.22f, 1f));
             }
 
-            return DrawSettingsImageButton(
+            bool shouldClose = DrawSettingsImageButton(
                 closeRect,
                 settingsCloseButtonTexture,
                 "CLOSE",
                 new Color(0.09f, 0.72f, 1f, 1f),
                 2.55f);
+            imageModalTextScale = previousModalTextScale;
+            return shouldClose;
         }
 
         /// <summary>
@@ -877,7 +884,7 @@ namespace BubbleTown.UI
             DrawBubble(knobRect, Color.Lerp(accentColor, Color.white, 0.16f));
 
             DrawRoundedRect(valueRect, new Color(1f, 0.96f, 0.74f, 0.88f), Color.clear, 12, 0);
-            GUI.Label(valueRect, $"{Mathf.RoundToInt(resolvedValue * 100f)}%", settingsValueStyle);
+            DrawScaledModalLabel(valueRect, $"{Mathf.RoundToInt(resolvedValue * 100f)}%", settingsValueStyle);
 
             Event currentEvent = Event.current;
             Rect hitRect = new Rect(
@@ -919,7 +926,7 @@ namespace BubbleTown.UI
                 ? new Rect(toggleRect.xMax - knobSize - toggleRect.height * 0.07f, toggleRect.y + toggleRect.height * 0.07f, knobSize, knobSize)
                 : new Rect(toggleRect.x + toggleRect.height * 0.07f, toggleRect.y + toggleRect.height * 0.07f, knobSize, knobSize);
             DrawBubble(knobRect, Color.white);
-            GUI.Label(toggleRect, value ? "ON" : "OFF", settingsValueStyle);
+            DrawScaledModalLabel(toggleRect, value ? "ON" : "OFF", settingsValueStyle);
 
             // The whole illustrated row is clickable so players do not need pixel-perfect switch clicks.
             if (GUI.Button(hitRect, GUIContent.none, invisibleButtonStyle))
@@ -1765,8 +1772,30 @@ namespace BubbleTown.UI
             Color previousColor = GUI.color;
             GUI.color = new Color(1f, 1f, 1f, alpha);
             DrawRoundedRect(rect, new Color(1f, 0.99f, 0.84f, 0.86f), Color.Lerp(accentColor, Color.white, 0.22f), 12, 1);
-            GUI.Label(new Rect(rect.x + 12f, rect.y + 2f, rect.width - 24f, rect.height - 4f), message, settingsFeedbackStyle);
+            DrawScaledModalLabel(new Rect(rect.x + 12f, rect.y + 2f, rect.width - 24f, rect.height - 4f), message, settingsFeedbackStyle);
             GUI.color = previousColor;
+        }
+
+        /// <summary>
+        /// Purpose: Draws modal overlay labels with the current image-modal scale.
+        /// Inputs: rect/text/style describe one dynamic modal label.
+        /// Output: no return value; restores shared style font size after drawing.
+        /// </summary>
+        /// <param name="rect">Screen-space label rect.</param>
+        /// <param name="text">Text to draw.</param>
+        /// <param name="style">GUI style to use.</param>
+        private static void DrawScaledModalLabel(Rect rect, string text, GUIStyle style)
+        {
+            if (style == null)
+            {
+                GUI.Label(rect, text);
+                return;
+            }
+
+            int previousFontSize = style.fontSize;
+            style.fontSize = RuntimeUIScaler.ScaleFontSize(previousFontSize, imageModalTextScale);
+            GUI.Label(rect, text, style);
+            style.fontSize = previousFontSize;
         }
 
         /// <summary>
