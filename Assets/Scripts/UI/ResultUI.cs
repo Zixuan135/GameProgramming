@@ -17,6 +17,8 @@ namespace BubbleTown.UI
         private const string MainMenuButtonResourcePath = "UI/Result/MainMenu2";
         private const float ResultArtworkWidth = 1448f;
         private const float ResultArtworkHeight = 1086f;
+        private const float FallbackResultPanelWidth = 800f;
+        private const float MaximumResultTextScale = 2.4f;
 
         private static readonly Dictionary<string, Texture2D> RoundedTextureCache = new Dictionary<string, Texture2D>();
         private static readonly Dictionary<string, Texture2D> CircleTextureCache = new Dictionary<string, Texture2D>();
@@ -61,6 +63,7 @@ namespace BubbleTown.UI
         private bool resultAudioPlayed;
         private bool texturesLoaded;
         private float shownAtTime;
+        private float imageResultTextScale = 1f;
 
         /// <summary>
         /// Normalized outcome categories used to choose result text, accent color, and audio feedback.
@@ -126,11 +129,14 @@ namespace BubbleTown.UI
             Rect panel = SimpleUIFactory.CenteredRect(800f, 500f);
 
             Matrix4x4 previousMatrix = GUI.matrix;
+            float previousTextScale = imageResultTextScale;
+            imageResultTextScale = RuntimeUIScaler.ResolveArtworkScale(panel.width, FallbackResultPanelWidth, 1f, MaximumResultTextScale);
             float entranceScale = ResolvePanelEntranceScale();
             GUIUtility.ScaleAroundPivot(new Vector2(entranceScale, entranceScale), panel.center);
             DrawPanel(panel, new Color(1f, 0.96f, 0.72f, 0.96f), new Color(0.2f, 0.58f, 0.82f, 1f), 24, 4);
             DrawResultDecorations(panel, viewModel);
             DrawResultContent(panel, viewModel);
+            imageResultTextScale = previousTextScale;
             GUI.matrix = previousMatrix;
         }
 
@@ -486,10 +492,13 @@ namespace BubbleTown.UI
 
             Rect panel = CalculateImageResultPanelRect();
             Matrix4x4 previousMatrix = GUI.matrix;
+            float previousTextScale = imageResultTextScale;
+            imageResultTextScale = ResolveImageResultTextScale(panel);
             float entranceScale = ResolvePanelEntranceScale();
             GUIUtility.ScaleAroundPivot(new Vector2(entranceScale, entranceScale), panel.center);
             GUI.DrawTexture(panel, resultPanelTexture, ScaleMode.StretchToFill, true);
             DrawImageResultContent(panel, viewModel);
+            imageResultTextScale = previousTextScale;
             GUI.matrix = previousMatrix;
         }
 
@@ -541,8 +550,8 @@ namespace BubbleTown.UI
                 new Color(0.08f, 0.28f, 0.48f, 1f),
                 new Color(0.03f, 0.15f, 0.25f, 0.20f),
                 3,
-                44,
-                28,
+                ScaleImageResultFontSize(44),
+                ScaleImageResultFontSize(28),
                 TextAnchor.MiddleCenter);
 
             Rect noteRect = RelativeArtworkRect(panel, 320f, 278f, 808f, 150f);
@@ -845,8 +854,9 @@ namespace BubbleTown.UI
             }
 
             int originalFontSize = style.fontSize;
+            int scaledOutlinePixels = ScaleImageResultPixels(outlinePixels);
             style.fontSize = ResolveFittedFontSize(rect, text, style, maxFontSize, minFontSize);
-            DrawOutlinedLabelAligned(rect, text, style, faceColor, outlineColor, shadowColor, outlinePixels, alignment);
+            DrawOutlinedLabelAligned(rect, text, style, faceColor, outlineColor, shadowColor, scaledOutlinePixels, alignment);
             style.fontSize = originalFontSize;
         }
 
@@ -1202,9 +1212,48 @@ namespace BubbleTown.UI
             LockStyleTextColor(style, textColor);
 
             Color previousContentColor = GUI.contentColor;
+            int previousFontSize = style.fontSize;
+            style.fontSize = ScaleImageResultFontSize(previousFontSize);
             GUI.contentColor = Color.white;
             GUI.Label(rect, text, style);
+            style.fontSize = previousFontSize;
             GUI.contentColor = previousContentColor;
+        }
+
+        /// <summary>
+        /// Purpose: Resolves how much image-result text should scale with the illustrated result artwork.
+        /// Inputs: panel is the current on-screen result artwork rect.
+        /// Output: font-size multiplier for dynamic result labels.
+        /// </summary>
+        /// <param name="panel">Drawn result artwork panel.</param>
+        /// <returns>Text scale for this result draw pass.</returns>
+        private float ResolveImageResultTextScale(Rect panel)
+        {
+            return RuntimeUIScaler.ResolveArtworkScale(panel.width, ResultArtworkWidth, 1f, MaximumResultTextScale);
+        }
+
+        /// <summary>
+        /// Purpose: Scales image-result font sizes so Player builds match the enlarged artwork.
+        /// Inputs: baseFontSize is the authored font size.
+        /// Output: scaled integer font size.
+        /// </summary>
+        /// <param name="baseFontSize">Original font size.</param>
+        /// <returns>Scaled font size.</returns>
+        private int ScaleImageResultFontSize(int baseFontSize)
+        {
+            return Mathf.Max(1, Mathf.RoundToInt(baseFontSize * imageResultTextScale));
+        }
+
+        /// <summary>
+        /// Purpose: Scales image-result outline offsets with the current result artwork size.
+        /// Inputs: basePixels is the authored pixel width.
+        /// Output: scaled pixel width.
+        /// </summary>
+        /// <param name="basePixels">Original pixel amount.</param>
+        /// <returns>Scaled pixel amount.</returns>
+        private int ScaleImageResultPixels(int basePixels)
+        {
+            return Mathf.Max(0, Mathf.RoundToInt(basePixels * imageResultTextScale));
         }
 
         /// <summary>

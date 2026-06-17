@@ -17,6 +17,7 @@ The current build is a playable Unity prototype with a complete menu-to-result f
 - Battle character prefabs use stronger silhouettes, per-character outline materials, larger facial features, and role-specific props that better match the character card artwork.
 - Battle uses an illustrated full-screen background behind the arena, a Canvas-based left HUD, and a tutorial prompt panel when Tutorial is active.
 - Menu, guide, settings, mode select, character select, map select, difficulty select, battle overlays, item guide, pause menu, and result page use image-driven UI assets when available.
+- Image-backed runtime UI now scales dynamic labels with the rendered artwork size, keeping HUD, Tutorial prompts, READY/GO, settings, character select, and result text readable in exported builds.
 - Mode Select now uses a transparent illustrated Tutorial card instead of the older Single Player card treatment.
 - The Result screen uses the latest illustrated `ResultUI` artwork with aspect-correct drawing, masked dynamic fields, and aligned retry/main-menu image buttons.
 - Built-in placeholder BGM/SFX cover menu, battle, result, movement, bombs, explosions, pickups, victory, defeat, and button feedback.
@@ -90,6 +91,7 @@ BubbleTown now mixes runtime UI construction with imported image assets stored u
 - `SimpleUIFactory` still provides fallback drawing for screens that do not have every image asset loaded.
 - `ModeSelectUI` renders image-backed Tutorial, AI Battle, Local VS, and Back controls, with the Tutorial card supplied as a transparent PNG so it matches the neighboring mode cards.
 - `BattleCanvasHUD` owns the in-battle left HUD, item guide, pause panel, settings overlay, opening prompt, tutorial prompt, result prompt, and pickup toast.
+- `RuntimeUIScaler` keeps runtime-generated text proportional to image-backed UI artwork so macOS and other exported builds match the Editor layout more closely.
 - `BattleVisualStyleController` applies map-aware lighting and places the shared illustrated battle background behind the arena.
 - The Result screen intentionally uses its own result artwork instead of the battle background, then redraws the dynamic outcome area and summary fields with masks so runtime result text does not overlap baked art.
 

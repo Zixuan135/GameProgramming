@@ -27,6 +27,8 @@ namespace BubbleTown.UI
         private const float CardFloatAmount = 0.005f;
         private const float ButtonFloatSpeed = 2.8f;
         private const float ButtonFloatAmount = 0.004f;
+        private const float CharacterSelectArtworkWidth = 1672f;
+        private const float MaximumImageTextScale = 2.4f;
 
         private static readonly string[] ImageRoleCharacterIds =
         {
@@ -59,6 +61,7 @@ namespace BubbleTown.UI
         private Texture2D whiteTexture;
         private readonly Texture2D[] roleTextures = new Texture2D[RoleTextureCount];
         private readonly Dictionary<string, Texture2D> roleTexturesByCharacterId = new Dictionary<string, Texture2D>();
+        private float imageTextScale = 1f;
 
         private readonly Dictionary<string, Texture2D> roundedTextureCache = new Dictionary<string, Texture2D>();
 
@@ -215,6 +218,7 @@ namespace BubbleTown.UI
 
             Rect screenRect = new Rect(0f, 0f, Screen.width, Screen.height);
             Rect backgroundRect = PixelSnapRect(CalculateAspectFitRect(backgroundTexture, screenRect));
+            imageTextScale = RuntimeUIScaler.ResolveArtworkScale(backgroundRect.width, CharacterSelectArtworkWidth, 1f, MaximumImageTextScale);
             GUI.DrawTexture(backgroundRect, backgroundTexture, ScaleMode.StretchToFill, false);
 
             DrawImageSlotBanner(backgroundRect, mode);
@@ -238,7 +242,7 @@ namespace BubbleTown.UI
             if (mode != GameMode.LocalVS)
             {
                 string label = $"Player 1: {(selectedPlayer1 != null ? selectedPlayer1.DisplayName : "Choose Hero")}";
-                GUI.Label(bannerRect, label, imageBannerStyle);
+                DrawImageLabel(bannerRect, label, imageBannerStyle);
                 return;
             }
 
@@ -269,7 +273,7 @@ namespace BubbleTown.UI
 
             string playerLabel = slot == Player1Slot ? "P1" : "P2";
             string characterName = character != null ? character.DisplayName : "Choose Hero";
-            GUI.Label(rect, $"{playerLabel}: {characterName}", imageSubtleBannerStyle);
+            DrawImageLabel(rect, $"{playerLabel}: {characterName}", imageSubtleBannerStyle);
 
             if (GUI.Button(rect, GUIContent.none, GetTransparentButtonStyle()))
             {
@@ -290,7 +294,7 @@ namespace BubbleTown.UI
             if (roster == null || roster.Length == 0)
             {
                 Rect messageRect = GetNormalizedRect(backgroundRect, 0.25f, 0.42f, 0.5f, 0.12f);
-                GUI.Label(messageRect, "No CharacterData assets found in Resources/Characters.", lockedLabelStyle);
+                DrawImageLabel(messageRect, "No CharacterData assets found in Resources/Characters.", lockedLabelStyle);
                 return;
             }
 
@@ -426,7 +430,7 @@ namespace BubbleTown.UI
             {
                 Rect pickedRect = new Rect(drawRect.x + drawRect.width * 0.18f, drawRect.y + drawRect.height * 0.42f, drawRect.width * 0.64f, drawRect.height * 0.15f);
                 DrawRoundedRect(pickedRect, new Color(0.42f, 0.47f, 0.5f, 0.82f), Color.white, 14, 2);
-                GUI.Label(pickedRect, "PICKED", smallPillStyle);
+                DrawImageLabel(pickedRect, "PICKED", smallPillStyle);
             }
 
             if (GUI.Button(rect, GUIContent.none, GetTransparentButtonStyle()))
@@ -495,6 +499,28 @@ namespace BubbleTown.UI
 
             GUI.DrawTexture(PixelSnapRect(drawRect), texture, ScaleMode.ScaleToFit, true);
             return GUI.Button(clickRect, GUIContent.none, GetTransparentButtonStyle());
+        }
+
+        /// <summary>
+        /// Purpose: Draws dynamic labels over imported character-select artwork with build-safe scaling.
+        /// Inputs: rect/text/style describe one image-backed label slot.
+        /// Output: no return value; temporarily scales font size and restores the shared style.
+        /// </summary>
+        /// <param name="rect">Screen-space label rect.</param>
+        /// <param name="text">Text to draw.</param>
+        /// <param name="style">Style to use for the label.</param>
+        private void DrawImageLabel(Rect rect, string text, GUIStyle style)
+        {
+            if (style == null)
+            {
+                GUI.Label(rect, text);
+                return;
+            }
+
+            int previousFontSize = style.fontSize;
+            style.fontSize = RuntimeUIScaler.ScaleFontSize(previousFontSize, imageTextScale);
+            GUI.Label(rect, text, style);
+            style.fontSize = previousFontSize;
         }
 
         /// <summary>

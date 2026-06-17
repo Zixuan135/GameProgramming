@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using BubbleTown.Characters;
 using BubbleTown.Core;
 using BubbleTown.Core.Enums;
@@ -39,6 +40,9 @@ namespace BubbleTown.UI
         private const float ItemGuideArtworkHeight = 941f;
         private const float LeftHudX = 14f;
         private const float LeftHudWidth = 286f;
+        private const float HudFontScaleReferenceWidth = 512f;
+        private const float MaximumHudFontScale = 2.75f;
+        private const float MaximumOverlayScale = 2.4f;
 
         private readonly Color safeAreaFill = new Color(0.74f, 0.93f, 1f, 1f);
         private readonly Color textPrimary = new Color(0.11f, 0.28f, 0.42f, 1f);
@@ -53,6 +57,11 @@ namespace BubbleTown.UI
 
         private BattleUI owner;
         private Font uiFont;
+        private readonly Dictionary<Text, int> baseTextSizes = new Dictionary<Text, int>();
+        private readonly Dictionary<Text, Vector2Int> baseBestFitSizes = new Dictionary<Text, Vector2Int>();
+        private float hudTextScale = 1f;
+        private float overlayTextScale = 1f;
+        private float itemGuideTextScale = 1f;
         private bool initialized;
         private bool suppressSettingsCallbacks;
         private string settingsFeedbackText = "Saved automatically";
@@ -197,6 +206,7 @@ namespace BubbleTown.UI
         {
             RefreshPersistentHud(gameManager, elapsedSeconds);
             RefreshOverlays(gameManager);
+            ApplyCanvasTextScale();
         }
 
         /// <summary>
@@ -614,6 +624,7 @@ namespace BubbleTown.UI
         /// <param name="gameManager">Current game state source.</param>
         private void RefreshOverlays(GameManager gameManager)
         {
+            overlayTextScale = ResolveOverlayScale();
             SetFullScreen(overlayRoot);
             SetFullScreen(overlayDimmer);
 
@@ -646,6 +657,7 @@ namespace BubbleTown.UI
             float hudHeight = hudWidth * HudArtworkHeight / HudArtworkWidth;
             float hudX = Mathf.Max(4f, (safeWidth - hudWidth) * 0.5f);
             float hudY = Mathf.Max(4f, (Screen.height - hudHeight) * 0.5f);
+            hudTextScale = ResolveHudTextScale(hudWidth);
             if (hudBackdropImage != null)
             {
                 SetTopLeft(hudBackdropImage.rectTransform, hudX, hudY, hudWidth, hudHeight);
@@ -657,6 +669,85 @@ namespace BubbleTown.UI
             SetHudArtworkRect(player1Panel, hudX, hudY, hudWidth, hudHeight, 90f, 570f, 844f, 330f);
             SetHudArtworkRect(opponentPanel, hudX, hudY, hudWidth, hudHeight, 90f, 957f, 844f, 330f);
             SetHudArtworkRect(bottomControlsPanel, hudX, hudY, hudWidth, hudHeight, 82f, 1332f, 860f, 120f);
+        }
+
+        /// <summary>
+        /// Purpose: Resolves the text multiplier for the scaled left HUD artwork.
+        /// Inputs: hudWidth is the current on-screen width of the HUD art.
+        /// Output: font scale used by dynamic labels drawn over the HUD texture.
+        /// </summary>
+        /// <param name="hudWidth">Current HUD artwork width.</param>
+        /// <returns>Font-size multiplier for persistent HUD text.</returns>
+        private float ResolveHudTextScale(float hudWidth)
+        {
+            float artworkScale = hudWidth / HudFontScaleReferenceWidth;
+            return Mathf.Clamp(Mathf.Max(artworkScale, RuntimeUIScaler.GlobalScale), 1f, MaximumHudFontScale);
+        }
+
+        /// <summary>
+        /// Purpose: Keeps dynamic Canvas text visually matched to the scaled artwork and overlays.
+        /// Inputs: no direct parameters; reads cached Text components and current screen scale.
+        /// Output: no return value; updates font sizes and best-fit bounds for runtime labels.
+        /// </summary>
+        private void ApplyCanvasTextScale()
+        {
+            foreach (KeyValuePair<Text, int> entry in baseTextSizes)
+            {
+                Text label = entry.Key;
+                if (label == null)
+                {
+                    continue;
+                }
+
+                float scale = ResolveTextScale(label);
+                label.fontSize = RuntimeUIScaler.ScaleFontSize(entry.Value, scale);
+                if (label.resizeTextForBestFit && baseBestFitSizes.TryGetValue(label, out Vector2Int bestFitSizes))
+                {
+                    label.resizeTextMinSize = RuntimeUIScaler.ScaleFontSize(bestFitSizes.x, scale);
+                    label.resizeTextMaxSize = Mathf.Max(
+                        label.resizeTextMinSize,
+                        RuntimeUIScaler.ScaleFontSize(bestFitSizes.y, scale));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Purpose: Chooses the right font scale for one Canvas label.
+        /// Inputs: label belongs to persistent HUD, item guide, or another overlay.
+        /// Output: resolved multiplier for the label's authored font size.
+        /// </summary>
+        /// <param name="label">Text component to classify.</param>
+        /// <returns>Font-size multiplier.</returns>
+        private float ResolveTextScale(Text label)
+        {
+            Transform labelTransform = label.transform;
+            if (safeAreaPanel != null && labelTransform.IsChildOf(safeAreaPanel))
+            {
+                return hudTextScale;
+            }
+
+            if (itemGuidePanel != null && labelTransform.IsChildOf(itemGuidePanel))
+            {
+                return itemGuideTextScale;
+            }
+
+            if (overlayRoot != null && labelTransform.IsChildOf(overlayRoot))
+            {
+                return overlayTextScale;
+            }
+
+            return RuntimeUIScaler.GlobalScale;
+        }
+
+        /// <summary>
+        /// Purpose: Resolves the shared scale for transient battle overlays.
+        /// Inputs: no direct parameters; reads runtime screen size and pixel density.
+        /// Output: clamped multiplier used by prompt panels, toasts, and guide overlays.
+        /// </summary>
+        /// <returns>Overlay scale multiplier.</returns>
+        private float ResolveOverlayScale()
+        {
+            return Mathf.Clamp(RuntimeUIScaler.GlobalScale, 1f, MaximumOverlayScale);
         }
 
         /// <summary>
@@ -778,7 +869,8 @@ namespace BubbleTown.UI
                 return;
             }
 
-            float panelWidth = Mathf.Min(760f, Screen.width - 36f);
+            float scale = ResolveOverlayScale();
+            float panelWidth = Mathf.Min(760f * scale, Screen.width - 36f);
             float panelHeight = panelWidth * PauseArtworkHeight / PauseArtworkWidth;
             float maxHeight = Screen.height - 36f;
             if (panelHeight > maxHeight)
@@ -841,7 +933,8 @@ namespace BubbleTown.UI
                 return;
             }
 
-            float panelWidth = Mathf.Min(900f, Screen.width - 36f);
+            float scale = ResolveOverlayScale();
+            float panelWidth = Mathf.Min(900f * scale, Screen.width - 36f);
             float panelHeight = panelWidth * ItemGuideArtworkHeight / ItemGuideArtworkWidth;
             float maxHeight = Screen.height - 36f;
             if (panelHeight > maxHeight)
@@ -850,6 +943,7 @@ namespace BubbleTown.UI
                 panelWidth = panelHeight * ItemGuideArtworkWidth / ItemGuideArtworkHeight;
             }
 
+            itemGuideTextScale = Mathf.Clamp(Mathf.Max(panelWidth / 900f, RuntimeUIScaler.PixelDensityScale), 1f, MaximumOverlayScale);
             SetCentered(itemGuidePanel, 0f, 0f, panelWidth, panelHeight);
         }
 
@@ -874,23 +968,24 @@ namespace BubbleTown.UI
                 return;
             }
 
+            float scale = ResolveOverlayScale();
             float safeWidth = Mathf.Max(LeftHudWidth + LeftHudX * 2f, Screen.width * 0.32f);
-            float availableWidth = Mathf.Max(300f, Screen.width - safeWidth - 56f);
-            float panelWidth = Mathf.Min(620f, availableWidth);
-            float panelHeight = 110f;
-            float promptX = safeWidth + 24f;
-            SetTopLeft(tutorialPromptPanel, promptX, 24f, panelWidth, panelHeight);
+            float availableWidth = Mathf.Max(300f, Screen.width - safeWidth - 32f * scale);
+            float panelWidth = Mathf.Min(620f * scale, availableWidth);
+            float panelHeight = 110f * scale;
+            float promptX = safeWidth + 24f * scale;
+            SetTopLeft(tutorialPromptPanel, promptX, 24f * scale, panelWidth, panelHeight);
 
             string title = gameManager.SinglePlayerObjectiveLabel + "  " + gameManager.SinglePlayerObjectiveProgressLabel;
             SetText(tutorialPromptTitleText, title);
             SetText(tutorialPromptBodyText, gameManager.SinglePlayerObjectiveHintLabel);
-            SetTopLeft(tutorialPromptTitleText.rectTransform, 24f, 12f, panelWidth - 46f, 32f);
-            SetTopLeft(tutorialPromptBodyText.rectTransform, 24f, 48f, panelWidth - 46f, 52f);
+            SetTopLeft(tutorialPromptTitleText.rectTransform, 24f * scale, 12f * scale, panelWidth - 46f * scale, 32f * scale);
+            SetTopLeft(tutorialPromptBodyText.rectTransform, 24f * scale, 48f * scale, panelWidth - 46f * scale, 52f * scale);
 
             Color accent = ResolveTutorialPromptAccent(gameManager.SinglePlayerObjectiveLabel);
             if (tutorialPromptStripeImage != null)
             {
-                SetTopLeft(tutorialPromptStripeImage.rectTransform, 0f, 0f, 10f, panelHeight);
+                SetTopLeft(tutorialPromptStripeImage.rectTransform, 0f, 0f, 10f * scale, panelHeight);
                 tutorialPromptStripeImage.color = accent;
             }
 
@@ -917,7 +1012,10 @@ namespace BubbleTown.UI
                 return;
             }
 
-            SetCentered(openingPromptPanel, 0f, 0f, 320f, 116f);
+            float scale = ResolveOverlayScale();
+            SetCentered(openingPromptPanel, 0f, 0f, 320f * scale, 116f * scale);
+            SetTopLeft(openingTitleText.rectTransform, 0f, 18f * scale, 320f * scale, 62f * scale);
+            SetTopLeft(openingBodyText.rectTransform, 18f * scale, 78f * scale, 284f * scale, 24f * scale);
             bool readyPhase = owner.IsOpeningReadyPhase;
             Color promptColor = readyPhase ? neutralColor : new Color(0.2f, 0.88f, 1f, 1f);
             if (openingAccentImage != null)
@@ -946,7 +1044,10 @@ namespace BubbleTown.UI
                 return;
             }
 
-            SetCentered(resultPromptPanel, 0f, 0f, 460f, 184f);
+            float scale = ResolveOverlayScale();
+            SetCentered(resultPromptPanel, 0f, 0f, 460f * scale, 184f * scale);
+            SetTopLeft(resultTitleText.rectTransform, 18f * scale, 22f * scale, 424f * scale, 58f * scale);
+            SetTopLeft(resultDetailText.rectTransform, 28f * scale, 84f * scale, 404f * scale, 82f * scale);
             SetText(resultTitleText, owner.ResultPromptTitle);
             SetText(resultDetailText, owner.ResultPromptDetail);
             if (resultAccentImage != null)
@@ -980,7 +1081,9 @@ namespace BubbleTown.UI
             float pop = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(progress / 0.22f));
             float scale = Mathf.Lerp(0.9f, 1f, pop) + Mathf.Sin(pop * Mathf.PI) * 0.08f;
             float slideOffset = Mathf.Lerp(-18f, 0f, pop);
-            SetCentered(pickupToastPanel, 0f, Screen.height * 0.5f - 152f + slideOffset, 300f, 40f);
+            float overlayScale = ResolveOverlayScale();
+            SetCentered(pickupToastPanel, 0f, Screen.height * 0.5f - 152f * overlayScale + slideOffset, 300f * overlayScale, 40f * overlayScale);
+            SetTopLeft(pickupToastText.rectTransform, 12f * overlayScale, 5f * overlayScale, 276f * overlayScale, 30f * overlayScale);
             pickupToastPanel.localScale = Vector3.one * scale;
             SetText(pickupToastText, owner.PickupToastText);
             if (pickupToastImage != null)
@@ -1193,6 +1296,7 @@ namespace BubbleTown.UI
             valueText.resizeTextForBestFit = true;
             valueText.resizeTextMinSize = 8;
             valueText.resizeTextMaxSize = 12;
+            RegisterBestFit(valueText, 8, 12);
             SetRelativeRect(valueText.rectTransform, 0.4f, 0.2f, 0.56f, 0.6f);
             return valueText;
         }
@@ -1458,6 +1562,7 @@ namespace BubbleTown.UI
             Text label = textObject.AddComponent<Text>();
             label.text = text;
             label.font = uiFont;
+            baseTextSizes[label] = fontSize;
             label.fontSize = fontSize;
             label.fontStyle = fontStyle;
             label.color = color;
@@ -1466,6 +1571,24 @@ namespace BubbleTown.UI
             label.horizontalOverflow = HorizontalWrapMode.Wrap;
             label.verticalOverflow = VerticalWrapMode.Truncate;
             return label;
+        }
+
+        /// <summary>
+        /// Purpose: Stores authored best-fit limits so they can scale with runtime text.
+        /// Inputs: label is a Text using resizeTextForBestFit; min/max are authored font bounds.
+        /// Output: no return value; updates best-fit metadata.
+        /// </summary>
+        /// <param name="label">Text component using best fit.</param>
+        /// <param name="minSize">Authored minimum font size.</param>
+        /// <param name="maxSize">Authored maximum font size.</param>
+        private void RegisterBestFit(Text label, int minSize, int maxSize)
+        {
+            if (label == null)
+            {
+                return;
+            }
+
+            baseBestFitSizes[label] = new Vector2Int(minSize, maxSize);
         }
 
         /// <summary>
