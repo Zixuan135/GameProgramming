@@ -106,6 +106,18 @@ The prototype includes generated placeholder audio so it has immediate game feel
 
 These sounds are placeholders and can be replaced later with final original or licensed audio.
 
+## Credits And External Assets
+
+- Game design, programming, integration, balancing, documentation, and Unity scene assembly: Zixuan Wang / BubbleTown project work.
+- Engine and tools: Unity `2022.3.62f3c1`, Unity Editor, Unity built-in components, Unity primitive meshes, Unity materials, and GitHub for version control, issues, pull requests, and project tracking.
+- Runtime 3D visuals: battle maps, walls, floor tiles, borders, environment props, character battle prefabs, bombs, explosions, and item drops are project-authored/generated inside the Unity project using scripts, prefabs, primitive meshes, and custom materials.
+- UI artwork: the illustrated menu, mode select, character select, map select, guide, settings, battle HUD, item guide, pause, result, role, map, item, Tutorial, and background images stored under `Assets/Resources/UI` are project-specific supplied artwork used for this coursework prototype.
+- Audio: the BGM and SFX clips under `Assets/Resources/Audio` are generated placeholder audio created to support the prototype's game feel.
+- Documentation and planning: the `Docs/` folder, GitHub Issues, Pull Requests, and the GitHub Project board record planning, visual direction, testing notes, development changes, and bug-fix history.
+- Online services and user data: BubbleTown does not use account login, networking, telemetry, cloud storage, or third-party runtime web services. Player-facing settings are stored locally through Unity `PlayerPrefs`.
+
+For any public release beyond coursework submission, the supplied artwork and placeholder audio should be rechecked against their source/licence records or replaced with final licensed/original assets.
+
 ## Project Structure
 
 ```text
@@ -149,7 +161,7 @@ BubbleTown is prepared as a playable vertical slice, with final manual validatio
 
 Player-facing accessibility support is intentionally lightweight but present: master/BGM/SFX volume sliders, BGM/SFX mute toggles, a screen-shake toggle, readable HUD labels, a guided Tutorial route, and pause/settings access during battle. The main limitation is that controls are keyboard-focused and not currently remappable through an in-game menu.
 
-For legal, ethical, social, and security considerations, BubbleTown uses original chibi characters and toy-board themes, avoids online accounts or networking, and stores only local settings through `PlayerPrefs`. Placeholder audio and any imported image/audio assets should be replaced, credited, or confirmed as licensed before public release.
+For legal, ethical, social, and security considerations, BubbleTown uses original chibi characters and toy-board themes, avoids online accounts or networking, stores only local settings through `PlayerPrefs`, and lists its current asset status in the Credits section above.
 
 ## Current Prototype Status
 
